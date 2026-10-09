@@ -64,6 +64,10 @@ import { UsersModule } from './users/users.module.js';
           },
           emailVerification: { url: `${appUrl}/verify-email` },
           passwordReset: { url: `${appUrl}/reset-password` },
+          // Where the sign-in link points, like the two above. Links are bound
+          // to the browser that asked for one, so this page and the one that
+          // requests a link are the same browser.
+          magicLink: { url: `${appUrl}/magic-link` },
         };
       },
     }),

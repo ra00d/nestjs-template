@@ -4,6 +4,8 @@ import {
   type EmailTokenPurpose,
   type EmailTokenRecord,
   type EmailTokenStore,
+  type MagicLinkRecord,
+  type MagicLinkStore,
   type MfaStore,
   type RefreshTokenRecord,
   type RefreshTokenStore,
@@ -16,6 +18,7 @@ import { and, desc, eq, gt, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
   emailTokens,
+  magicLinks,
   mfaAuthenticators,
   mfaFailures,
   mfaRecoveryCodes,
@@ -30,7 +33,9 @@ import {
  * any number of API instances.
  */
 @Injectable()
-export class DrizzleAuthenticationStore implements SessionStore, RefreshTokenStore, MfaStore, EmailTokenStore {
+export class DrizzleAuthenticationStore
+  implements SessionStore, RefreshTokenStore, MfaStore, EmailTokenStore, MagicLinkStore
+{
   /** Pending links kept per table: anyone can create them. */
   protected readonly maxPending: number = 100_000;
 
@@ -43,6 +48,7 @@ export class DrizzleAuthenticationStore implements SessionStore, RefreshTokenSto
       refreshTokens: this,
       mfa: this,
       emailTokens: this,
+      magicLinks: this,
     });
   }
 
@@ -227,8 +233,21 @@ export class DrizzleAuthenticationStore implements SessionStore, RefreshTokenSto
     await this.db.delete(emailTokens).where(and(eq(emailTokens.userId, userId), eq(emailTokens.purpose, purpose)));
   }
 
+  // Passwordless sign-in links
+
+  async saveMagicLink(record: MagicLinkRecord): Promise<void> {
+    await this.db.insert(magicLinks).values({ ...record, redirectTo: record.redirectTo ?? null });
+    await this.trim(magicLinks, record.createdAt);
+  }
+
+  // One statement: of two uses of the same link, one gets the row.
+  async consumeMagicLink(id: string): Promise<MagicLinkRecord | undefined> {
+    const [row] = await this.db.delete(magicLinks).where(eq(magicLinks.id, id)).returning();
+    return row && withoutNulls(row);
+  }
+
   /** Deletes what expired, and past `maxPending`, what expires first. */
-  private async trim(table: typeof emailTokens, now: Date) {
+  private async trim(table: typeof emailTokens | typeof magicLinks, now: Date) {
     await this.db.delete(table).where(lte(table.expiresAt, now));
     const [cutoff] = await this.db
       .select({ expiresAt: table.expiresAt })

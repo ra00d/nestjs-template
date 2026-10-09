@@ -85,6 +85,20 @@ export const mfaFailures = pgTable(
   ],
 );
 
+export const magicLinks = pgTable(
+  'magic_links',
+  {
+    // The SHA-256 of the link's token and of the secret binding it to the browser
+    // that asked for it, so the token alone finds no row here.
+    id: text('id').primaryKey(),
+    email: text('email').notNull(),
+    createdAt: at('created_at').notNull(),
+    expiresAt: at('expires_at').notNull(),
+    redirectTo: text('redirect_to'),
+  },
+  (table) => [index('magic_links_expires_at_idx').on(table.expiresAt)],
+);
+
 export const emailTokens = pgTable(
   'email_tokens',
   {
