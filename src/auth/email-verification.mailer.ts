@@ -4,14 +4,17 @@ import {
   EmailVerificationHandler,
   type EmailVerificationLink,
 } from '@nestjs/authentication';
+import { I18nService } from '@nestjs/i18n';
 import { Mailer, type Mailable } from '@nestjs/mail';
 import { UsersRepository } from '../users/users.repository.js';
 
 @Injectable()
 export class VerifyEmailMail implements Mailable<EmailVerificationLink> {
+  constructor(private readonly i18n: I18nService) {}
+
   render({ url }: EmailVerificationLink) {
     return {
-      subject: 'Confirm your email address',
+      subject: this.i18n.t('mail.verifyEmail.subject'),
       template: 'verify-email',
       context: { url },
     };

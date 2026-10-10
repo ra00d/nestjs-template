@@ -1,0 +1,2 @@
+export const CACHE_INSTANCE = Symbol('CACHE_INSTANCE');
+export const CACHE_MODULE_OPTIONS = Symbol('CACHE_MODULE_OPTIONS');

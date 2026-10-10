@@ -1,0 +1,11 @@
+{
+  "verifyEmail": {
+    "subject": "Confirm your email address"
+  },
+  "passwordReset": {
+    "subject": "Reset your password"
+  },
+  "magicLink": {
+    "subject": "Your sign-in link"
+  }
+}

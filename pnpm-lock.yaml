@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@keyv/redis':
+        specifier: ^6.1.0
+        version: 6.1.0(keyv@6.1.0)
       '@nestjs/authentication':
         specifier: ^0.0.1
         version: 0.0.1(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -44,6 +47,9 @@ importers:
       drizzle-orm:
         specifier: 1.0.0-rc.4
         version: 1.0.0-rc.4(@types/pg@8.23.1)(pg@8.23.1)(zod@4.6.5)
+      keyv:
+        specifier: ^6.1.0
+        version: 6.1.0
       pg:
         specifier: ^8.23.1
         version: 8.23.1
@@ -494,6 +500,12 @@ packages:
     resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==, tarball: https://registry.npmjs.org/@js-temporal/polyfill/-/polyfill-0.5.1.tgz}
     engines: {node: '>=12'}
 
+  '@keyv/redis@6.1.0':
+    resolution: {integrity: sha512-H1nYM70uS+LtYWLJOqnaFJrFAm3MpEgjOEeFfHd7VaE3RKfEJKr8pnKOfmftBx5KfWuNnKzP1VBViuVHAJR+MA==, tarball: https://registry.npmjs.org/@keyv/redis/-/redis-6.1.0.tgz}
+    engines: {node: '>= 22.19.0'}
+    peerDependencies:
+      keyv: ^6.1.0
+
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==, tarball: https://registry.npmjs.org/@lukeed/csprng/-/csprng-1.1.0.tgz}
     engines: {node: '>=8'}
@@ -863,6 +875,18 @@ packages:
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==, tarball: https://registry.npmjs.org/@pinojs/redact/-/redact-0.4.0.tgz}
 
+  '@redis/client@6.3.0':
+    resolution: {integrity: sha512-fHrjwGCBvAANGi+TuRuwKi83sIOzgHr8eh+Uf48w3fSX7Hhrz174NrWqfJhAC2vnN0d/tfaZpdr6+o6JC3QHwg==, tarball: https://registry.npmjs.org/@redis/client/-/client-6.3.0.tgz}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@node-rs/xxhash': ^1.1.0
+      '@opentelemetry/api': '>=1 <2'
+    peerDependenciesMeta:
+      '@node-rs/xxhash':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+
   '@rolldown/binding-android-arm-eabi@1.2.12':
     resolution: {integrity: sha512-dB/a1214qKfHMXCpgqR4OZT+jS4kTyEXbQGJPqzobt5EwH5rX080pxE37alt3RzvR1bf1Yz/yGqRfrYAxuPw0A==, tarball: https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.12.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1201,6 +1225,10 @@ packages:
   clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==, tarball: https://registry.npmjs.org/clone/-/clone-1.0.4.tgz}
     engines: {node: '>=0.8'}
+
+  cluster-key-slot@1.1.2:
+    resolution: {integrity: sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==, tarball: https://registry.npmjs.org/cluster-key-slot/-/cluster-key-slot-1.1.2.tgz}
+    engines: {node: '>=0.10.0'}
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==, tarball: https://registry.npmjs.org/color-convert/-/color-convert-2.0.1.tgz}
@@ -1662,6 +1690,10 @@ packages:
     resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==, tarball: https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz}
     engines: {node: '>= 0.4'}
 
+  hookified@3.0.4:
+    resolution: {integrity: sha512-Uos6DSO6BKv4DeR1C22UosRpeUaaoQgEQ+eDCyoJRll2OGzGpZc708vL7orIvqrYLo6zhVV+pkwO9zKVCsq3PQ==, tarball: https://registry.npmjs.org/hookified/-/hookified-3.0.4.tgz}
+    engines: {node: '>=22.18.0'}
+
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==, tarball: https://registry.npmjs.org/html-escaper/-/html-escaper-2.0.2.tgz}
 
@@ -1757,6 +1789,10 @@ packages:
 
   jsonc-parser@3.3.1:
     resolution: {integrity: sha512-HUgH65KyejrUFPvHFPbqOY0rsFip3Bo5wb4ngvdi1EpCYWUQDC5V+Y7mZws+DLkr4M//zQJoanu1SP+87Dv1oQ==, tarball: https://registry.npmjs.org/jsonc-parser/-/jsonc-parser-3.3.1.tgz}
+
+  keyv@6.1.0:
+    resolution: {integrity: sha512-0OO64DxKOITdyQljNCcO+vc+iyaPmm3OV5eKOWRxWCp3V0QnXenpqcKfjGjycNILUJNV+erm1ose6Hsgr1fNFA==, tarball: https://registry.npmjs.org/keyv/-/keyv-6.1.0.tgz}
+    engines: {node: '>= 22.19.0'}
 
   light-my-request@6.6.0:
     resolution: {integrity: sha512-CHYbu8RtboSIoVsHZ6Ye4cj4Aw/yg2oAFimlF7mNvfDV192LR7nDiKtSIfCuLT7KokPSTn/9kfVLm5OGN0A28A==, tarball: https://registry.npmjs.org/light-my-request/-/light-my-request-6.6.0.tgz}
@@ -2852,6 +2888,16 @@ snapshots:
     dependencies:
       jsbi: 4.3.2
 
+  '@keyv/redis@6.1.0(keyv@6.1.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+      cluster-key-slot: 1.1.2
+      hookified: 3.0.4
+      keyv: 6.1.0
+    transitivePeerDependencies:
+      - '@node-rs/xxhash'
+      - '@opentelemetry/api'
+
   '@lukeed/csprng@1.1.0': {}
 
   '@nestjs/authentication@0.0.1(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
@@ -3101,6 +3147,8 @@ snapshots:
       '@noble/hashes': 1.8.0
 
   '@pinojs/redact@0.4.0': {}
+
+  '@redis/client@6.3.0': {}
 
   '@rolldown/binding-android-arm-eabi@1.2.12':
     optional: true
@@ -3409,6 +3457,8 @@ snapshots:
   cli-width@4.1.0: {}
 
   clone@1.0.4: {}
+
+  cluster-key-slot@1.1.2: {}
 
   color-convert@2.0.1:
     dependencies:
@@ -3782,6 +3832,8 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
+  hookified@3.0.4: {}
+
   html-escaper@2.0.2: {}
 
   http-errors@2.0.1:
@@ -3871,6 +3923,10 @@ snapshots:
   json5@2.2.3: {}
 
   jsonc-parser@3.3.1: {}
+
+  keyv@6.1.0:
+    dependencies:
+      hookified: 3.0.4
 
   light-my-request@6.6.0:
     dependencies:

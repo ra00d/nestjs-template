@@ -1,23 +1,28 @@
+import { i18nIssueMessage } from '@nestjs/i18n';
 import { z } from 'zod';
 
 /** Follows the password rules every setter checks: a minimum, on top of the hasher's own limits. */
 export const passwordSchema = z.string().min(12).max(128);
 
+// The message names a translation key (`src/i18n/<locale>/validation.json`):
+// the `I18nStandardSchemaValidationPipe` renders it in the request's locale.
+const emailSchemaField = z.email(i18nIssueMessage('validation.invalidEmail'));
+
 export const signUpSchema = z.object({
-  email: z.email(),
+  email: emailSchemaField,
   password: passwordSchema,
 });
 export type SignUpDto = z.infer<typeof signUpSchema>;
 
 // Sign-in does not enforce a minimum: a password set under an older rule still works.
 export const signInSchema = z.object({
-  email: z.email(),
+  email: emailSchemaField,
   password: z.string(),
 });
 export type SignInDto = z.infer<typeof signInSchema>;
 
 export const emailSchema = z.object({
-  email: z.email(),
+  email: emailSchemaField,
 });
 export type EmailDto = z.infer<typeof emailSchema>;
 

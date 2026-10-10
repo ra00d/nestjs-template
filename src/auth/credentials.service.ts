@@ -1,5 +1,6 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PasswordHasher } from '@nestjs/authentication';
+import { I18nService } from '@nestjs/i18n';
 import type { User } from '../users/user.js';
 import { UsersRepository } from '../users/users.repository.js';
 
@@ -8,11 +9,12 @@ export class CredentialsService {
   constructor(
     private readonly usersRepository: UsersRepository,
     private readonly passwordHasher: PasswordHasher,
+    private readonly i18n: I18nService,
   ) {}
 
   async register(email: string, password: string): Promise<User> {
     if (await this.usersRepository.findByEmail(email)) {
-      throw new ConflictException('Email already registered');
+      throw new ConflictException(this.i18n.t('auth.emailAlreadyRegistered'));
     }
     // The address is unverified: anyone can type any email into a sign-up form.
     return this.usersRepository.create(email, { passwordHash: await this.passwordHasher.hash(password) });
@@ -40,7 +42,7 @@ export class CredentialsService {
     const found = await this.usersRepository.findCredentials(user.email);
     const valid = await this.passwordHasher.verify(currentPassword, found?.passwordHash);
     if (!valid || !found?.passwordHash) {
-      throw new UnauthorizedException('Invalid password');
+      throw new UnauthorizedException(this.i18n.t('auth.invalidPassword'));
     }
     await this.usersRepository.updatePasswordHash(user.id, await this.passwordHasher.hash(newPassword));
   }

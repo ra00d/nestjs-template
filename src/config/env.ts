@@ -21,6 +21,17 @@ export const envSchema = z.object({
   SMTP_URL: z.union([z.url(), z.literal('')]).optional(),
   /** The `From` of every email the application sends. */
   MAIL_FROM: z.string().default('Accounts <accounts@example.com>'),
+  /**
+   * The locale used when no resolver finds a supported one, and outside
+   * requests (jobs, scripts). Must have a catalog in `src/i18n`.
+   */
+  DEFAULT_LOCALE: z.string().default('en'),
+  /** Redis connection string, for the `KeyvRedis` store. */
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  /** Prefixes every Redis key as `<namespace>::<key>`. Unset shares one keyspace. */
+  REDIS_NAMESPACE: z.string().optional(),
+  /** Default cache TTL in milliseconds. Unset, and entries live until overwritten. */
+  CACHE_DEFAULT_TTL: z.coerce.number().int().positive().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

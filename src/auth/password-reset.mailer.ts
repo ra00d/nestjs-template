@@ -5,13 +5,16 @@ import {
   type PasswordResetLink,
 } from '@nestjs/authentication';
 import { Mailer, type Mailable } from '@nestjs/mail';
+import { I18nService } from '@nestjs/i18n';
 import { UsersRepository } from '../users/users.repository.js';
 
 @Injectable()
 export class PasswordResetMail implements Mailable<PasswordResetLink> {
+  constructor(private readonly i18n: I18nService) {}
+
   render({ url }: PasswordResetLink) {
     return {
-      subject: 'Reset your password',
+      subject: this.i18n.t('mail.passwordReset.subject'),
       template: 'password-reset',
       context: { url },
     };

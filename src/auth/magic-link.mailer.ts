@@ -5,13 +5,16 @@ import {
   type MagicLink,
 } from '@nestjs/authentication';
 import { Mailer, type Mailable } from '@nestjs/mail';
+import { I18nService } from '@nestjs/i18n';
 import { UsersRepository } from '../users/users.repository.js';
 
 @Injectable()
 export class MagicLinkMail implements Mailable<MagicLink> {
+  constructor(private readonly i18n: I18nService) {}
+
   render({ url }: MagicLink) {
     return {
-      subject: 'Your sign-in link',
+      subject: this.i18n.t('mail.magicLink.subject'),
       template: 'magic-link',
       context: { url },
     };

@@ -1,0 +1,10 @@
+{
+  "invalid_type": "Ungültige Eingabe: {expected} erwartet",
+  "too_small": "Zu klein: mindestens {minimum} erwartet",
+  "too_big": "Zu groß: höchstens {maximum} erwartet",
+  "invalid_format": "Ungültiges Format: {format}",
+  "unrecognized_keys": "Unbekannte Schlüssel: {keys}",
+  "invalid_union": "Ungültige Eingabe",
+  "custom": "Ungültige Eingabe",
+  "invalidEmail": "Ungültige E-Mail-Adresse"
+}
