@@ -4,8 +4,8 @@ import {
   SessionCookieProvider,
   type SessionRecord,
 } from '@nestjs/authentication';
-import type { User } from '../users/user.js';
-import { UsersRepository } from '../users/users.repository.js';
+import { UsersRepository } from '../repositories/users.repository.js';
+import { User } from '../types/user.js';
 
 @Injectable()
 export class SessionAuth extends SessionCookieProvider<User> {
@@ -24,3 +24,4 @@ export class SessionAuth extends SessionCookieProvider<User> {
     return this.usersRepository.findById(session.userId);
   }
 }
+

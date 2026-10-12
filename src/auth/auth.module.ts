@@ -1,23 +1,25 @@
 import { Module } from '@nestjs/common';
-import { UsersModule } from '../users/users.module.js';
-import { AuthController } from './auth.controller.js';
-import { AuthThrottlerGuard } from './auth-throttler.guard.js';
-import { CredentialsService } from './credentials.service.js';
-import { DrizzleAuthenticationStore } from './drizzle-authentication.store.js';
-import { EmailVerificationController } from './email-verification.controller.js';
-import { EmailVerificationMailer } from './email-verification.mailer.js';
-import { JwtAuth } from './jwt-auth.provider.js';
-import { MagicLinkController } from './magic-link.controller.js';
-import { MagicLinkMailer } from './magic-link.mailer.js';
-import { PasswordController } from './password.controller.js';
-import { PasswordResetController } from './password-reset.controller.js';
-import { PasswordResetMailer } from './password-reset.mailer.js';
-import { SessionAuth } from './session-auth.provider.js';
-import { SessionsController } from './sessions.controller.js';
-import { TokensController } from './tokens.controller.js';
+import { AuthController } from './controllers/auth.controller.js';
+import { EmailVerificationController } from './controllers/email-verification.controller.js';
+import { MagicLinkController } from './controllers/magic-link.controller.js';
+import { MeController } from './controllers/me.controller.js';
+import { PasswordResetController } from './controllers/password-reset.controller.js';
+import { PasswordController } from './controllers/password.controller.js';
+import { SessionsController } from './controllers/sessions.controller.js';
+import { TokensController } from './controllers/tokens.controller.js';
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard.js';
+import { DrizzleAuthenticationStore } from './repositories/drizzle-authentication.store.js';
+import { UsersRepository } from './repositories/users.repository.js';
+import {
+  CredentialsService,
+  EmailVerificationMailer,
+  JwtAuth,
+  MagicLinkMailer,
+  PasswordResetMailer,
+  SessionAuth,
+} from './services.js';
 
 @Module({
-  imports: [UsersModule],
   controllers: [
     AuthController,
     TokensController,
@@ -26,16 +28,19 @@ import { TokensController } from './tokens.controller.js';
     PasswordController,
     MagicLinkController,
     SessionsController,
+    MeController,
   ],
   providers: [
     AuthThrottlerGuard,
     SessionAuth,
     JwtAuth,
     CredentialsService,
+    UsersRepository,
     DrizzleAuthenticationStore,
     EmailVerificationMailer,
     PasswordResetMailer,
     MagicLinkMailer,
   ],
+  exports: [UsersRepository],
 })
 export class AuthModule {}

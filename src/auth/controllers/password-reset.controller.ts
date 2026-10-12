@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { PasswordResetService, Public } from '@nestjs/authentication';
 import { Throttle, minutes } from '@nestjs/throttler';
-import { emailSchema, resetPasswordSchema, type EmailDto, type ResetPasswordDto } from './auth.schemas.js';
+import { emailSchema, resetPasswordSchema, type EmailDto, type ResetPasswordDto } from '../dto/auth.schemas.js';
 
 @Public()
 @Controller('auth/password')

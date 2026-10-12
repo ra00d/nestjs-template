@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { CurrentUser, SessionService, SignInService, TokenService } from '@nestjs/authentication';
-import type { User } from '../users/user.js';
-import { changePasswordSchema, type ChangePasswordDto } from './auth.schemas.js';
-import { CredentialsService } from './credentials.service.js';
+import type { User } from '../types/user.js';
+import { changePasswordSchema, type ChangePasswordDto } from '../dto/auth.schemas.js';
+import { CredentialsService } from '../services/credentials.service.js';
 
 @Controller('auth/password')
 export class PasswordController {

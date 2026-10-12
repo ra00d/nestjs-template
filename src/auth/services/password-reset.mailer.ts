@@ -6,7 +6,7 @@ import {
 } from '@nestjs/authentication';
 import { Mailer, type Mailable } from '@nestjs/mail';
 import { I18nService } from '@nestjs/i18n';
-import { UsersRepository } from '../users/users.repository.js';
+import { UsersRepository } from '../repositories/users.repository.js';
 
 @Injectable()
 export class PasswordResetMail implements Mailable<PasswordResetLink> {
@@ -36,7 +36,13 @@ export class PasswordResetMailer extends PasswordResetHandler {
   // the account keeps that address and this hash: any change invalidates it.
   async findUser(email: string) {
     const found = await this.usersRepository.findCredentials(email);
-    return found && { id: found.user.id, email: found.user.email, passwordHash: found.passwordHash };
+    return (
+      found && {
+        id: found.user.id,
+        email: found.user.email,
+        passwordHash: found.passwordHash,
+      }
+    );
   }
 
   async send(link: PasswordResetLink) {
@@ -47,3 +53,4 @@ export class PasswordResetMailer extends PasswordResetHandler {
     return this.usersRepository.updatePasswordHash(userId, passwordHash);
   }
 }
+

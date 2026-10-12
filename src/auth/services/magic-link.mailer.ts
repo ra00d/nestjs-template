@@ -6,7 +6,7 @@ import {
 } from '@nestjs/authentication';
 import { Mailer, type Mailable } from '@nestjs/mail';
 import { I18nService } from '@nestjs/i18n';
-import { UsersRepository } from '../users/users.repository.js';
+import { UsersRepository } from '../repositories/users.repository.js';
 
 @Injectable()
 export class MagicLinkMail implements Mailable<MagicLink> {

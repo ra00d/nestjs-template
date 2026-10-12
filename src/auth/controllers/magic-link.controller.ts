@@ -1,7 +1,18 @@
-import { BadRequestException, Body, Controller, HttpCode, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+} from '@nestjs/common';
 import { MagicLinkService, Public } from '@nestjs/authentication';
 import { Throttle, minutes } from '@nestjs/throttler';
-import { emailSchema, tokenSchema, type EmailDto, type TokenDto } from './auth.schemas.js';
+import {
+  emailSchema,
+  tokenSchema,
+  type EmailDto,
+  type TokenDto,
+} from '../dto/auth.schemas.js';
 
 // The link opens a page of the web app, which POSTs the token from its URL
 // back to the API: email scanners and link previews follow links with GET
@@ -35,3 +46,4 @@ export class MagicLinkController {
     return { mfaRequired: issued.session.mfa === 'pending' };
   }
 }
+

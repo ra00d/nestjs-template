@@ -4,8 +4,8 @@ import {
   JwtBearerProvider,
   type JwtClaims,
 } from '@nestjs/authentication';
-import type { User } from '../users/user.js';
-import { UsersRepository } from '../users/users.repository.js';
+import { UsersRepository } from '../repositories/users.repository.js';
+import { User } from '../types/user.js';
 
 @Injectable()
 export class JwtAuth extends JwtBearerProvider<User> {
@@ -25,3 +25,4 @@ export class JwtAuth extends JwtBearerProvider<User> {
     return sub ? this.usersRepository.findById(sub) : null;
   }
 }
+

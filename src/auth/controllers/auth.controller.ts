@@ -2,8 +2,8 @@ import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs
 import { Public, SignInService } from '@nestjs/authentication';
 import { I18nService } from '@nestjs/i18n';
 import { Throttle, minutes } from '@nestjs/throttler';
-import { signInSchema, signUpSchema, type SignInDto, type SignUpDto } from './auth.schemas.js';
-import { CredentialsService } from './credentials.service.js';
+import { signInSchema, signUpSchema, type SignInDto, type SignUpDto } from '../dto/auth.schemas.js';
+import { CredentialsService } from '../services/credentials.service.js';
 
 @Public()
 @Controller('auth')
