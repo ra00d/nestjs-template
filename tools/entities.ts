@@ -2,8 +2,9 @@ import { defineEntity } from './lib/types.ts';
 
 /**
  * Every module the generator scaffolds. Add an entity here (or run
- * `pnpm gen` with no arguments for the interactive wizard) and run
- * `pnpm gen <name>` to emit its full NestJS slice.
+ * `pnpm gen add` for the interactive wizard) and run
+ * `pnpm gen <name>` to emit its full NestJS slice. Running `pnpm gen`
+ * with no arguments emits every defined entity.
  */
 export const entities = [
   defineEntity({

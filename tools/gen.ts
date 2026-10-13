@@ -3,8 +3,9 @@
 /**
  * Scopes a NestJS module out of tools/entities.ts.
  *
- *   pnpm gen                 TTY: interactive wizard; non-TTY: everything
+ *   pnpm gen                 generate all defined entities
  *   pnpm gen posts comments   the named entities
+ *   pnpm gen add             interactive wizard to define a new entity
  *   pnpm gen --list          defined entities and their files
  *   pnpm gen --dry-run       print the plan, write nothing
  *   pnpm gen --force         overwrite files from earlier runs
@@ -167,8 +168,6 @@ const wizard = async (): Promise<EntityDefinition> => {
   if (p.isCancel(confirmed)) cancel();
   if (!confirmed) return cancel();
 
-  await appendEntity(new Project(), ENTITIES_PATH, definition);
-  p.log.step(`Added ${entityName} to ${ENTITIES_PATH}.`);
   return definition;
 };
 
@@ -242,7 +241,7 @@ program
     if (options.list) {
       p.intro('tools/entities.ts');
       if (entities.length === 0) {
-        p.log.info('No entities defined. Run `pnpm gen` for the interactive wizard.');
+        p.log.info('No entities defined. Run `pnpm gen add` for the interactive wizard.');
       }
       for (const entity of entities) {
         const names2 = entityNames(entity);
@@ -252,13 +251,6 @@ program
         }
       }
       p.outro(`${entities.length} ${entities.length === 1 ? 'entity' : 'entities'} defined.`);
-      return;
-    }
-
-    if (names.length === 0 && process.stdin.isTTY) {
-      const definition = await wizard();
-      await run([definition], [...entities, definition], { force: options.force });
-      p.outro('Done.');
       return;
     }
 
@@ -273,11 +265,34 @@ program
       }
     }
     if (selected.length === 0) {
-      p.log.error('No entities defined. Add one to tools/entities.ts or run `pnpm gen` for the interactive wizard.');
+      p.log.error('No entities defined. Add one to tools/entities.ts or run `pnpm gen add` for the interactive wizard.');
       process.exit(1);
     }
     p.intro('Scaffolding modules');
     await run(selected, entities, { dryRun: options.dryRun, force: options.force });
+    p.outro('Done.');
+  });
+
+program
+  .command('add')
+  .description('Add a new entity to tools/entities.ts via the interactive wizard')
+  .option('--dry-run', 'print the plan without writing files')
+  .option('--force', 'overwrite files from earlier runs')
+  .action(async (options: { dryRun?: boolean; force?: boolean }) => {
+    if (!process.stdin.isTTY) {
+      p.log.error('The interactive wizard needs a TTY. Define the entity in tools/entities.ts instead.');
+      process.exit(1);
+    }
+    const definition = await wizard();
+    if (options.dryRun) {
+      await run([definition], [...entities, definition], { dryRun: true, force: options.force });
+      p.log.info(`Dry run: ${entityNames(definition).name} was not added to ${ENTITIES_PATH}.`);
+      p.outro('Done.');
+      return;
+    }
+    await appendEntity(new Project(), ENTITIES_PATH, definition);
+    p.log.step(`Added ${entityNames(definition).name} to ${ENTITIES_PATH}.`);
+    await run([definition], [...entities, definition], { force: options.force });
     p.outro('Done.');
   });
 
