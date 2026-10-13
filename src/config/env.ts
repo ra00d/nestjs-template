@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
 /**
+ * Empty env values (`KEY=`) arrive as `''`. Treat them as unset so
+ * optional numbers fall back to their defaults instead of coercing to `0`.
+ */
+const emptyToUndefined = (value: unknown): unknown =>
+  value === '' ? undefined : value;
+
+/**
  * The environment the application refuses to start without. `ConfigModule`
  * validates it at bootstrap, so a missing or malformed variable stops the
  * application before the first request instead of at the first one that
@@ -10,7 +17,10 @@ export const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(3000),
+  ),
   /** URL prefix for all versioned API routes (Swagger stays at `/docs`). */
   API_PREFIX: z
     .string()
@@ -18,6 +28,18 @@ export const envSchema = z.object({
     .default('api'),
   /** Run Drizzle SQL migrations on boot when `true`. Prefer `pnpm db:migrate` in production. */
   DB_MIGRATE_ON_BOOT: z.stringbool().default(false),
+  /** Structured log level (`debug` in development, `info` otherwise). */
+  LOG_LEVEL: z.preprocess(
+    emptyToUndefined,
+    z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .default('info'),
+  ),
+  /** Global request timeout in milliseconds; handlers slower than this get a 408. */
+  REQUEST_TIMEOUT_MS: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(30_000),
+  ),
   /** PostgreSQL connection string, for the Drizzle pool. */
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   /** HS256 secret for access tokens, at least 32 bytes: `openssl rand -base64 32`. */
@@ -44,9 +66,15 @@ export const envSchema = z.object({
   /** Redis connection string, for the `KeyvRedis` store. */
   REDIS_URL: z.string().default('redis://localhost:6379'),
   /** Prefixes every Redis key as `<namespace>::<key>`. Unset shares one keyspace. */
-  REDIS_NAMESPACE: z.string().optional(),
+  REDIS_NAMESPACE: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).optional(),
+  ),
   /** Default cache TTL in milliseconds. Unset, and entries live until overwritten. */
-  CACHE_DEFAULT_TTL: z.coerce.number().int().positive().optional(),
+  CACHE_DEFAULT_TTL: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().optional(),
+  ),
 });
 
 export type Env = z.infer<typeof envSchema>;

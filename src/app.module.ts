@@ -1,7 +1,7 @@
 import { AuthenticationModule } from '@nestjs/authentication';
-import { Module } from '@nestjs/common';
+import { Module, RequestMethod } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { DrizzleModule } from '@nestjs/drizzle';
 import {
   AcceptLanguageLocaleResolver,
@@ -23,6 +23,7 @@ import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
+import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -35,13 +36,40 @@ import {
   DatabaseExceptionFilter,
   HttpExceptionFilter,
 } from './exceptions/filters/index.js';
+import { HealthModule } from './health/health.module.js';
+import {
+  TimeoutInterceptor,
+  TransformInterceptor,
+} from './interceptors/index.js';
+import { TrimPipe } from './pipes/trim.pipe.js';
+import { REDIS_STORE } from './redis/redis.constants.js';
+import type { RedisStore } from './redis/redis.options.js';
 import { RedisModule } from './redis/redis.module.js';
+import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
 
 @Module({
   imports: [
     // Validates the environment at bootstrap: a missing or malformed
     // variable stops the application before the first request.
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+
+    // Structured JSON logs (pretty in development). The correlation ID is
+    // assigned by the Fastify `genReqId` in `main.ts`, so `request.id` is
+    // already correct by the time this middleware runs.
+    LoggerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        pinoHttp: {
+          level: config.get('LOG_LEVEL'),
+          transport:
+            config.get('NODE_ENV') !== 'production'
+              ? { target: 'pino-pretty', options: { singleLine: true } }
+              : undefined,
+        },
+        // The readiness probe would drown real traffic otherwise.
+        exclude: [{ method: RequestMethod.GET, path: 'health' }],
+      }),
+    }),
 
     MultipartModule.register({
       dest: './upload',
@@ -132,8 +160,6 @@ import { RedisModule } from './redis/redis.module.js';
       },
     }),
 
-    ThrottlerModule.forRoot([{ ttl: minutes(1), limit: 100 }]),
-
     // Shared Redis connection (`REDIS_STORE`), closed on shutdown. The
     // cache, rate limiter, or session stores all inject the same adapter.
     RedisModule.forRootAsync({
@@ -152,6 +178,18 @@ import { RedisModule } from './redis/redis.module.js';
       }),
     }),
 
+    // Shared limits across instances: sliding window on Redis instead of
+    // per-process memory, so a fleet enforces one quota.
+    ThrottlerModule.forRootAsync({
+      inject: [REDIS_STORE],
+      useFactory: (store: RedisStore) => ({
+        throttlers: [{ ttl: minutes(1), limit: 100 }],
+        storage: new KeyvThrottlerStorage(store),
+      }),
+    }),
+
+    HealthModule,
+
     AuthModule,
   ],
   controllers: [AppController],
@@ -167,7 +205,13 @@ import { RedisModule } from './redis/redis.module.js';
     // Validates the request bodies whose handlers declare a `schema` (the
     // Zod schemas in src/auth/auth.schemas.ts) and translates the issues
     // with the `validation` namespace (`src/i18n/<locale>/validation.json`).
+    // TrimPipe runs first so validation sees trimmed values.
+    { provide: APP_PIPE, useClass: TrimPipe },
     { provide: APP_PIPE, useClass: I18nStandardSchemaValidationPipe },
+    // One envelope for every JSON response (`{ data }`, paginated results
+    // pass through), plus a 408 for handlers slower than REQUEST_TIMEOUT_MS.
+    { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
     // The root module runs first, so this guard sees the request before the
     // authentication guard: guessed tokens count against the limit too.
     { provide: APP_GUARD, useClass: AuthThrottlerGuard },
