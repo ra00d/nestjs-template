@@ -1,5 +1,2 @@
-import { authRelations } from './auth.relations.js';
-
-export * from './auth.schema.js';
-
-export default authRelations;
+export * as schema from './auth.schema.js';
+export * as relations from './auth.relations.js';

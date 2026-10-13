@@ -364,4 +364,3 @@ function withoutNulls<T extends object>(row: T): WithoutNulls<T> {
     Object.entries(row).filter(([, value]) => value !== null),
   ) as WithoutNulls<T>;
 }
-

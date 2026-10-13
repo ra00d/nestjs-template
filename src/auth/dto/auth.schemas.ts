@@ -8,10 +8,15 @@ export const passwordSchema = z.string().min(12).max(128);
 // the `I18nStandardSchemaValidationPipe` renders it in the request's locale.
 const emailSchemaField = z.email(i18nIssueMessage('validation.invalidEmail'));
 
-export const signUpSchema = z.object({
-  email: emailSchemaField,
-  password: passwordSchema,
-});
+export const signUpSchema = z
+  .object({
+    email: emailSchemaField,
+    password: passwordSchema,
+  })
+  .meta({
+    id: 'signUpSchema',
+    description: 'The sign-up payload',
+  });
 export type SignUpDto = z.infer<typeof signUpSchema>;
 
 // Sign-in does not enforce a minimum: a password set under an older rule still works.
@@ -51,4 +56,3 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
-

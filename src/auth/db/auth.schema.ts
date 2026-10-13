@@ -7,8 +7,8 @@ import {
   primaryKey,
   text,
 } from 'drizzle-orm/pg-core';
-import { at } from '../../database/types.js';
 import { Role } from '../types/user.js';
+import { at, timestamps } from '../../database/fields.js';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -16,8 +16,7 @@ export const users = pgTable('users', {
   passwordHash: text('password_hash'),
   emailVerified: boolean('email_verified').notNull().default(false),
   roles: jsonb('roles').$type<Role[]>().notNull().default([]),
-  createdAt: at('created_at').notNull().defaultNow(),
-  updatedAt: at('updated_at').notNull().defaultNow(),
+  ...timestamps,
 });
 
 // Authentication state: what DrizzleAuthenticationStore (src/auth) keeps for @nestjs/authentication.
@@ -126,30 +125,3 @@ export const emailTokens = pgTable(
     index('email_tokens_expires_at_idx').on(table.expiresAt),
   ],
 );
-export const posts = pgTable('posts', {
-  id: text('id').primaryKey(),
-  title: text('title').notNull(),
-  body: text('body'),
-  status: text('status', { enum: ['draft', 'published'] })
-    .notNull()
-    .default('draft'),
-  authorId: text('author_id')
-    .notNull()
-    .references(() => users.id),
-  views: integer('views').notNull().default(0),
-  createdAt: at('created_at').notNull().defaultNow(),
-  updatedAt: at('updated_at').notNull().defaultNow(),
-});
-
-export const comments = pgTable('comments', {
-  id: text('id').primaryKey(),
-  postId: text('post_id')
-    .notNull()
-    .references(() => posts.id),
-  body: text('body').notNull(),
-  authorId: text('author_id')
-    .notNull()
-    .references(() => users.id),
-  createdAt: at('created_at').notNull().defaultNow(),
-  updatedAt: at('updated_at').notNull().defaultNow(),
-});
