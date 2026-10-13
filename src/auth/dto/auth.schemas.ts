@@ -1,8 +1,9 @@
 import { i18nIssueMessage } from '@nestjs/i18n';
 import { z } from 'zod';
+import { passwordSchema } from '../../utils/validation.js';
 
 /** Follows the password rules every setter checks: a minimum, on top of the hasher's own limits. */
-export const passwordSchema = z.string().min(12).max(128);
+export { passwordSchema };
 
 // The message names a translation key (`src/i18n/<locale>/validation.json`):
 // the `I18nStandardSchemaValidationPipe` renders it in the request's locale.
