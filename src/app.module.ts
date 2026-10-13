@@ -45,6 +45,7 @@ import { RedisModule } from './redis/redis.module.js';
 
     MultipartModule.register({
       dest: './upload',
+      limits: { fileSize: 10 * 1024 * 1024, files: 5, parts: 1000 },
     }),
     // Localization: catalogs in `src/i18n/<locale>/*.json` (each file is a
     // namespace: `en/auth.json` -> `auth.*`). The locale is resolved per
@@ -68,12 +69,15 @@ import { RedisModule } from './redis/redis.module.js';
     }),
 
     // The Drizzle database, on a pg pool the module closes when the application shuts down.
+    // Migrations run here only when DB_MIGRATE_ON_BOOT=true; otherwise use `pnpm db:migrate`.
     DrizzleModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (config: ConfigService<Env, true>) => {
         const connection: string = config.get('DATABASE_URL');
         const db = drizzle(connection, {});
-        // await migrate(db, { migrationsFolder: './drizzle' });
+        if (config.get('DB_MIGRATE_ON_BOOT')) {
+          await migrate(db, { migrationsFolder: './drizzle' });
+        }
         return {
           db,
         };

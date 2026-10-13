@@ -11,11 +11,18 @@ export const envSchema = z.object({
     .enum(['development', 'test', 'production'])
     .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
+  /** URL prefix for all versioned API routes (Swagger stays at `/docs`). */
+  API_PREFIX: z
+    .string()
+    .regex(/^[a-z0-9-]+$/i, 'API_PREFIX must be a single path segment')
+    .default('api'),
+  /** Run Drizzle SQL migrations on boot when `true`. Prefer `pnpm db:migrate` in production. */
+  DB_MIGRATE_ON_BOOT: z.stringbool().default(false),
   /** PostgreSQL connection string, for the Drizzle pool. */
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   /** HS256 secret for access tokens, at least 32 bytes: `openssl rand -base64 32`. */
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 bytes'),
-  /** HS256 secret for access tokens, at least 32 bytes: `openssl rand -base64 32`. */
+  /** HS256 secret for secure-session cookies, at least 32 bytes: `openssl rand -base64 32`. */
   SESSION_SECRET: z
     .string()
     .min(32, 'SESSION_SECRET must be at least 32 bytes'),
