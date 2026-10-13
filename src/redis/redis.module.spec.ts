@@ -15,7 +15,7 @@ describe('RedisModule', () => {
       ],
     }).compile();
 
-    const store = module.get<typeof KeyvRedis>(REDIS_STORE);
+    const store = module.get<KeyvRedis<any>>(REDIS_STORE);
     expect(store).toBeInstanceOf(KeyvRedis);
     expect(store.namespace).toBe('test');
     // Closing the module disconnects a never-connected client without throwing.

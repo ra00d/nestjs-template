@@ -6,7 +6,7 @@ import {
   JsonI18nLoader,
   translateStandardSchemaIssues,
 } from '@nestjs/i18n';
-import { signUpSchema } from '../auth/auth.schemas.js';
+import { signUpSchema } from '../auth/dto/auth.schemas.js';
 import './i18n.types.js';
 
 describe('i18n', () => {

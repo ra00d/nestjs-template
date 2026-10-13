@@ -9,11 +9,10 @@ import {
 import KeyvRedis from '@keyv/redis';
 import { REDIS_MODULE_OPTIONS, REDIS_STORE } from './redis.constants.js';
 import type {
-  RedisModuleAsyncOptions,
   RedisModuleOptions,
   RedisStore,
+  RedisModuleAsyncOptions,
 } from './redis.options.js';
-
 const logger = new Logger('RedisModule');
 
 /** Creates the shared `KeyvRedis` adapter from validated module options. */

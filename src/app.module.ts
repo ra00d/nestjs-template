@@ -1,14 +1,8 @@
-import { APP_GUARD, APP_PIPE } from '@nestjs/core';
-import { Module } from '@nestjs/common';
 import { AuthenticationModule } from '@nestjs/authentication';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { DrizzleModule } from '@nestjs/drizzle';
-import {
-  FileTemplateEngine,
-  LogMailTransport,
-  MailModule,
-  SmtpTransport,
-} from '@nestjs/mail';
 import {
   AcceptLanguageLocaleResolver,
   CookieLocaleResolver,
@@ -18,17 +12,30 @@ import {
   JsonI18nLoader,
   QueryLocaleResolver,
 } from '@nestjs/i18n';
+import {
+  FileTemplateEngine,
+  LogMailTransport,
+  MailModule,
+  SmtpTransport,
+} from '@nestjs/mail';
+import { MultipartModule } from '@nestjs/platform-fastify';
 import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
-import { AuthThrottlerGuard } from './auth/auth-throttler.guard.js';
+import { AuthThrottlerGuard } from './auth/guards/auth-throttler.guard.js';
 import { CacheModule } from './cache/cache.module.js';
 import { envSchema, trustedOrigins, type Env } from './config/env.js';
+import {
+  AuthenticationExceptionFilter,
+  CatchAllExceptionFilter,
+  DatabaseExceptionFilter,
+  HttpExceptionFilter,
+} from './exceptions/filters/index.js';
 import { RedisModule } from './redis/redis.module.js';
-import { UsersModule } from './users/users.module.js';
 
 @Module({
   imports: [
@@ -36,6 +43,9 @@ import { UsersModule } from './users/users.module.js';
     // variable stops the application before the first request.
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
 
+    MultipartModule.register({
+      dest: './upload',
+    }),
     // Localization: catalogs in `src/i18n/<locale>/*.json` (each file is a
     // namespace: `en/auth.json` -> `auth.*`). The locale is resolved per
     // request, in order: `?lang=de`, the `x-lang` header, the `lang` cookie,
@@ -60,9 +70,13 @@ import { UsersModule } from './users/users.module.js';
     // The Drizzle database, on a pg pool the module closes when the application shuts down.
     DrizzleModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => {
+      useFactory: async (config: ConfigService<Env, true>) => {
         const connection: string = config.get('DATABASE_URL');
-        return { drizzle, connection };
+        const db = drizzle(connection, {});
+        // await migrate(db, { migrationsFolder: './drizzle' });
+        return {
+          db,
+        };
       },
     }),
 
@@ -134,12 +148,18 @@ import { UsersModule } from './users/users.module.js';
       }),
     }),
 
-    UsersModule,
     AuthModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    // Exception filters, most specific first: Nest runs the first filter
+    // whose `@Catch` metatypes match, and the catch-all matches everything,
+    // so it must stay last.
+    { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
+    { provide: APP_FILTER, useClass: DatabaseExceptionFilter },
+    { provide: APP_FILTER, useClass: CatchAllExceptionFilter },
     // Validates the request bodies whose handlers declare a `schema` (the
     // Zod schemas in src/auth/auth.schemas.ts) and translates the issues
     // with the `validation` namespace (`src/i18n/<locale>/validation.json`).
