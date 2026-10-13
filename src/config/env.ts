@@ -7,12 +7,20 @@ import { z } from 'zod';
  * needs it.
  */
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   /** PostgreSQL connection string, for the Drizzle pool. */
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   /** HS256 secret for access tokens, at least 32 bytes: `openssl rand -base64 32`. */
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 bytes'),
+  /** HS256 secret for access tokens, at least 32 bytes: `openssl rand -base64 32`. */
+  SESSION_SECRET: z
+    .string()
+    .min(32, 'SESSION_SECRET must be at least 32 bytes'),
+  SESSION_SALT: z.string().min(8, 'SESSION_SALT must be 8 bytes'),
+
   /** Public origin of the application: the links in emails and the `iss` of access tokens. */
   APP_URL: z.url().default('http://localhost:3000'),
   /** Other origins whose pages may sign in and send unsafe requests with the session cookie. */
