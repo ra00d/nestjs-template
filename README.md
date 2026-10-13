@@ -2,8 +2,6 @@
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
 
   <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
     <p align="center">
@@ -28,8 +26,48 @@
 ## Project setup
 
 ```bash
-$ pnpm install
+pnpm install
 ```
+
+## Scaffolding a module
+
+Instead of `nest g resource`, modules are generated from the central
+definitions in `tools/entities.ts`, controlled by `tools/gen.config.ts`
+(`modulesDir` — where modules are scaffolded, default `src/modules`;
+`externalSchema`/`externalTypes` — where hand-written tables and their
+entity types live):
+
+```bash
+pnpm gen                 # interactive wizard (TTY) or all entities
+pnpm gen posts comments  # the named entities
+pnpm gen --dry-run       # print the plan, write nothing
+pnpm gen --list          # defined entities and their files
+```
+
+Each entity emits a full slice under `<modulesDir>/<name>/` — entity type,
+`controllers/`, `services/`, `repositories/` (SQL-like Drizzle builder with
+manual `?include=` batch loading, plus a mocked-database spec),
+one Zod schema per file under `dto/`, plus a `db.ts` entry point
+(`db/index.ts` exposing the tables as `schema`) and a service spec.
+Tables spread the shared columns from `src/database/fields.ts`
+(`...timestamps`). The `db.ts` namespaces are aggregated in
+`src/db-schema.ts`, and the module is registered in `src/app.module.ts`.
+Existing files are skipped unless `--force` is passed.
+After generating, create the SQL migration:
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
+The generated list endpoint supports pagination, sorting, filtering,
+search and relation includes out of the box:
+
+```
+GET /posts?page=2&limit=50&sort=createdAt&order=desc&status=draft&views.gte=10&search=hello&include=author,comments
+```
+
+returning `{ data, meta: { page, limit, total, totalPages } }`.
 
 ## Compile and run the project
 
@@ -64,8 +102,8 @@ When you're ready to deploy your NestJS application to production, there are som
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm install -g @nestjs/mau
+mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
@@ -88,7 +126,7 @@ In production applications, observability is essential for understanding how you
 To add it to this project:
 
 ```bash
-$ pnpm install @nestjs/observe
+pnpm install @nestjs/observe
 ```
 
 Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
