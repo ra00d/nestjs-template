@@ -1,0 +1,66 @@
+name: nestjs-template
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nestjs_template
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d nestjs_template"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Local SMTP catcher + inbox UI (http://localhost:8025). Point SMTP_URL at
+  # it to click the verification/reset links from logs: SMTP_URL=smtp://mail:1025
+  mail:
+    image: axllent/mailpit:v1.27
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Compose defaults; override in `.env` (see `.env.example`).
+      DATABASE_URL: postgres://postgres:postgres@db:5432/nestjs_template
+      REDIS_URL: redis://redis:6379
+      APP_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist staged uploads and stored files outside the container.
+      - ./upload:/app/upload
+      - ./storage:/app/storage
+
+volumes:
+  pgdata:
+  redisdata:
