@@ -28,6 +28,35 @@ export const envSchema = z.object({
     .default('api'),
   /** Run Drizzle SQL migrations on boot when `true`. Prefer `pnpm db:migrate` in production. */
   DB_MIGRATE_ON_BOOT: z.stringbool().default(false),
+  /** Upload staging: multipart `dest` and the files the GC task sweeps. */
+  UPLOAD_DIR: z.string().min(1).default('./upload'),
+  /** Staged uploads older than this (days) are deleted by the nightly task. */
+  UPLOAD_MAX_AGE_DAYS: z.preprocess(
+    emptyToUndefined,
+    z.coerce.number().int().positive().default(7),
+  ),
+  /** File storage: local disk by default, S3-compatible when `s3`. */
+  STORAGE_DRIVER: z.enum(['local', 's3']).default('local'),
+  /** Local disk root (created at startup when missing). */
+  STORAGE_DIR: z.string().min(1).default('./storage'),
+  /** S3 bucket/endpoint/credentials. Required when `STORAGE_DRIVER=s3`. */
+  S3_BUCKET: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  S3_REGION: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  S3_ENDPOINT: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
+  S3_ACCESS_KEY_ID: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).optional(),
+  ),
+  S3_SECRET_ACCESS_KEY: z.preprocess(
+    emptyToUndefined,
+    z.string().min(1).optional(),
+  ),
+  /** Bootstrap admin: when set, `pnpm db:seed` creates it idempotently. */
+  ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
+  ADMIN_PASSWORD: z.preprocess(
+    emptyToUndefined,
+    z.string().min(12).max(128).optional(),
+  ),
   /** Structured log level (`debug` in development, `info` otherwise). */
   LOG_LEVEL: z.preprocess(
     emptyToUndefined,

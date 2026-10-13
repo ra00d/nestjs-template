@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PasswordHasher } from '@nestjs/authentication';
 import { I18nService } from '@nestjs/i18n';
+import { AuditService } from '../../audit/audit.module.js';
 import type { User } from '../types/user.js';
 import { UsersRepository } from '../repositories/users.repository.js';
 
@@ -10,6 +11,7 @@ export class CredentialsService {
     private readonly usersRepository: UsersRepository,
     private readonly passwordHasher: PasswordHasher,
     private readonly i18n: I18nService,
+    private readonly audit: AuditService,
   ) {}
 
   async register(email: string, password: string): Promise<User> {
@@ -17,7 +19,15 @@ export class CredentialsService {
       throw new ConflictException(this.i18n.t('auth.emailAlreadyRegistered'));
     }
     // The address is unverified: anyone can type any email into a sign-up form.
-    return this.usersRepository.create(email, { passwordHash: await this.passwordHasher.hash(password) });
+    const user = await this.usersRepository.create(email, { passwordHash: await this.passwordHasher.hash(password) });
+    await this.audit.log({
+      action: 'user.registered',
+      entity: 'user',
+      actorId: user.id,
+      entityId: user.id,
+      metadata: { email: user.email },
+    });
+    return user;
   }
 
   /** The user, or `null` when the email or the password is wrong. */
@@ -45,5 +55,11 @@ export class CredentialsService {
       throw new UnauthorizedException(this.i18n.t('auth.invalidPassword'));
     }
     await this.usersRepository.updatePasswordHash(user.id, await this.passwordHasher.hash(newPassword));
+    await this.audit.log({
+      action: 'user.passwordChanged',
+      entity: 'user',
+      actorId: user.id,
+      entityId: user.id,
+    });
   }
 }

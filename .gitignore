@@ -49,6 +49,10 @@ lerna-debug.log*
 .temp
 .tmp
 
+# Local runtime data (created at startup; see UPLOAD_DIR, STORAGE_DIR)
+/upload
+/storage
+
 # Runtime data
 pids
 *.pid

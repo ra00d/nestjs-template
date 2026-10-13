@@ -45,7 +45,10 @@ import { TrimPipe } from './pipes/trim.pipe.js';
 import { REDIS_STORE } from './redis/redis.constants.js';
 import type { RedisStore } from './redis/redis.options.js';
 import { RedisModule } from './redis/redis.module.js';
+import { AuditModule } from './audit/audit.module.js';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
+import { StorageModule } from './storage/storage.module.js';
+import { TasksModule } from './tasks/tasks.module.js';
 
 @Module({
   imports: [
@@ -71,9 +74,12 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
       }),
     }),
 
-    MultipartModule.register({
-      dest: './upload',
-      limits: { fileSize: 10 * 1024 * 1024, files: 5, parts: 1000 },
+    MultipartModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => ({
+        dest: config.get('UPLOAD_DIR'),
+        limits: { fileSize: 10 * 1024 * 1024, files: 5, parts: 1000 },
+      }),
     }),
     // Localization: catalogs in `src/i18n/<locale>/*.json` (each file is a
     // namespace: `en/auth.json` -> `auth.*`). The locale is resolved per
@@ -189,6 +195,12 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
     }),
 
     HealthModule,
+
+    AuditModule,
+
+    StorageModule.forRoot(),
+
+    TasksModule,
 
     AuthModule,
   ],

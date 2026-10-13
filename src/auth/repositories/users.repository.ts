@@ -28,13 +28,18 @@ export class UsersRepository {
     {
       passwordHash = null,
       emailVerified = false,
-    }: { passwordHash?: string | null; emailVerified?: boolean } = {},
+      roles = ['customer'],
+    }: {
+      passwordHash?: string | null;
+      emailVerified?: boolean;
+      roles?: User['roles'];
+    } = {},
   ): Promise<User> {
     const row: UserRow = {
       id: randomUUID(),
       email: normalize(email),
       emailVerified,
-      roles: ['customer'],
+      roles,
       passwordHash,
     };
     const [created] = await this.db.insert(users).values(row).returning();
