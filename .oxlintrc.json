@@ -3,7 +3,23 @@
   "rules": {
     "typescript/no-explicit-any": "off",
     "typescript/no-floating-promises": "error"
+    // "no-restricted-imports": [
+    //   "error",
+    //   {
+    //     "patterns": [
+    //       {
+    //         "group": ["**/internal/**"],
+    //         "message": "Import from the module's public index instead."
+    //       },
+    //       {
+    //         "group": ["**/*.service.js"],
+    //         "message": "Import through the public API."
+    //       }
+    //     ]
+    //   }
+    // ]
   },
+
   "env": {
     "node": true
   }
