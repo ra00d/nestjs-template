@@ -63,9 +63,23 @@ Key behavior flags:
 
 - `GET /` — liveness, version-neutral, no auth, raw `Hello World!`.
 - `GET /health` — readiness (heap + `SELECT 1` + Redis round-trip);
-  `200` healthy, `503` degraded. Excluded from request logging.
-- Every response carries `x-request-id` (echoed when sent); logs are JSON
-  in production, pretty in development.
+  `200` healthy, `503` degraded. Skips the access line.
+- Logging is `src/logger/`: `AppLogger` writes
+  `[timestamp] LEVEL [context] [reqId] message` to stdout (`verbose`,
+  `debug`, `log`) and stderr (`warn`, `error`, `fatal`), gated by
+  `LOG_LEVEL` (`trace`…`fatal`, `silent`).
+- Every object/array handed to the logger is deep-cloned with sensitive
+  fields (`password`, `pinCode`, `token`, … — `DEFAULT_SENSITIVE_FIELDS`
+  in `src/utils/redact.ts`, or `redactSensitive()` it directly) replaced
+  by `'[Redacted]'`. Tune via `LoggerModule.forRoot({ sensitiveFields,
+  redact, level })`.
+- One access line per request (`METHOD path status ms`) comes from the
+  `RequestIdInterceptor`, which also assigns/echoes `x-request-id`.
+  Guard-rejected requests (401/403) get the echo but no access line —
+  interceptors run after guards.
+- Pino integration later: swap `AppLogger`'s `process.stdout/stderr`
+  writes for a pino instance. Interface, levels, `LOG_LEVEL` values and
+  module options stay the same; re-add `nestjs-pino` then.
 
 ## Seeding and migrations
 

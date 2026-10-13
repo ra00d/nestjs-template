@@ -9,10 +9,11 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
-import { Logger } from 'nestjs-pino';
 import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module.js';
 import { trustedOrigins, type Env } from './config/env.js';
+import { AppLogger } from './logger/logger.service.js';
+import { runWithRequestContext } from './logger/request-context.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -36,26 +37,40 @@ async function bootstrap() {
   const sessionSecret: string = config.get('SESSION_SECRET');
   const sessionSalt: string = config.get('SESSION_SALT');
 
-  app.useLogger(app.get(Logger));
+  app.useLogger(app.get(AppLogger));
   app.enableShutdownHooks();
 
-  // Echo the correlation ID (`x-request-id`, generated when missing) so
-  // clients can match responses to logs. `pino-http` owns `request.id`;
-  // this only copies it onto the wire (already in CORS `exposedHeaders`).
-  // Structural types keep this free of a direct `fastify` dependency.
+  // Earliest correlation: primes the logger's request context and echoes
+  // the id for EVERY request — including guard-rejected and 404s, which
+  // never reach the `RequestIdInterceptor`. Structural types keep this
+  // free of a direct `fastify` dependency.
   app
     .getHttpAdapter()
     .getInstance()
     .addHook(
-      'onSend',
-      async (
-        request: { id?: unknown },
-        reply: { header: (name: string, value: string) => unknown },
+      'onRequest',
+      (
+        request: {
+          id?: unknown;
+          headers?: Record<string, string | string[] | undefined>;
+        },
+        reply: { header?: (name: string, value: string) => unknown },
+        done: () => void,
       ) => {
-        const id = request.id;
-        if (typeof id === 'string' && id.length > 0) {
-          reply.header('x-request-id', id);
+        const header = request.headers?.['x-request-id'];
+        const sent = Array.isArray(header) ? header[0] : header;
+        const reqId =
+          (typeof request.id === 'string' && request.id.length > 0
+            ? request.id
+            : undefined) ??
+          (typeof sent === 'string' && sent.length > 0 ? sent : undefined) ??
+          randomUUID();
+        try {
+          reply.header?.('x-request-id', reqId);
+        } catch {
+          // Never fail a request for a correlation header.
         }
+        runWithRequestContext({ reqId }, done);
       },
     );
 

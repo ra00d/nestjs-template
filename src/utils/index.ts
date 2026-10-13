@@ -16,6 +16,8 @@ export {
 } from './errors.js';
 export { getClientIp, getUserAgent } from './request.js';
 export type { ClientRequest } from './request.js';
+export { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from './redact.js';
+export type { RedactOptions } from './redact.js';
 export {
   decodeCursor,
   encodeCursor,

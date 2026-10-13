@@ -1,5 +1,5 @@
 import { AuthenticationModule } from '@nestjs/authentication';
-import { Module, RequestMethod } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { DrizzleModule } from '@nestjs/drizzle';
@@ -23,7 +23,6 @@ import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
-import { LoggerModule } from 'nestjs-pino';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
@@ -49,6 +48,7 @@ import { AuditModule } from './audit/audit.module.js';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
 import { StorageModule } from './storage/storage.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
+import { LoggerModule } from './logger/logger.module.js';
 
 @Module({
   imports: [
@@ -56,23 +56,10 @@ import { TasksModule } from './tasks/tasks.module.js';
     // variable stops the application before the first request.
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
 
-    // Structured JSON logs (pretty in development). The correlation ID is
-    // assigned by the Fastify `genReqId` in `main.ts`, so `request.id` is
-    // already correct by the time this middleware runs.
-    LoggerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
-        pinoHttp: {
-          level: config.get('LOG_LEVEL'),
-          transport:
-            config.get('NODE_ENV') !== 'production'
-              ? { target: 'pino-pretty', options: { singleLine: true } }
-              : undefined,
-        },
-        // The readiness probe would drown real traffic otherwise.
-        exclude: [{ method: RequestMethod.GET, path: 'health' }],
-      }),
-    }),
+    // Application logging: `AppLogger` (stdout/stderr with automatic
+    // secret stripping) plus the outermost request-id interceptor feeding
+    // it the correlation ID.
+    LoggerModule.forRoot(),
 
     MultipartModule.registerAsync({
       inject: [ConfigService],
