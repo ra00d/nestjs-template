@@ -2,6 +2,7 @@ import { Global, Injectable, Logger, Module } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { randomUUID } from 'node:crypto';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import type { DbOrTx } from '../database/types.js';
 import { auditLogs } from './audit.schema.js';
 
 export interface AuditEntry {
@@ -23,9 +24,14 @@ export class AuditService {
 
   constructor(@InjectDrizzle() private readonly db: NodePgDatabase) {}
 
-  async log(entry: AuditEntry): Promise<void> {
+  /**
+   * Writes an audit entry. Pass a transaction (or any `DbOrTx`) as the
+   * second argument to make the write part of a unit of work; otherwise the
+   * shared injected database is used.
+   */
+  async log(entry: AuditEntry, executor: DbOrTx = this.db): Promise<void> {
     try {
-      await this.db.insert(auditLogs).values({
+      await executor.insert(auditLogs).values({
         id: randomUUID(),
         action: entry.action,
         entity: entry.entity,

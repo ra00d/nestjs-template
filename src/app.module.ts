@@ -49,6 +49,7 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
 import { StorageModule } from './storage/storage.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
 import { LoggerModule } from './logger/logger.module.js';
+import { DatabaseModule } from './database/database.module.js';
 
 @Module({
   imports: [
@@ -183,6 +184,7 @@ import { LoggerModule } from './logger/logger.module.js';
 
     HealthModule,
 
+    DatabaseModule,
     AuditModule,
 
     StorageModule.forRoot(),
