@@ -3,6 +3,7 @@ import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { randomUUID } from 'node:crypto';
+import { currentTx } from '../../database/transaction.js';
 import { permissions, rolePermissions, roles } from '../db/auth.schema.js';
 
 const slugify = (value: string): string =>
@@ -19,7 +20,12 @@ export type NewPermissionRecord = typeof permissions.$inferInsert;
 
 @Injectable()
 export class RBACRepository {
-  constructor(@InjectDrizzle() private readonly db: NodePgDatabase) {}
+  constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase) {}
+
+  /** Use the active transaction (if any) over the injected database. */
+  private get db(): NodePgDatabase {
+    return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;
+  }
 
   // Roles
 

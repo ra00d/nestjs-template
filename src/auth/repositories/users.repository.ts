@@ -13,6 +13,8 @@ import {
   users,
 } from '../db/auth.schema.js';
 
+import { currentTx } from '../../database/transaction.js';
+
 type UserRow = {
   id: string;
   email: string;
@@ -28,7 +30,12 @@ type UserRow = {
  */
 @Injectable()
 export class UsersRepository {
-  constructor(@InjectDrizzle() private readonly db: NodePgDatabase) {}
+  constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase) {}
+
+  /** Use the active transaction (if any) over the injected database. */
+  private get db(): NodePgDatabase {
+    return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;
+  }
 
   async create(
     email: string,

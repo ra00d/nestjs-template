@@ -14,6 +14,7 @@ import {
   type TotpRecord,
 } from '@nestjs/authentication';
 import { InjectDrizzle } from '@nestjs/drizzle';
+import { currentTx } from '../../database/transaction.js';
 import { and, desc, eq, gt, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -45,7 +46,7 @@ export class DrizzleAuthenticationStore
   protected readonly maxPending: number = 100_000;
 
   constructor(
-    @InjectDrizzle() private readonly db: NodePgDatabase,
+    @InjectDrizzle() private readonly baseDb: NodePgDatabase,
     storage: AuthenticationStorage,
   ) {
     storage.registerSource({
@@ -55,6 +56,11 @@ export class DrizzleAuthenticationStore
       emailTokens: this,
       magicLinks: this,
     });
+  }
+
+  /** Use the active transaction (if any) over the injected database. */
+  private get db(): NodePgDatabase {
+    return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;
   }
 
   // Sessions

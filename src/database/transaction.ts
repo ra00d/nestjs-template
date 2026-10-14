@@ -1,7 +1,15 @@
 import type { EmptyRelations } from 'drizzle-orm';
 import type { NodePgTransaction } from 'drizzle-orm/node-postgres';
 import type { DbOrTx, Tx, TxConfig, TxOptions } from './types.js';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { isTx, markTx } from './types.js';
+
+export const txStorage = new AsyncLocalStorage<Tx>();
+
+/** The transaction currently running in this async scope, if any. */
+export function currentTx(): Tx | undefined {
+  return txStorage.getStore();
+}
 
 /** Drop undefined transaction options so Drizzle receives a clean config. */
 export function toTxConfig(options?: TxOptions): TxConfig | undefined {
@@ -33,15 +41,15 @@ export async function withTx<T>(
 ): Promise<T> {
   if (isTx(runner)) {
     return runner.transaction(async (nested: NodePgTransaction<EmptyRelations>) => {
-      markTx(nested as Tx);
-      return fn(nested as Tx);
+      const tx = markTx(nested as Tx);
+      return txStorage.run(tx, () => fn(tx));
     });
   }
 
   const config = toTxConfig(options);
   return runner.transaction(async (tx: NodePgTransaction<EmptyRelations>) => {
-    markTx(tx as Tx);
-    return fn(tx as Tx);
+    const marked = markTx(tx as Tx);
+    return txStorage.run(marked, () => fn(marked));
   }, config);
 }
 
