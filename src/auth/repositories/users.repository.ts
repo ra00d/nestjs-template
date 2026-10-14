@@ -4,7 +4,14 @@ import { Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '../types/user.js';
-import { users } from '../db/auth.schema.js';
+import {
+  permissions,
+  rolePermissions,
+  roles,
+  userPermissions,
+  userRoles,
+  users,
+} from '../db/auth.schema.js';
 
 type UserRow = {
   id: string;
@@ -113,6 +120,234 @@ export class UsersRepository {
       .returning({ id: users.id });
     return updated.length > 0;
   }
+
+  // Role assignments
+
+  async assignRole(userId: string, roleId: string): Promise<void> {
+    await this.db
+      .insert(userRoles)
+      .values({ userId, roleId })
+      .onConflictDoNothing();
+  }
+
+  async addRole(userId: string, roleId: string): Promise<void> {
+    return this.assignRole(userId, roleId);
+  }
+
+  async grantRole(userId: string, roleId: string): Promise<void> {
+    return this.assignRole(userId, roleId);
+  }
+
+  async removeRole(userId: string, roleId: string): Promise<void> {
+    await this.db
+      .delete(userRoles)
+      .where(and(eq(userRoles.userId, userId), eq(userRoles.roleId, roleId)));
+  }
+
+  async revokeRole(userId: string, roleId: string): Promise<void> {
+    return this.removeRole(userId, roleId);
+  }
+
+  async unassignRole(userId: string, roleId: string): Promise<void> {
+    return this.removeRole(userId, roleId);
+  }
+
+  async getUserRoles(userId: string): Promise<(typeof roles.$inferSelect)[]> {
+    const rows = await this.db
+      .select({ role: roles })
+      .from(userRoles)
+      .innerJoin(roles, eq(userRoles.roleId, roles.id))
+      .where(eq(userRoles.userId, userId));
+    return rows.map((row) => row.role);
+  }
+
+  async listUserRoles(userId: string): Promise<(typeof roles.$inferSelect)[]> {
+    return this.getUserRoles(userId);
+  }
+
+  async findUserRoles(userId: string): Promise<(typeof roles.$inferSelect)[]> {
+    return this.getUserRoles(userId);
+  }
+
+  async rolesForUser(userId: string): Promise<(typeof roles.$inferSelect)[]> {
+    return this.getUserRoles(userId);
+  }
+
+  async hasRole(userId: string, roleId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(and(eq(userRoles.userId, userId), eq(userRoles.roleId, roleId)))
+      .limit(1);
+    return !!row;
+  }
+
+  async hasRoleByName(userId: string, roleName: string): Promise<boolean> {
+    const role = await this.db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(eq(roles.name, roleName))
+      .limit(1);
+    if (!role[0]) {
+      return false;
+    }
+    return this.hasRole(userId, role[0].id);
+  }
+
+  // Permission assignments
+
+  async assignPermission(userId: string, permissionId: string): Promise<void> {
+    await this.db
+      .insert(userPermissions)
+      .values({ userId, permissionId })
+      .onConflictDoNothing();
+  }
+
+  async addPermission(userId: string, permissionId: string): Promise<void> {
+    return this.assignPermission(userId, permissionId);
+  }
+
+  async grantPermission(userId: string, permissionId: string): Promise<void> {
+    return this.assignPermission(userId, permissionId);
+  }
+
+  async removePermission(userId: string, permissionId: string): Promise<void> {
+    await this.db
+      .delete(userPermissions)
+      .where(
+        and(
+          eq(userPermissions.userId, userId),
+          eq(userPermissions.permissionId, permissionId),
+        ),
+      );
+  }
+
+  async revokePermission(userId: string, permissionId: string): Promise<void> {
+    return this.removePermission(userId, permissionId);
+  }
+
+  async unassignPermission(
+    userId: string,
+    permissionId: string,
+  ): Promise<void> {
+    return this.removePermission(userId, permissionId);
+  }
+
+  async getUserDirectPermissions(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    const rows = await this.db
+      .select({ permission: permissions })
+      .from(userPermissions)
+      .innerJoin(permissions, eq(userPermissions.permissionId, permissions.id))
+      .where(eq(userPermissions.userId, userId));
+    return rows.map((row) => row.permission);
+  }
+
+  async getUserPermissions(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    const direct = await this.getUserDirectPermissions(userId);
+    const roleRows = await this.db
+      .select({ permission: permissions })
+      .from(userRoles)
+      .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
+      .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+      .where(eq(userRoles.userId, userId));
+    const fromRoles = roleRows.map((row) => row.permission);
+    const seen = new Set<string>();
+    const merged: (typeof permissions.$inferSelect)[] = [];
+    for (const permission of [...direct, ...fromRoles]) {
+      if (seen.has(permission.id)) {
+        continue;
+      }
+      seen.add(permission.id);
+      merged.push(permission);
+    }
+    return merged;
+  }
+
+  async listUserPermissions(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    return this.getUserPermissions(userId);
+  }
+
+  async findUserPermissions(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    return this.getUserPermissions(userId);
+  }
+
+  async permissionsForUser(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    return this.getUserPermissions(userId);
+  }
+
+  async effectivePermissions(
+    userId: string,
+  ): Promise<(typeof permissions.$inferSelect)[]> {
+    return this.getUserPermissions(userId);
+  }
+
+  async hasPermission(userId: string, permissionId: string): Promise<boolean> {
+    const [direct] = await this.db
+      .select({ permissionId: userPermissions.permissionId })
+      .from(userPermissions)
+      .where(
+        and(
+          eq(userPermissions.userId, userId),
+          eq(userPermissions.permissionId, permissionId),
+        ),
+      )
+      .limit(1);
+    if (direct) {
+      return true;
+    }
+    const [throughRole] = await this.db
+      .select({ permissionId: rolePermissions.permissionId })
+      .from(userRoles)
+      .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
+      .where(
+        and(
+          eq(userRoles.userId, userId),
+          eq(rolePermissions.permissionId, permissionId),
+        ),
+      )
+      .limit(1);
+    return !!throughRole;
+  }
+
+  async hasPermissionByName(
+    userId: string,
+    permissionName: string,
+  ): Promise<boolean> {
+    const permission = await this.db
+      .select({ id: permissions.id })
+      .from(permissions)
+      .where(eq(permissions.name, permissionName))
+      .limit(1);
+    if (!permission[0]) {
+      return false;
+    }
+    return this.hasPermission(userId, permission[0].id);
+  }
+
+  // Assignment aliases expected by different callers.
+
+  assignRoleToUser = this.assignRole;
+  addRoleToUser = this.assignRole;
+  grantRoleToUser = this.assignRole;
+  removeRoleFromUser = this.removeRole;
+  revokeRoleFromUser = this.removeRole;
+  unassignRoleFromUser = this.removeRole;
+  assignPermissionToUser = this.assignPermission;
+  addPermissionToUser = this.assignPermission;
+  grantPermissionToUser = this.assignPermission;
+  removePermissionFromUser = this.removePermission;
+  revokePermissionFromUser = this.removePermission;
+  unassignPermissionFromUser = this.removePermission;
 }
 
 const normalize = (email: string) =>

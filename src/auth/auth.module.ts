@@ -9,6 +9,7 @@ import { SessionsController } from './controllers/sessions.controller.js';
 import { TokensController } from './controllers/tokens.controller.js';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard.js';
 import { DrizzleAuthenticationStore } from './repositories/drizzle-authentication.store.js';
+import { RBACRepository } from './repositories/rbac.repository.js';
 import { UsersRepository } from './repositories/users.repository.js';
 import {
   CredentialsService,
@@ -18,6 +19,8 @@ import {
   PasswordResetMailer,
   SessionAuth,
 } from './services.js';
+import { RBACController } from './controllers/rbac.controller.js';
+import { RBACService } from './services/rbac.service.js';
 
 @Module({
   controllers: [
@@ -29,6 +32,7 @@ import {
     MagicLinkController,
     SessionsController,
     MeController,
+    RBACController,
   ],
   providers: [
     AuthThrottlerGuard,
@@ -36,11 +40,13 @@ import {
     JwtAuth,
     CredentialsService,
     UsersRepository,
+    RBACRepository,
     DrizzleAuthenticationStore,
     EmailVerificationMailer,
     PasswordResetMailer,
     MagicLinkMailer,
+    RBACService,
   ],
-  exports: [UsersRepository],
+  exports: [UsersRepository, RBACRepository],
 })
 export class AuthModule {}

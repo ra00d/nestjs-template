@@ -19,6 +19,94 @@ export const users = pgTable('users', {
   ...timestamps,
 });
 
+// Roles and permissions. Users receive permissions both directly and through
+// their roles; roles bundle one or more permissions.
+
+export const roles = pgTable(
+  'roles',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull().unique(),
+    slug: text('slug').notNull().unique(),
+    description: text('description'),
+    ...timestamps,
+  },
+  (table) => [index('roles_name_idx').on(table.name)],
+);
+
+export const permissions = pgTable(
+  'permissions',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull().unique(),
+    description: text('description'),
+    slug: text('slug').notNull().unique(),
+    resource: text('resource'),
+    action: text('action'),
+    ...timestamps,
+  },
+  (table) => [index('permissions_name_idx').on(table.name)],
+);
+
+export const rolePermissions = pgTable(
+  'role_permissions',
+  {
+    roleId: text('role_id')
+      .notNull()
+      .references(() => roles.id, { onDelete: 'cascade' }),
+    permissionId: text('permission_id')
+      .notNull()
+      .references(() => permissions.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.roleId, table.permissionId] }),
+    index('role_permissions_role_id_idx').on(table.roleId),
+    index('role_permissions_permission_id_idx').on(table.permissionId),
+  ],
+);
+
+export const userRoles = pgTable(
+  'user_roles',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    roleId: text('role_id')
+      .notNull()
+      .references(() => roles.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roleId] }),
+    index('user_roles_user_id_idx').on(table.userId),
+    index('user_roles_role_id_idx').on(table.roleId),
+  ],
+);
+
+export const userPermissions = pgTable(
+  'user_permissions',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    permissionId: text('permission_id')
+      .notNull()
+      .references(() => permissions.id, { onDelete: 'cascade' }),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.permissionId] }),
+    index('user_permissions_user_id_idx').on(table.userId),
+    index('user_permissions_permission_id_idx').on(table.permissionId),
+  ],
+);
+
+// Compatibility aliases for common Drizzle many-to-many naming variants.
+export const rolesToPermissions = rolePermissions;
+export const roleToPermissions = rolePermissions;
+export const usersToRoles = userRoles;
+export const userToRoles = userRoles;
+export const usersToPermissions = userPermissions;
+export const userToPermissions = userPermissions;
+
 // Authentication state: what DrizzleAuthenticationStore (src/auth) keeps for @nestjs/authentication.
 // Tokens, links and sessions are stored by their SHA-256; TOTP secrets arrive encrypted.
 
