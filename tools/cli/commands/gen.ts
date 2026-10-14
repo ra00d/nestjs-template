@@ -11,6 +11,10 @@ import { getConfig, loadCliConfig } from '../config.ts';
 import { wizard } from './gen/wizard.ts';
 import { run } from './gen/run.ts';
 import { ENTITIES_PATH } from './gen/constants.ts';
+import { generateController } from './gen/generators/controller.ts';
+import { generateModule } from './gen/generators/module.ts';
+import { generateRepository } from './gen/generators/repository.ts';
+import { generateService } from './gen/generators/service.ts';
 
 export function createGenCommand(): Command {
   const program = new Command();
@@ -88,7 +92,7 @@ export function createGenCommand(): Command {
     );
 
   program
-    .command('add')
+    .command('entity')
     .description('Add a new entity to cli.config.ts via the interactive wizard')
     .option('--dry-run', 'print the plan without writing files')
     .option('--force', 'overwrite files from earlier runs')
@@ -121,6 +125,25 @@ export function createGenCommand(): Command {
       });
       p.outro('Done.');
     });
+
+  const registerResourceCommand = (
+    kind: 'service' | 'controller' | 'module' | 'repository',
+    generator: (name: string, path?: string) => string,
+  ): void => {
+    program
+      .command(`${kind} <name> [path]`)
+      .description(`Generate a single ${kind} file (like the Nest CLI)`)
+      .action(async (name: string, path?: string) => {
+        await loadCliConfig();
+        const target = generator(name, path ?? '');
+        p.log.success(`Created ${target}`);
+      });
+  };
+
+  registerResourceCommand('service', generateService);
+  registerResourceCommand('controller', generateController);
+  registerResourceCommand('module', generateModule);
+  registerResourceCommand('repository', generateRepository);
 
   return program;
 }

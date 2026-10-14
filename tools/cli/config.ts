@@ -14,11 +14,16 @@ export interface GenCommandConfig {
 }
 
 export interface CliConfig {
+  /**
+   * the root direcotry of the project
+   */
+  rootDir: string;
   gen: GenCommandConfig;
 }
 
 /** Partial shape accepted by `defineConfig` — everything falls back to defaults. */
 export interface CliConfigInput {
+  rootDir?: string;
   gen?: {
     config?: GenConfig;
     entities?: EntityDefinition[];
@@ -26,6 +31,7 @@ export interface CliConfigInput {
 }
 
 export const DEFAULT_CLI_CONFIG: CliConfig = {
+  rootDir: 'src',
   gen: {
     config: { ...DEFAULT_GEN_CONFIG },
     entities: [],
@@ -34,6 +40,7 @@ export const DEFAULT_CLI_CONFIG: CliConfig = {
 
 export function defineConfig(input?: CliConfigInput): CliConfig {
   return {
+    rootDir: input?.rootDir || DEFAULT_CLI_CONFIG.rootDir,
     gen: {
       config: { ...DEFAULT_GEN_CONFIG, ...input?.gen?.config },
       entities: input?.gen?.entities ?? [],
@@ -60,11 +67,14 @@ export function resetCliConfig(): void {
  * Load the CLI config file (`cli.config.ts` by default) and cache it.
  * Falls back to {@link DEFAULT_CLI_CONFIG} when the file is missing or invalid.
  */
-export async function loadCliConfig(path: string = DEFAULT_CONFIG_PATH): Promise<CliConfig> {
+export async function loadCliConfig(
+  path: string = DEFAULT_CONFIG_PATH,
+): Promise<CliConfig> {
   try {
     const module = await import(pathToFileURL(resolve(path)).href);
     const raw = module.default ?? module.cliConfig ?? module.config;
-    const input = typeof raw === 'function' ? raw() : (raw as CliConfigInput | undefined);
+    const input =
+      typeof raw === 'function' ? raw() : (raw as CliConfigInput | undefined);
     cachedCliConfig = defineConfig(input);
   } catch {
     cachedCliConfig = defineConfig();
@@ -76,7 +86,9 @@ export async function loadCliConfig(path: string = DEFAULT_CONFIG_PATH): Promise
 export function getConfig(): CliConfig;
 /** Get a single top-level config section, e.g. `getConfig('gen')`. */
 export function getConfig<K extends keyof CliConfig>(key: K): CliConfig[K];
-export function getConfig<K extends keyof CliConfig>(key?: K): CliConfig | CliConfig[K] {
+export function getConfig<K extends keyof CliConfig>(
+  key?: K,
+): CliConfig | CliConfig[K] {
   const config = cachedCliConfig ?? DEFAULT_CLI_CONFIG;
   if (key === undefined) return config;
   return config[key];
