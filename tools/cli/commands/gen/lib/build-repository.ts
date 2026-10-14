@@ -142,8 +142,7 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
   ];
 
   const findAllStatements = [
-    'const conditions: SQL<unknown>[] = [];',
-    ...sqlConditions,
+    'const conditions = this.getFilterConditions(query);',
     'const where = conditions.length > 0 ? and(...conditions) : undefined;',
     `const [rows, total] = await Promise.all([
   this.db
@@ -245,6 +244,17 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
           parameters: [{ name: 'id', type: 'string' }],
           returnType: 'Promise<void>',
           statements: [`await this.db.delete(${table}).where(eq(${table}.id, id));`],
+        },
+        {
+          name: 'getFilterConditions',
+          scope: Scope.Private,
+          parameters: [{ name: 'query', type: `List${names.entity}QueryDto` }],
+          returnType: 'SQL<unknown>[]',
+          statements: [
+            'const conditions: SQL<unknown>[] = [];',
+            ...sqlConditions,
+            'return conditions;',
+          ],
         },
         ...(hasRelations
           ? [
