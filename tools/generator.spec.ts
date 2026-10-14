@@ -203,8 +203,7 @@ describe('plan', () => {
 
   it('writes the repository with the SQL-like builder and manual includes', () => {
     const content = file(plans, 'src/modules/posts/repositories/posts.repository.ts');
-    expect(content).toContain('constructor(@InjectDrizzle() private readonly db: NodePgDatabase)');
-    expect(content).toContain("import { posts } from '../db/posts.schema.js';");
+    expect(content).toContain('constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase)');    expect(content).toContain("import { posts } from '../db/posts.schema.js';");
     expect(content).toContain("import { users } from '../../../auth/db/auth.schema.js';");
     expect(content).toContain("import { comments } from '../../comments/db/comments.schema.js';");
     expect(content).toContain('async create(data: CreatePostDto): Promise<Post> {');
@@ -263,8 +262,7 @@ describe('plan', () => {
     expect(plan.files.map((file) => file.path)).toContain('src/modules/labels/repositories/labels.repository.spec.ts');
     const repo = plan.files.find((file) => file.path === 'src/modules/labels/repositories/labels.repository.ts')?.content ?? '';
     expect(repo).toContain('this.db.select().from(labels)');
-    expect(repo).toContain('private readonly db: NodePgDatabase');
-    expect(repo).toContain("from 'drizzle-orm/node-postgres';");
+    expect(repo).toContain('private readonly baseDb: NodePgDatabase');    expect(repo).toContain("from 'drizzle-orm/node-postgres';");
     expect(repo).not.toContain('db.query');
     expect(repo).not.toContain('withIncludes');
     const table = plan.files.find((file) => file.path === 'src/modules/labels/db/labels.schema.ts')?.content ?? '';

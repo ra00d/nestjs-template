@@ -114,6 +114,10 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     { moduleSpecifier: 'drizzle-orm', namedImports: [...sqlImports] },
     { moduleSpecifier: 'drizzle-orm/node-postgres', namedImports: ['NodePgDatabase'], isTypeOnly: true },
     {
+      moduleSpecifier: importPath(path, 'src/database/transaction.ts'),
+      namedImports: ['currentTx'],
+    },
+    {
       moduleSpecifier: importPath(path, `${moduleDir}/db/${names.name}.schema.ts`),
       namedImports: [table],
     },
@@ -175,7 +179,7 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
         {
           parameters: [
             {
-              name: 'db',
+              name: 'baseDb',
               type: 'NodePgDatabase',
               scope: Scope.Private,
               isReadonly: true,
@@ -183,6 +187,15 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
             },
           ],
           statements: [],
+        },
+      ],
+      getAccessors: [
+        {
+          name: 'db',
+          returnType: 'NodePgDatabase',
+          statements: [
+            'return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;',
+          ],
         },
       ],
       methods: [
