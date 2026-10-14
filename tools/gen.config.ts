@@ -1,4 +1,4 @@
-import { defineConfig } from './lib/config.ts';
+import { defineConfig } from './cli/commands/gen/lib/config.ts';
 
 /**
  * Generation settings. `modulesDir` is where new modules are scaffolded,
