@@ -21,8 +21,45 @@ import {
 } from './services.js';
 import { RBACController } from './controllers/rbac.controller.js';
 import { RBACService } from './services/rbac.service.js';
+import { AuthenticationModule } from '@nestjs/authentication';
+import { ConfigService } from '@nestjs/config';
+import { Env, trustedOrigins } from '../config/env.js';
 
 @Module({
+  imports: [
+    // Routes require a signed-in user by default; @Public() and
+    // @Authenticate() relax or tighten that per route. Options are values
+    // only: providers and stores register themselves in AuthModule.
+    AuthenticationModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => {
+        const appUrl = config.get('APP_URL');
+        return {
+          session: {
+            absoluteTtl: '14d', // signed out after 14 days, however active
+            idleTtl: '3d', // or after 3 days without a request
+            trustedOrigins: trustedOrigins(config.get('TRUSTED_ORIGINS')),
+            // Stored with every new session, whichever way the customer signed in.
+            metadata: (request) => ({
+              userAgent: request.headers['user-agent'],
+            }),
+          },
+          accessToken: {
+            key: config.get('JWT_SECRET'),
+            issuer: appUrl,
+            audience: 'web',
+            ttl: '15m',
+          },
+          emailVerification: { url: `${appUrl}/verify-email` },
+          passwordReset: { url: `${appUrl}/reset-password` },
+          // Where the sign-in link points, like the two above. Links are bound
+          // to the browser that asked for one, so this page and the one that
+          // requests a link are the same browser.
+          magicLink: { url: `${appUrl}/magic-link` },
+        };
+      },
+    }),
+  ],
   controllers: [
     AuthController,
     TokensController,
