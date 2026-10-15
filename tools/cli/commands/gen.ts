@@ -20,6 +20,7 @@ export function createGenCommand(): Command {
   const program = new Command();
   program
     .name('gen')
+    .alias('g')
     .description('Scaffold NestJS modules from cli.config.ts into src/.')
     .argument(
       '[entities...]',
@@ -93,6 +94,7 @@ export function createGenCommand(): Command {
 
   program
     .command('entity')
+    .alias('en')
     .description('Add a new entity to cli.config.ts via the interactive wizard')
     .option('--dry-run', 'print the plan without writing files')
     .option('--force', 'overwrite files from earlier runs')
@@ -129,9 +131,11 @@ export function createGenCommand(): Command {
   const registerResourceCommand = (
     kind: 'service' | 'controller' | 'module' | 'repository',
     generator: (name: string, path?: string) => string,
+    alias: string = '',
   ): void => {
     program
       .command(`${kind} <name> [path]`)
+      .alias(alias)
       .description(`Generate a single ${kind} file (like the Nest CLI)`)
       .action(async (name: string, path?: string) => {
         await loadCliConfig();
@@ -140,10 +144,10 @@ export function createGenCommand(): Command {
       });
   };
 
-  registerResourceCommand('service', generateService);
-  registerResourceCommand('controller', generateController);
-  registerResourceCommand('module', generateModule);
-  registerResourceCommand('repository', generateRepository);
+  registerResourceCommand('service', generateService, 's');
+  registerResourceCommand('controller', generateController, 'c');
+  registerResourceCommand('module', generateModule, 'mo');
+  registerResourceCommand('repository', generateRepository, 'repo');
 
   return program;
 }

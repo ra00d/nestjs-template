@@ -25,7 +25,7 @@ export const buildCreateDtoFile = (context: EntityContext): { path: string; cont
         const optional = field.default !== undefined ? '.optional()' : field.required ? '' : '.nullish()';
         return `  ${field.name}: ${value}${optional},`;
       })
-      .join('\n')}\n})`;
+      .join('\n')}\n}).meta({ id: 'create${names.entity}Schema' })`;
 
   const content = buildFile(path, (file) => {
     file.addImportDeclaration({ moduleSpecifier: 'zod', namedImports: ['z'] });
@@ -51,7 +51,7 @@ export const buildUpdateDtoFile = (context: EntityContext): { path: string; cont
   const initializer =
     `z.object({\n${context.fields
       .map((field) => `  ${field.name}: ${zodField(field.type, field.values)}.optional(),`)
-      .join('\n')}\n})`;
+      .join('\n')}\n}).meta({ id: 'update${names.entity}Schema' })`;
 
   const content = buildFile(path, (file) => {
     file.addImportDeclaration({ moduleSpecifier: 'zod', namedImports: ['z'] });
@@ -110,7 +110,7 @@ export const buildListQueryFile = (context: EntityContext): { path: string; cont
   }
   const initializer = `z.object({\n${entries
     .map((entry) => `  ${/^[A-Za-z_$][\w$]*$/.test(entry.key) ? entry.key : `'${entry.key}'`}: ${entry.value},`)
-    .join('\n')}\n})`;
+    .join('\n')}\n}).meta({ id: 'list${names.entity}QuerySchema' })`;
 
   const content = buildFile(path, (file) => {
     file.addImportDeclaration({ moduleSpecifier: 'zod', namedImports: ['z'] });
