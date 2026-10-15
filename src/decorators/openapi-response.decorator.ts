@@ -29,9 +29,8 @@ export type ApiMetaOptions = ApiMeta;
 
 function isStandardSchema(value: unknown): value is StandardSchemaObject {
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    Object.prototype.hasOwnProperty.call(value, '~standard')
+    typeof value === 'object' && value !== null && '~standard' in value
+    // Object.prototype.hasOwnProperty.call(value, '~standard')
   );
 }
 
@@ -66,10 +65,8 @@ function toHeaderList(headers: unknown): Record<string, unknown>[] {
   return [];
 }
 
-export const ApiMeta = (
-  options: ApiMeta = {},
-): MethodDecorator & ClassDecorator => {
-  const decorators: Array<MethodDecorator | ClassDecorator> = [];
+export function ApiMeta(options: ApiMeta = {}) {
+  const decorators = [];
 
   if (options.tags !== undefined) {
     const tags = Array.isArray(options.tags) ? options.tags : [options.tags];
@@ -115,6 +112,10 @@ export const ApiMeta = (
   }
 
   if (options.res !== undefined) {
+    // console.log(options.res['~standard']);
+
+    console.log(isStandardSchema(options.res));
+
     if (isStandardSchema(options.res)) {
       decorators.push(
         ApiResponse({ status: 200, standardSchema: options.res } as never),
@@ -151,6 +152,5 @@ export const ApiMeta = (
     }
   }
 
-  return applyDecorators(...decorators) as MethodDecorator & ClassDecorator;
-};
-
+  return applyDecorators(...decorators);
+}

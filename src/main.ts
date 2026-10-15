@@ -32,13 +32,13 @@ async function bootstrap() {
       },
       multipart: { limits: { fileSize: 10 * 1024 * 1024, files: 5 } },
     }),
-    { bufferLogs: true },
+    //   { bufferLogs: true },
   );
   const config = app.get(ConfigService<Env, true>);
   const sessionSecret: string = config.get('SESSION_SECRET');
   const sessionSalt: string = config.get('SESSION_SALT');
 
-  app.useLogger(app.get(AppLogger));
+  //app.useLogger(app.get(AppLogger));
   app.enableShutdownHooks();
 
   // Earliest correlation: primes the logger's request context and echoes

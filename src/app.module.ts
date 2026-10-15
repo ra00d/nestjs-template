@@ -1,4 +1,3 @@
-import { AuthenticationModule } from '@nestjs/authentication';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
@@ -25,10 +24,12 @@ import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { AuditModule } from './audit/audit.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { AuthThrottlerGuard } from './auth/guards/auth-throttler.guard.js';
 import { CacheModule } from './cache/cache.module.js';
-import { envSchema, trustedOrigins, type Env } from './config/env.js';
+import { envSchema, type Env } from './config/env.js';
+import { DatabaseModule } from './database/database.module.js';
 import {
   AuthenticationExceptionFilter,
   CatchAllExceptionFilter,
@@ -40,16 +41,14 @@ import {
   TimeoutInterceptor,
   TransformInterceptor,
 } from './interceptors/index.js';
+import { LoggerModule } from './logger/logger.module.js';
 import { TrimPipe } from './pipes/trim.pipe.js';
 import { REDIS_STORE } from './redis/redis.constants.js';
-import type { RedisStore } from './redis/redis.options.js';
 import { RedisModule } from './redis/redis.module.js';
-import { AuditModule } from './audit/audit.module.js';
-import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
+import type { RedisStore } from './redis/redis.options.js';
 import { StorageModule } from './storage/storage.module.js';
 import { TasksModule } from './tasks/tasks.module.js';
-import { LoggerModule } from './logger/logger.module.js';
-import { DatabaseModule } from './database/database.module.js';
+import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
 
 @Module({
   imports: [
@@ -119,39 +118,6 @@ import { DatabaseModule } from './database/database.module.js';
         }),
         from: config.get('MAIL_FROM'),
       }),
-    }),
-
-    // Routes require a signed-in user by default; @Public() and
-    // @Authenticate() relax or tighten that per route. Options are values
-    // only: providers and stores register themselves in AuthModule.
-    AuthenticationModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => {
-        const appUrl = config.get('APP_URL');
-        return {
-          session: {
-            absoluteTtl: '14d', // signed out after 14 days, however active
-            idleTtl: '3d', // or after 3 days without a request
-            trustedOrigins: trustedOrigins(config.get('TRUSTED_ORIGINS')),
-            // Stored with every new session, whichever way the customer signed in.
-            metadata: (request) => ({
-              userAgent: request.headers['user-agent'],
-            }),
-          },
-          accessToken: {
-            key: config.get('JWT_SECRET'),
-            issuer: appUrl,
-            audience: 'web',
-            ttl: '15m',
-          },
-          emailVerification: { url: `${appUrl}/verify-email` },
-          passwordReset: { url: `${appUrl}/reset-password` },
-          // Where the sign-in link points, like the two above. Links are bound
-          // to the browser that asked for one, so this page and the one that
-          // requests a link are the same browser.
-          magicLink: { url: `${appUrl}/magic-link` },
-        };
-      },
     }),
 
     // Shared Redis connection (`REDIS_STORE`), closed on shutdown. The
