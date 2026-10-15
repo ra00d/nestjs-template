@@ -9,6 +9,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
+import { ZodObject } from 'zod';
 import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module.js';
 import { trustedOrigins, type Env } from './config/env.js';
@@ -109,17 +110,25 @@ async function bootstrap() {
   const oaiConfig = new DocumentBuilder()
     .setTitle('API')
     .setDescription('Application API')
+    .setOpenAPIVersion('3.1.0')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, oaiConfig, {
       standardSchemaConverter: (schema, { schemaType }) => {
+        let id = '';
         const converted = createSchema(schema as never, {
           io: schemaType,
-          openapiVersion: '3.0.0',
+          openapiVersion: '3.1.0',
         });
-        return { schema: converted.schema, components: converted.components };
+        if (schema instanceof ZodObject) {
+          id = schema.meta()?.id || '';
+        }
+        return {
+          schema: converted.components[id] || converted.schema,
+          components: converted.components,
+        };
       },
     });
   SwaggerModule.setup('docs', app, documentFactory, {
