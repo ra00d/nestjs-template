@@ -13,12 +13,23 @@ export interface GenCommandConfig {
   entities: EntityDefinition[];
 }
 
+/** Settings for the `db` command; all fall back to the template defaults. */
+export interface DbCommandConfig {
+  /** drizzle-kit config file read by `generate`, `check`, `migrate`, `create`, `reset`, `pull` and `export`. */
+  config: string;
+  /** Package script `db seed` (and `db reset --seed`) runs. */
+  seedScript: string;
+  /** Maintenance database `db create` connects to for `CREATE DATABASE`. */
+  maintenanceDatabase: string;
+}
+
 export interface CliConfig {
   /**
    * the root direcotry of the project
    */
   rootDir: string;
   gen: GenCommandConfig;
+  db: DbCommandConfig;
 }
 
 /** Partial shape accepted by `defineConfig` — everything falls back to defaults. */
@@ -28,7 +39,15 @@ export interface CliConfigInput {
     config?: GenConfig;
     entities?: EntityDefinition[];
   };
+  db?: Partial<DbCommandConfig>;
 }
+
+/** Fallbacks mirror what the `db` command would use without cli.config.ts. */
+export const DEFAULT_DB_CONFIG: DbCommandConfig = {
+  config: 'drizzle.config.ts',
+  seedScript: 'db:seed',
+  maintenanceDatabase: 'postgres',
+};
 
 export const DEFAULT_CLI_CONFIG: CliConfig = {
   rootDir: 'src',
@@ -36,6 +55,7 @@ export const DEFAULT_CLI_CONFIG: CliConfig = {
     config: { ...DEFAULT_GEN_CONFIG },
     entities: [],
   },
+  db: { ...DEFAULT_DB_CONFIG },
 };
 
 export function defineConfig(input?: CliConfigInput): CliConfig {
@@ -45,6 +65,7 @@ export function defineConfig(input?: CliConfigInput): CliConfig {
       config: { ...DEFAULT_GEN_CONFIG, ...input?.gen?.config },
       entities: input?.gen?.entities ?? [],
     },
+    db: { ...DEFAULT_DB_CONFIG, ...input?.db },
   };
 }
 

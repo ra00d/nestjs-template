@@ -25,8 +25,8 @@ service names; everything else comes from `.env`.
 ```bash
 docker compose up db redis mail   # Postgres :5432, Redis :6379, Mailpit :8025
 pnpm install
-pnpm db:generate && pnpm db:migrate   # create tables (incl. audit_logs)
-pnpm db:seed                          # no-op unless ADMIN_EMAIL/ADMIN_PASSWORD are set
+pnpm db generate && pnpm db migrate   # create tables (incl. audit_logs)
+pnpm db seed                          # no-op unless ADMIN_EMAIL/ADMIN_PASSWORD are set
 pnpm start:dev
 ```
 
@@ -53,7 +53,7 @@ Key behavior flags:
 
 | Variable | Default | Effect |
 | --- | --- | --- |
-| `DB_MIGRATE_ON_BOOT` | `false` | Run Drizzle migrations inside the app. Prefer `pnpm db:migrate` in production. |
+| `DB_MIGRATE_ON_BOOT` | `false` | Run Drizzle migrations inside the app. Prefer `pnpm db migrate` in production. |
 | `API_PREFIX` | `api` | Routes live at `/api/v1/…`; `/`, `/health`, `/docs` stay outside. |
 | `LOG_LEVEL` | `info` | `fatal,error,warn,info,debug,trace,silent`. |
 | `STORAGE_DRIVER` | `local` | `local` (`STORAGE_DIR`) or `s3` (needs `S3_BUCKET`). |
@@ -84,10 +84,20 @@ Key behavior flags:
 ## Seeding and migrations
 
 ```bash
-pnpm db:generate   # Drizzle diff of src/db-schema.ts -> ./drizzle
-pnpm db:migrate    # apply (or DB_MIGRATE_ON_BOOT=true for ephemeral envs)
-ADMIN_EMAIL=a@b.co ADMIN_PASSWORD=… pnpm db:seed   # idempotent admin
+pnpm db generate   # Drizzle diff of src/db-schema.ts -> ./drizzle
+pnpm db migrate    # apply (or DB_MIGRATE_ON_BOOT=true for ephemeral envs)
+pnpm db create     # create the database if missing, then migrate
+ADMIN_EMAIL=a@b.co ADMIN_PASSWORD=… pnpm db seed   # idempotent admin
+pnpm db reset --force --seed   # wipe a dev database and rebuild it
+pnpm db check      # validate the migration snapshots
+pnpm db export     # print the DDL of the current schema
+pnpm db pull       # introspect an existing database into schema files
 ```
+
+The `db` command is part of the developer CLI (`pnpm db …`, or
+`pnpm cli db …`); its defaults live in the `db` section of
+`cli.config.ts`. The `db:generate`/`db:migrate`/`db:seed` package scripts
+keep working as direct shortcuts.
 
 ## Production notes
 
