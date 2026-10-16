@@ -1,12 +1,8 @@
 import { Scope } from 'ts-morph';
-import { DRIZZLE_CONDITION_BUILDER, OPERATORS_BY_TYPE } from './mapping.ts';
 import { toCamelCase } from './names.ts';
 import type { EntityContext } from './context.ts';
 import { importPath, targetEntityType, targetTypeName } from './paths.ts';
 import { buildFile } from './project.ts';
-
-/** `query.views.gte` for operator keys, `query.title` for plain field names. */
-const access = (key: string): string => (/^[A-Za-z_$][\w$]*$/.test(key) ? `query.${key}` : `query['${key}']`);
 
 /** Table variables the repository loads relations from (excluding its own table). */
 const relationTables = (
@@ -78,16 +74,6 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
 
   const sqlConditions: string[] = [];
   const sqlImports = new Set<string>(['eq', 'and', 'asc', 'desc', 'type SQL']);
-  for (const field of listFields) {
-    for (const operator of OPERATORS_BY_TYPE[field.type]) {
-      const key = operator === 'eq' ? field.name : `${field.name}.${operator}`;
-      const value = operator === 'contains' ? `\`%\${${access(key)}}%\`` : access(key);
-      sqlConditions.push(
-        `  if (${access(key)} !== undefined) conditions.push(${DRIZZLE_CONDITION_BUILDER[operator]}(${table}.${field.name}, ${value}));`,
-      );
-      sqlImports.add(DRIZZLE_CONDITION_BUILDER[operator]);
-    }
-  }
   if (searchableFields.length > 0) {
     sqlImports.add('ilike');
     sqlImports.add('or');
@@ -99,6 +85,19 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     );
   }
   if (hasRelations) sqlImports.add('inArray');
+
+  // The filter payload is an array of `FilterItem`: the column map narrows the
+  // field names the list-query schema already validated, and the shared
+  // builder turns operator/value pairs into Drizzle conditions.
+  const filterStatements =
+    listFields.length > 0
+      ? [
+          'const columns: FilterColumns = {',
+          ...listFields.map((field) => `  ${field.name}: ${table}.${field.name},`),
+          '};',
+          'const conditions = buildFilterConditions(columns, query.filters);',
+        ]
+      : ['const conditions: SQL<unknown>[] = [];'];
 
   const entityImports = new Map<string, string>();
   for (const relation of relations) {
@@ -117,6 +116,14 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
       moduleSpecifier: importPath(path, 'src/database/transaction.ts'),
       namedImports: ['currentTx'],
     },
+    ...(listFields.length > 0
+      ? [
+          {
+            moduleSpecifier: importPath(path, 'src/database/filters.ts'),
+            namedImports: ['buildFilterConditions', 'type FilterColumns'],
+          },
+        ]
+      : []),
     {
       moduleSpecifier: importPath(path, `${moduleDir}/db/${names.name}.schema.ts`),
       namedImports: [table],
@@ -250,11 +257,7 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
           scope: Scope.Private,
           parameters: [{ name: 'query', type: `List${names.entity}QueryDto` }],
           returnType: 'SQL<unknown>[]',
-          statements: [
-            'const conditions: SQL<unknown>[] = [];',
-            ...sqlConditions,
-            'return conditions;',
-          ],
+          statements: [...filterStatements, ...sqlConditions, 'return conditions;'],
         },
         ...(hasRelations
           ? [

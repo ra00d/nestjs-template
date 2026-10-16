@@ -4,13 +4,29 @@ import {
   MAX_LIST_LIMIT,
   OPERATORS_BY_TYPE,
   zodField,
-  zodOperatorValue,
-  zodQueryField,
+  zodFilterValue,
 } from './mapping.ts';
 import type { EntityContext } from './context.ts';
+import { importPath } from './paths.ts';
 import { buildFile } from './project.ts';
 
 const quoted = (values: string[]): string => values.map((value) => `'${value}'`).join(', ');
+
+/** One `z.object({ field, operator, value })` alternative of a filter item. */
+const filterItemObject = (field: string, operators: string[], value: string): string =>
+  [
+    'z.object({',
+    `  field: z.literal('${field}'),`,
+    `  operator: ${operators.length === 1 ? `z.literal('${operators[0]}')` : `z.enum([${quoted(operators)}])`},`,
+    `  value: ${value},`,
+    '})',
+  ].join('\n');
+
+const indent = (text: string): string =>
+  text
+    .split('\n')
+    .map((line) => `  ${line}`)
+    .join('\n');
 
 /** `dto/create-post.dto.ts`: the creation schema and its DTO. */
 export const buildCreateDtoFile = (context: EntityContext): { path: string; content: string } => {
@@ -75,29 +91,32 @@ export const buildListQueryFile = (context: EntityContext): { path: string; cont
   const { names, listFields, searchableFields, relations, sortableFields, defaultSort, moduleDir } = context;
   const path = `${moduleDir}/dto/list-${names.base}.query.ts`;
 
+  // One union alternative per field value shape: the scalar operators plus a
+  // separate `in` alternative that arrays the same value schema. Enum
+  // operators stay enum-typed: a plain `z.string()` would fail the column's
+  // literal union in both the SQL conditions and the RQB filter.
+  const filterAlternatives: string[] = [];
+  for (const field of listFields) {
+    const operators = OPERATORS_BY_TYPE[field.type];
+    const scalar = zodFilterValue(field.type, field.values);
+    const scalarOperators = operators.filter((operator) => operator !== 'in');
+    if (scalarOperators.length > 0) {
+      filterAlternatives.push(filterItemObject(field.name, scalarOperators, scalar));
+    }
+    if (operators.includes('in')) {
+      filterAlternatives.push(filterItemObject(field.name, ['in'], `z.array(${scalar})`));
+    }
+  }
+  const filterSchema = `${names.base}FilterItemSchema`;
+
   const entries: { key: string; value: string }[] = [
     { key: 'page', value: 'z.coerce.number().int().min(1).default(1)' },
     { key: 'limit', value: `z.coerce.number().int().min(1).max(${MAX_LIST_LIMIT}).default(${DEFAULT_LIST_LIMIT})` },
     { key: 'sort', value: `z.enum([${quoted(sortableFields.map((field) => field.name))}]).default('${defaultSort}')` },
     { key: 'order', value: "z.enum(['asc', 'desc']).default('desc')" },
   ];
-  for (const field of listFields) {
-    const operators = OPERATORS_BY_TYPE[field.type];
-    if (operators.includes('eq')) {
-      entries.push({ key: field.name, value: `${zodQueryField(field.type, field.values)}.optional()` });
-    }
-    for (const operator of operators) {
-      if (operator === 'eq') continue;
-      // Enum operators stay enum-typed: a plain `z.string()` would fail the
-      // column's literal union in both the SQL conditions and the RQB filter.
-      const value =
-        field.type === 'enum'
-          ? operator === 'in'
-            ? `z.string().transform((value) => value.split(',')).pipe(z.array(z.enum([${quoted(field.values)}])))`
-            : `z.enum([${quoted(field.values)}])`
-          : zodOperatorValue(field.type, operator);
-      entries.push({ key: `${field.name}.${operator}`, value: `${value}.optional()` });
-    }
+  if (filterAlternatives.length > 0) {
+    entries.push({ key: 'filters', value: `filterItemsSchema(${filterSchema}).optional()` });
   }
   if (searchableFields.length > 0) {
     entries.push({ key: 'search', value: 'z.string().optional()' });
@@ -114,11 +133,31 @@ export const buildListQueryFile = (context: EntityContext): { path: string; cont
 
   const content = buildFile(path, (file) => {
     file.addImportDeclaration({ moduleSpecifier: 'zod', namedImports: ['z'] });
-    file.addVariableStatement({
+    if (filterAlternatives.length > 0) {
+      file.addImportDeclaration({
+        moduleSpecifier: importPath(path, 'src/database/filters.ts'),
+        namedImports: ['filterItemsSchema'],
+      });
+      file.addVariableStatement({
+        declarationKind: VariableDeclarationKind.Const,
+        declarations: [
+          {
+            name: filterSchema,
+            initializer: `z.union([\n${filterAlternatives.map((alternative) => indent(alternative)).join(',\n')}\n])`,
+          },
+        ],
+      });
+    }
+    const listStatement = file.addVariableStatement({
       isExported: true,
       declarationKind: VariableDeclarationKind.Const,
       declarations: [{ name: `list${names.entity}QuerySchema`, initializer }],
     });
+    if (filterAlternatives.length > 0) {
+      // ts-morph glues consecutive variable statements together; keep the
+      // filter union visually separate from the query schema.
+      file.insertText(listStatement.getStart(), '\n');
+    }
     file.addTypeAlias({
       isExported: true,
       name: `List${names.entity}QueryDto`,

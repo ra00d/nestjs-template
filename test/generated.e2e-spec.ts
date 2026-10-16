@@ -72,6 +72,10 @@ describe('Generated modules (e2e)', () => {
     const email = `smoke-${crypto.randomUUID()}@example.com`;
     const password = 'smoke-test-password-1';
 
+    // The `filters` query value is a JSON-encoded array of filter items.
+    const filters = (items: object[]): string =>
+      encodeURIComponent(JSON.stringify(items));
+
     // Routes are private by default.
     await client.get('/posts').expect(401);
 
@@ -87,7 +91,23 @@ describe('Generated modules (e2e)', () => {
     // An unknown sort key is a 400 from the list query schema.
     await client.get('/posts?sort=nope').expect(400);
 
-    const filtered = (await client.get('/posts?status=draft&views.gte=0').expect(200)).body;
+    // An unknown filter field is a 400 from the filter item schema.
+    await client
+      .get(
+        `/posts?filters=${filters([{ field: 'nope', operator: 'eq', value: 'x' }])}`,
+      )
+      .expect(400);
+
+    const filtered = (
+      await client
+        .get(
+          `/posts?filters=${filters([
+            { field: 'status', operator: 'eq', value: 'draft' },
+            { field: 'views', operator: 'gte', value: 0 },
+          ])}`,
+        )
+        .expect(200)
+    ).body;
     expect(filtered.meta).toMatchObject({ page: 1, limit: 20 });
     expect(filtered.meta.total).toBeGreaterThanOrEqual(1);
 

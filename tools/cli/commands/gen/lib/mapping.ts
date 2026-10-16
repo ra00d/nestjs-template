@@ -1,6 +1,6 @@
 import type { FieldType } from './types.ts';
 
-/** List-query operator suffixes appended to field names: `?views.gte=10`. */
+/** List-query operators accepted in the `?filters=` item payload. */
 export type Operator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in';
 
 export const OPERATORS_BY_TYPE: Record<FieldType, Operator[]> = {
@@ -66,32 +66,8 @@ export const tsField = (type: FieldType, values?: string[]): string => {
   }
 };
 
-/** Zod validator for a `<field>.<operator>` query key. `in` returns arrays. */
-export const zodOperatorValue = (type: FieldType, operator: Operator): string => {
-  if (operator === 'in') {
-    switch (type) {
-      case 'timestamp':
-        return "z.string().transform((value) => value.split(',').map((item) => new Date(item)))";
-      case 'integer':
-        return "z.string().transform((value) => value.split(',').map(Number))";
-      default:
-        return "z.string().transform((value) => value.split(',').filter(Boolean))";
-    }
-  }
-  switch (type) {
-    case 'integer':
-      return 'z.coerce.number().int()';
-    case 'boolean':
-      return 'z.coerce.boolean()';
-    case 'timestamp':
-      return 'z.coerce.date()';
-    default:
-      return 'z.string()';
-  }
-};
-
-/** Zod validator for the bare `<field>` equality query key (coerced from the query string). */
-export const zodQueryField = (type: FieldType, values?: string[]): string => {
+/** Zod validator for one filter value inside the JSON `?filters=` payload. */
+export const zodFilterValue = (type: FieldType, values?: string[]): string => {
   switch (type) {
     case 'integer':
       return 'z.coerce.number().int()';
@@ -104,18 +80,6 @@ export const zodQueryField = (type: FieldType, values?: string[]): string => {
     default:
       return 'z.string()';
   }
-};
-
-/** Drizzle condition builder per operator, applied as `builder(<column>, <value>)`. */
-export const DRIZZLE_CONDITION_BUILDER: Record<Operator, string> = {
-  eq: 'eq',
-  ne: 'ne',
-  gt: 'gt',
-  gte: 'gte',
-  lt: 'lt',
-  lte: 'lte',
-  contains: 'ilike',
-  in: 'inArray',
 };
 
 export const DEFAULT_LIST_LIMIT = 20;
