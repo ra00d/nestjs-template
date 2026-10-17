@@ -163,6 +163,14 @@ export class RBACService {
     return this.usersRepo.listUserPermissions(userId);
   }
 
+  async getUserPermissionNames(userId: string) {
+    return this.usersRepo.getUserPermissionNames(userId);
+  }
+
+  async listUserPermissionNames(userId: string) {
+    return this.usersRepo.listUserPermissionNames(userId);
+  }
+
   async hasRole(userId: string, roleId: string) {
     return this.usersRepo.hasRole(userId, roleId);
   }

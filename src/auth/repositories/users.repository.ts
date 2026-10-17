@@ -1,3 +1,4 @@
+// oxlint-disable typescript/unbound-method
 import { randomUUID } from 'node:crypto';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { Injectable } from '@nestjs/common';
@@ -22,7 +23,8 @@ type UserRow = typeof users.$inferSelect;
  * The application's users, kept in PostgreSQL through Drizzle. Password
  * hashes stay inside this class: everything it returns is a `User` without
  * one, so a user can leave a route or a log without leaking its hash. Every
- * returned user carries the role slugs assigned through `user_roles`.
+ * returned user carries the role slugs assigned through `user_roles` and the
+ * permission names it holds, directly and through those roles.
  */
 @Injectable()
 export class UsersRepository {
@@ -30,7 +32,9 @@ export class UsersRepository {
 
   /** Use the active transaction (if any) over the injected database. */
   private get db(): NodePgDatabase {
-    return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;
+    return (
+      (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb
+    );
   }
 
   async create(
@@ -56,7 +60,10 @@ export class UsersRepository {
       .returning();
     const assigned = [...new Set(roleSlugs)];
     await this.assignRoleSlugs(created.id, assigned);
-    return toUser(created, assigned);
+    const permissions =
+      (await permissionNamesByUser(this.db, [created.id])).get(created.id) ??
+      [];
+    return toUser(created, assigned, permissions);
   }
 
   async findById(id: string): Promise<User | null> {
@@ -64,7 +71,7 @@ export class UsersRepository {
     if (!row) {
       return null;
     }
-    const [user] = await this.withRoles([row]);
+    const [user] = await this.hydrate([row]);
     return user;
   }
 
@@ -76,7 +83,7 @@ export class UsersRepository {
     if (!row) {
       return null;
     }
-    const [user] = await this.withRoles([row]);
+    const [user] = await this.hydrate([row]);
     return user;
   }
 
@@ -91,7 +98,7 @@ export class UsersRepository {
     if (!row) {
       return null;
     }
-    const [user] = await this.withRoles([row]);
+    const [user] = await this.hydrate([row]);
     return { user, passwordHash: row.passwordHash };
   }
 
@@ -125,16 +132,29 @@ export class UsersRepository {
       return this.findByEmail(email);
     }
     await this.assignRoleSlugs(created.id, ['customer']);
-    return toUser(created, ['customer']);
+    const permissions =
+      (await permissionNamesByUser(this.db, [created.id])).get(created.id) ??
+      [];
+    return toUser(created, ['customer'], permissions);
   }
 
-  /** Attaches each row's role slugs, read through `user_roles`. */
-  private async withRoles(rows: UserRow[]): Promise<User[]> {
-    const rolesById = await rolesByUser(
-      this.db,
-      rows.map((row) => row.id),
+  /**
+   * Attaches each row's role slugs and permission names, read through
+   * `user_roles`, `user_permissions` and `role_permissions`.
+   */
+  private async hydrate(rows: UserRow[]): Promise<User[]> {
+    const ids = rows.map((row) => row.id);
+    const [rolesById, permissionsById] = await Promise.all([
+      rolesByUser(this.db, ids),
+      permissionNamesByUser(this.db, ids),
+    ]);
+    return rows.map((row) =>
+      toUser(
+        row,
+        rolesById.get(row.id) ?? [],
+        permissionsById.get(row.id) ?? [],
+      ),
     );
-    return rows.map((row) => toUser(row, rolesById.get(row.id) ?? []));
   }
 
   /**
@@ -347,6 +367,17 @@ export class UsersRepository {
     return this.getUserPermissions(userId);
   }
 
+  /** The names of the permissions the user holds, direct and through roles. */
+  async getUserPermissionNames(userId: string): Promise<string[]> {
+    return (await this.getUserPermissions(userId)).map(
+      (permission) => permission.name,
+    );
+  }
+
+  async listUserPermissionNames(userId: string): Promise<string[]> {
+    return this.getUserPermissionNames(userId);
+  }
+
   async hasPermission(userId: string, permissionId: string): Promise<boolean> {
     const [direct] = await this.db
       .select({ permissionId: userPermissions.permissionId })
@@ -412,7 +443,8 @@ const normalize = (email: string) =>
 const toUser = (
   { passwordHash: _, ...account }: UserRow,
   roles: string[],
-): User => ({ ...account, roles });
+  permissions: string[] = [],
+): User => ({ ...account, roles, permissions });
 
 /**
  * Role slugs per user id, read through `user_roles`. Anything loading several
@@ -440,9 +472,44 @@ async function rolesByUser(
 }
 
 /**
- * The users with `ids`, each carrying its role slugs. Shared with the
- * generated modules that include an author, so every user in a response is
- * shaped the same way and never carries a password hash.
+ * Permission names per user id: the direct assignments through
+ * `user_permissions` plus everything the users' roles carry through
+ * `role_permissions`. Names dedupe on insert, so a permission held both ways
+ * appears once.
+ */
+async function permissionNamesByUser(
+  db: NodePgDatabase,
+  userIds: string[],
+): Promise<Map<string, string[]>> {
+  const byUser = new Map<string, string[]>();
+  if (userIds.length === 0) {
+    return byUser;
+  }
+  const direct = await db
+    .select({ userId: userPermissions.userId, name: permissions.name })
+    .from(userPermissions)
+    .innerJoin(permissions, eq(userPermissions.permissionId, permissions.id))
+    .where(inArray(userPermissions.userId, userIds));
+  const throughRoles = await db
+    .select({ userId: userRoles.userId, name: permissions.name })
+    .from(userRoles)
+    .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(inArray(userRoles.userId, userIds));
+  for (const { userId, name } of [...direct, ...throughRoles]) {
+    const names = byUser.get(userId) ?? [];
+    if (!names.includes(name)) {
+      names.push(name);
+    }
+    byUser.set(userId, names);
+  }
+  return byUser;
+}
+
+/**
+ * The users with `ids`, each carrying its role slugs and permission names.
+ * Shared with the generated modules that include an author, so every user in
+ * a response is shaped the same way and never carries a password hash.
  */
 export async function findUsersByIds(
   db: NodePgDatabase,
@@ -452,6 +519,11 @@ export async function findUsersByIds(
     return [];
   }
   const rows = await db.select().from(users).where(inArray(users.id, ids));
-  const rolesById = await rolesByUser(db, ids);
-  return rows.map((row) => toUser(row, rolesById.get(row.id) ?? []));
+  const [rolesById, permissionsById] = await Promise.all([
+    rolesByUser(db, ids),
+    permissionNamesByUser(db, ids),
+  ]);
+  return rows.map((row) =>
+    toUser(row, rolesById.get(row.id) ?? [], permissionsById.get(row.id) ?? []),
+  );
 }
