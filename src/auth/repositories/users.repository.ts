@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { Injectable } from '@nestjs/common';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { User } from '../types/user.js';
 import {
@@ -15,18 +15,14 @@ import {
 
 import { currentTx } from '../../database/transaction.js';
 
-type UserRow = {
-  id: string;
-  email: string;
-  emailVerified: boolean;
-  roles: User['roles'];
-  passwordHash: string | null;
-};
+/** A full `users` row: what the database holds, password hash included. */
+type UserRow = typeof users.$inferSelect;
 
 /**
  * The application's users, kept in PostgreSQL through Drizzle. Password
  * hashes stay inside this class: everything it returns is a `User` without
- * one, so a user can leave a route or a log without leaking its hash.
+ * one, so a user can leave a route or a log without leaking its hash. Every
+ * returned user carries the role slugs assigned through `user_roles`.
  */
 @Injectable()
 export class UsersRepository {
@@ -42,27 +38,34 @@ export class UsersRepository {
     {
       passwordHash = null,
       emailVerified = false,
-      roles = ['customer'],
+      roles: roleSlugs = ['customer'],
     }: {
       passwordHash?: string | null;
       emailVerified?: boolean;
       roles?: User['roles'];
     } = {},
   ): Promise<User> {
-    const row: UserRow = {
-      id: randomUUID(),
-      email: normalize(email),
-      emailVerified,
-      roles,
-      passwordHash,
-    };
-    const [created] = await this.db.insert(users).values(row).returning();
-    return toUser(created);
+    const [created] = await this.db
+      .insert(users)
+      .values({
+        id: randomUUID(),
+        email: normalize(email),
+        emailVerified,
+        passwordHash,
+      })
+      .returning();
+    const assigned = [...new Set(roleSlugs)];
+    await this.assignRoleSlugs(created.id, assigned);
+    return toUser(created, assigned);
   }
 
   async findById(id: string): Promise<User | null> {
     const [row] = await this.db.select().from(users).where(eq(users.id, id));
-    return row ? toUser(row) : null;
+    if (!row) {
+      return null;
+    }
+    const [user] = await this.withRoles([row]);
+    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -70,7 +73,11 @@ export class UsersRepository {
       .select()
       .from(users)
       .where(eq(users.email, normalize(email)));
-    return row ? toUser(row) : null;
+    if (!row) {
+      return null;
+    }
+    const [user] = await this.withRoles([row]);
+    return user;
   }
 
   /** For password sign-in only. */
@@ -81,7 +88,11 @@ export class UsersRepository {
       .select()
       .from(users)
       .where(eq(users.email, normalize(email)));
-    return row ? { user: toUser(row), passwordHash: row.passwordHash } : null;
+    if (!row) {
+      return null;
+    }
+    const [user] = await this.withRoles([row]);
+    return { user, passwordHash: row.passwordHash };
   }
 
   async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
@@ -106,12 +117,50 @@ export class UsersRepository {
         email: normalize(email),
         passwordHash: null,
         emailVerified: true,
-        roles: ['customer'],
       })
       .onConflictDoNothing({ target: users.email })
       .returning();
-    // Another request created it first: the row is there, under its own address.
-    return created ? toUser(created) : this.findByEmail(email);
+    if (!created) {
+      // Another request created it first: the row is there, under its own address.
+      return this.findByEmail(email);
+    }
+    await this.assignRoleSlugs(created.id, ['customer']);
+    return toUser(created, ['customer']);
+  }
+
+  /** Attaches each row's role slugs, read through `user_roles`. */
+  private async withRoles(rows: UserRow[]): Promise<User[]> {
+    const rolesById = await rolesByUser(
+      this.db,
+      rows.map((row) => row.id),
+    );
+    return rows.map((row) => toUser(row, rolesById.get(row.id) ?? []));
+  }
+
+  /**
+   * Assigns role slugs, inserting a `roles` row for any slug that does not
+   * exist yet: the first user of a fresh install registers before the roles
+   * they ask for exist.
+   */
+  private async assignRoleSlugs(
+    userId: string,
+    slugs: string[],
+  ): Promise<void> {
+    if (slugs.length === 0) {
+      return;
+    }
+    await this.db
+      .insert(roles)
+      .values(slugs.map((slug) => ({ id: randomUUID(), name: slug, slug })))
+      .onConflictDoNothing();
+    const existing = await this.db
+      .select({ id: roles.id, slug: roles.slug })
+      .from(roles)
+      .where(inArray(roles.slug, slugs));
+    await this.db
+      .insert(userRoles)
+      .values(existing.map((role) => ({ userId, roleId: role.id })))
+      .onConflictDoNothing();
   }
 
   /**
@@ -360,9 +409,49 @@ export class UsersRepository {
 const normalize = (email: string) =>
   email.trim().normalize('NFC').toLowerCase();
 
-const toUser = ({ id, email, emailVerified, roles }: UserRow): User => ({
-  id,
-  email,
-  emailVerified,
-  roles: [...roles],
-});
+const toUser = (
+  { passwordHash: _, ...account }: UserRow,
+  roles: string[],
+): User => ({ ...account, roles });
+
+/**
+ * Role slugs per user id, read through `user_roles`. Anything loading several
+ * users at once reads their assignments in one query this way.
+ */
+async function rolesByUser(
+  db: NodePgDatabase,
+  userIds: string[],
+): Promise<Map<string, string[]>> {
+  const byUser = new Map<string, string[]>();
+  if (userIds.length === 0) {
+    return byUser;
+  }
+  const rows = await db
+    .select({ userId: userRoles.userId, slug: roles.slug })
+    .from(userRoles)
+    .innerJoin(roles, eq(userRoles.roleId, roles.id))
+    .where(inArray(userRoles.userId, userIds));
+  for (const { userId, slug } of rows) {
+    const slugs = byUser.get(userId) ?? [];
+    slugs.push(slug);
+    byUser.set(userId, slugs);
+  }
+  return byUser;
+}
+
+/**
+ * The users with `ids`, each carrying its role slugs. Shared with the
+ * generated modules that include an author, so every user in a response is
+ * shaped the same way and never carries a password hash.
+ */
+export async function findUsersByIds(
+  db: NodePgDatabase,
+  ids: string[],
+): Promise<User[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+  const rows = await db.select().from(users).where(inArray(users.id, ids));
+  const rolesById = await rolesByUser(db, ids);
+  return rows.map((row) => toUser(row, rolesById.get(row.id) ?? []));
+}

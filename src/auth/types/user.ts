@@ -1,9 +1,14 @@
-export type Role = 'customer' | 'staff' | 'admin';
+import type { users } from '../db/auth.schema.js';
 
-export interface User {
-  id: string;
-  email: string;
-  /** Whether the owner proved the address, e.g. by using a magic link or a reset link. */
-  emailVerified: boolean;
-  roles: Role[];
+/** A `users` row minus the password hash, which never leaves `UsersRepository`. */
+export type UserRecord = Omit<typeof users.$inferSelect, 'passwordHash'>;
+
+/**
+ * A signed-in user: the account's columns plus the role slugs assigned to it
+ * through `user_roles`. Derived from the schema, so a column change cannot
+ * drift from the type.
+ */
+export interface User extends UserRecord {
+  roles: string[];
+  permissions?: string[];
 }

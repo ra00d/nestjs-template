@@ -4,6 +4,19 @@ import type { EntityContext } from './context.ts';
 import { importPath, targetEntityType, targetTypeName } from './paths.ts';
 import { buildFile } from './project.ts';
 
+/**
+ * Whether the relation loads `users`. Those are read through
+ * `findUsersByIds` rather than a bare table select: the shared loader strips
+ * the password hash and attaches the role slugs the authorization flow
+ * reads, so a generated module returns the same `User` shape as the auth
+ * module.
+ */
+export const isUsersRelation = (
+  relation: EntityContext['relations'][number],
+): boolean =>
+  relation.type === 'one' &&
+  toCamelCase(relation.references.split('.')[0]) === 'users';
+
 /** Table variables the repository loads relations from (excluding its own table). */
 const relationTables = (
   context: EntityContext,
@@ -12,6 +25,7 @@ const relationTables = (
   const own = toCamelCase(context.names.name);
   const targets = new Map<string, string>();
   for (const relation of context.relations) {
+    if (isUsersRelation(relation)) continue;
     const raw = relation.type === 'one' ? relation.references.split('.')[0] : relation.target;
     const variable = toCamelCase(raw);
     if (variable === own || targets.has(variable)) continue;
@@ -38,9 +52,23 @@ const includeBlock = (context: EntityContext, relation: EntityContext['relations
     const [targetTable, targetColumn] = relation.references.split('.');
     const target = toCamelCase(targetTable);
     const targetType = targetTypeName(context, targetTable);
+    const field = context.fields.find((candidate) => candidate.name === relation.field);
+    const ids = `[...new Set(rows.map((row) => row.${relation.field}))]${
+      field && !field.required ? '.filter((id): id is string => id !== null)' : ''
+    }`;
+    if (isUsersRelation(relation)) {
+      return [
+        `if (include?.has('${relation.name}')) {`,
+        `  const ids = ${ids};`,
+        `  const related: ${targetType}[] = await findUsersByIds(this.db, ids);`,
+        `  const byId = new Map(related.map((item) => [item.${targetColumn}, item]));`,
+        `  for (const row of rows) row.${relation.name} = byId.get(row.${relation.field}) ?? null;`,
+        `}`,
+      ].join('\n');
+    }
     return [
       `if (include?.has('${relation.name}')) {`,
-      `  const ids = [...new Set(rows.map((row) => row.${relation.field}))];`,
+      `  const ids = ${ids};`,
       `  const related: ${targetType}[] = await this.db.select().from(${target}).where(inArray(${target}.${targetColumn}, ids));`,
       `  const byId = new Map(related.map((item) => [item.${targetColumn}, item]));`,
       `  for (const row of rows) row.${relation.name} = byId.get(row.${relation.field}) ?? null;`,
@@ -71,6 +99,9 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
   const table = toCamelCase(names.name);
   const path = `${moduleDir}/repositories/${names.name}.repository.ts`;
   const hasRelations = relations.length > 0;
+  // `inArray` is only for the relations that load their table directly; a
+  // users relation goes through `findUsersByIds`.
+  const loadsTableRelations = relations.some((relation) => !isUsersRelation(relation));
 
   const sqlConditions: string[] = [];
   const sqlImports = new Set<string>(['eq', 'and', 'asc', 'desc', 'type SQL']);
@@ -84,7 +115,7 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
       `  if (query.search) {\n    const searchFilter = or(${predicates});\n    if (searchFilter) conditions.push(searchFilter);\n  }`,
     );
   }
-  if (hasRelations) sqlImports.add('inArray');
+  if (loadsTableRelations) sqlImports.add('inArray');
 
   // The filter payload is an array of `FilterItem`: the column map narrows the
   // field names the list-query schema already validated, and the shared
@@ -105,6 +136,7 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     const { type, from } = targetEntityType(context, path, raw);
     if (!entityImports.has(from)) entityImports.set(from, type);
   }
+  const usesUsers = relations.some(isUsersRelation);
 
   const imports: { moduleSpecifier: string; namedImports: string[]; isTypeOnly?: boolean }[] = [
     { moduleSpecifier: 'node:crypto', namedImports: ['randomUUID'] },
@@ -116,6 +148,14 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
       moduleSpecifier: importPath(path, 'src/database/transaction.ts'),
       namedImports: ['currentTx'],
     },
+    ...(usesUsers
+      ? [
+          {
+            moduleSpecifier: importPath(path, 'src/auth/repositories/users.repository.ts'),
+            namedImports: ['findUsersByIds'],
+          },
+        ]
+      : []),
     ...(listFields.length > 0
       ? [
           {

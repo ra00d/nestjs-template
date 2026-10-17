@@ -215,7 +215,10 @@ describe('plan', () => {
   it('writes the repository with the SQL-like builder and manual includes', () => {
     const content = file(plans, 'src/modules/posts/repositories/posts.repository.ts');
     expect(content).toContain('constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase)');    expect(content).toContain("import { posts } from '../db/posts.schema.js';");
-    expect(content).toContain("import { users } from '../../../auth/db/auth.schema.js';");
+    expect(content).not.toContain("from '../../../auth/db/auth.schema.js';");
+    expect(content).toContain("import type { User } from '../../../auth/types/user.js';");
+    expect(content).toContain("import { findUsersByIds } from '../../../auth/repositories/users.repository.js';");
+    expect(content).toContain('const related: User[] = await findUsersByIds(this.db, ids);');
     expect(content).toContain("import { comments } from '../../comments/db/comments.schema.js';");
     expect(content).toContain('async create(data: CreatePostDto): Promise<Post> {');
     expect(content).toContain('.select()');
@@ -232,7 +235,7 @@ describe('plan', () => {
     expect(content).not.toContain('db.query');
     expect(content).toContain('private async withIncludes(');
     expect(content).toContain("if (include?.has('author')) {");
-    expect(content).toContain('.where(inArray(users.id, ids));');
+    expect(content).not.toContain('.where(inArray(users.id, ids));');
     expect(content).toContain("if (include?.has('comments')) {");
     expect(content).toContain('.where(inArray(comments.postId, ids));');
     expect(content).toContain('row.author = byId.get(row.authorId) ?? null;');
@@ -245,6 +248,9 @@ describe('plan', () => {
     expect(content).toContain('new PostsRepository(db as unknown as NodePgDatabase);');
     expect(content).toContain('loads requested relations for a single');
     expect(content).toContain('loads requested relations for a page');
+    expect(content).toContain("joinRows([{ userId: 'author-related', slug: 'writer' }])");
+    expect(content).toContain("expect(result?.author).toMatchObject({ id: 'author-related', roles: ['writer'] });");
+    expect(content).toContain("expect(result?.comments).toEqual([]);");
   });
 
   it('writes the controller with the validated list query', () => {

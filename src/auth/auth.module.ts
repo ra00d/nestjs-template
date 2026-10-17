@@ -21,9 +21,11 @@ import {
 } from './services.js';
 import { RBACController } from './controllers/rbac.controller.js';
 import { RBACService } from './services/rbac.service.js';
+import { RBACPolicy } from './policies/rbac.policy.js';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { ConfigService } from '@nestjs/config';
 import { Env, trustedOrigins } from '../config/env.js';
+import { AuthorizationModule } from '@nestjs/authorization';
 
 @Module({
   imports: [
@@ -59,6 +61,9 @@ import { Env, trustedOrigins } from '../config/env.js';
         };
       },
     }),
+    // Registers the policy the app's @Can() checks name; a @Policy() provider
+    // of any module is found too, but this module owns authorization here.
+    AuthorizationModule.forRoot({ policies: [RBACPolicy] }),
   ],
   controllers: [
     AuthController,

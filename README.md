@@ -57,15 +57,40 @@ Existing files are skipped unless `--force` is passed.
 After generating, create the SQL migration:
 
 ```bash
-pnpm db:generate
-pnpm db:migrate
+pnpm db generate
+pnpm db migrate
 ```
+
+## Database
+
+Database operations run through the `db` CLI command (`pnpm db …`). Read
+the runbook in `docs/operations.md` for the operator's view; the database
+workflow in short:
+
+```bash
+pnpm db generate [name]           # drizzle-kit diff of src/db-schema.ts -> ./drizzle
+pnpm db check                     # validate the migration snapshots
+pnpm db migrate                   # apply pending migrations
+pnpm db create                    # create the database if missing, then migrate
+pnpm db seed                      # run the seed entry point (src/seed.ts)
+pnpm db reset --force [--seed]    # drop every table, re-apply migrations
+pnpm db pull                      # introspect the database into schema files
+pnpm db export [--out file.sql]   # print the DDL of the current schema
+```
+
+Defaults live in the `db` section of `cli.config.ts`: the drizzle-kit
+config path (`config`), the package script seeding runs (`seedScript`)
+and the maintenance database used for `CREATE DATABASE`
+(`maintenanceDatabase`). Connection URL and migrations folder are read
+from `drizzle.config.ts`.
 
 The generated list endpoint supports pagination, sorting, filtering,
-search and relation includes out of the box:
+search and relation includes out of the box. Filters travel as a
+URL-encoded JSON array of `{ field, operator, value }` items, each
+validated against the entity's filterable fields and their operators:
 
 ```
-GET /posts?page=2&limit=50&sort=createdAt&order=desc&status=draft&views.gte=10&search=hello&include=author,comments
+GET /posts?page=2&limit=50&sort=createdAt&order=desc&filters=[{"field":"status","operator":"eq","value":"draft"},{"field":"views","operator":"gte","value":10}]&search=hello&include=author,comments
 ```
 
 returning `{ data, meta: { page, limit, total, totalPages } }`.

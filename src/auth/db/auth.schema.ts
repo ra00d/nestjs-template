@@ -7,7 +7,6 @@ import {
   primaryKey,
   text,
 } from 'drizzle-orm/pg-core';
-import { Role } from '../types/user.js';
 import { at, timestamps } from '../../database/fields.js';
 
 export const users = pgTable('users', {
@@ -15,7 +14,6 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash'),
   emailVerified: boolean('email_verified').notNull().default(false),
-  roles: jsonb('roles').$type<Role[]>().notNull().default([]),
   ...timestamps,
 });
 
@@ -98,14 +96,6 @@ export const userPermissions = pgTable(
     index('user_permissions_permission_id_idx').on(table.permissionId),
   ],
 );
-
-// Compatibility aliases for common Drizzle many-to-many naming variants.
-export const rolesToPermissions = rolePermissions;
-export const roleToPermissions = rolePermissions;
-export const usersToRoles = userRoles;
-export const userToRoles = userRoles;
-export const usersToPermissions = userPermissions;
-export const userToPermissions = userPermissions;
 
 // Authentication state: what DrizzleAuthenticationStore (src/auth) keeps for @nestjs/authentication.
 // Tokens, links and sessions are stored by their SHA-256; TOTP secrets arrive encrypted.

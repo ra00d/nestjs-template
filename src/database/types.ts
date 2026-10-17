@@ -51,3 +51,29 @@ export function isTx(value: unknown): value is Tx {
     (value as Record<symbol, unknown>)[TX_MARKER] === true
   );
 }
+
+/*
+ * Filtering types
+ */
+/** Operators accepted by a {@link FilterItem}, e.g. `{ field: 'views', operator: 'gte', value: 10 }`. */
+export type FilterOperator =
+  'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in';
+
+/**
+ * A filter value. `in` carries an array; timestamps may arrive as ISO strings
+ * and are coerced to `Date` by the list-query schema before reaching a
+ * repository.
+ */
+export type FilterValue =
+  | string
+  | number
+  | boolean
+  | Date
+  | ReadonlyArray<string | number | Date>
+  | string[];
+
+export type FilterItem = {
+  field: string;
+  operator: FilterOperator;
+  value: FilterValue;
+};

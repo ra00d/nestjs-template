@@ -17,9 +17,7 @@ async function seed() {
   const email = normalizeEmail(process.env['ADMIN_EMAIL'] ?? '');
   const password = process.env['ADMIN_PASSWORD'] ?? '';
   if (!email || !password) {
-    console.log(
-      'db:seed: ADMIN_EMAIL/ADMIN_PASSWORD not set, nothing to do.',
-    );
+    console.log('db:seed: ADMIN_EMAIL/ADMIN_PASSWORD not set, nothing to do.');
     return;
   }
 

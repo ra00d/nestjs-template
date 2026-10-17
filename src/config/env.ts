@@ -55,7 +55,7 @@ export const envSchema = z.object({
   ADMIN_EMAIL: z.preprocess(emptyToUndefined, z.email().optional()),
   ADMIN_PASSWORD: z.preprocess(
     emptyToUndefined,
-    z.string().min(12).max(128).optional(),
+    z.string().min(6).max(128).optional(),
   ),
   /** Structured log level (`debug` in development, `info` otherwise). */
   LOG_LEVEL: z.preprocess(
@@ -95,10 +95,7 @@ export const envSchema = z.object({
   /** Redis connection string, for the `KeyvRedis` store. */
   REDIS_URL: z.string().default('redis://localhost:6379'),
   /** Prefixes every Redis key as `<namespace>::<key>`. Unset shares one keyspace. */
-  REDIS_NAMESPACE: z.preprocess(
-    emptyToUndefined,
-    z.string().min(1).optional(),
-  ),
+  REDIS_NAMESPACE: z.preprocess(emptyToUndefined, z.string().min(1).optional()),
   /** Default cache TTL in milliseconds. Unset, and entries live until overwritten. */
   CACHE_DEFAULT_TTL: z.preprocess(
     emptyToUndefined,
