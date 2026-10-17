@@ -63,7 +63,7 @@ import { AuthorizationModule } from '@nestjs/authorization';
     }),
     // Registers the policy the app's @Can() checks name; a @Policy() provider
     // of any module is found too, but this module owns authorization here.
-    AuthorizationModule.forRoot({ policies: [RBACPolicy] }),
+    //AuthorizationModule.forRoot({ policies: [RBACPolicy] }),
   ],
   controllers: [
     AuthController,
@@ -88,6 +88,7 @@ import { AuthorizationModule } from '@nestjs/authorization';
     PasswordResetMailer,
     MagicLinkMailer,
     RBACService,
+    RBACPolicy,
   ],
   exports: [UsersRepository, RBACRepository],
 })

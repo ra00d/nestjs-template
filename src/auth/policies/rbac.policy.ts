@@ -1,5 +1,5 @@
-import { Policy } from '@nestjs/authorization';
-import type { User } from '../types/user.js';
+import type { User } from '@/auth/types';
+import { Policy } from '@/auth/decorators/policy.decorator';
 
 /**
  * Role-based access control over the role slugs the signed-in user carries.
