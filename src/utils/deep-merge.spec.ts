@@ -1,4 +1,4 @@
-import { deepMerge } from './deep-merge.js';
+import { deepMerge } from './deep-merge';
 
 describe('deepMerge', () => {
   it('merges flat objects', () => {

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { readdir, stat, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { Env } from '../config/env.js';
+import type { Env } from '../config/env';
 
 /**
  * Recurring housekeeping. Cron expressions run in the server timezone —

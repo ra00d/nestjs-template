@@ -132,7 +132,7 @@ export const SCHEMA_BARREL = 'src/db-schema.ts';
 
 /**
  * Registers the entities' `db.ts` files in `src/db-schema.ts` as plain
- * re-exports (`export * from './modules/roles/db.js';`), mirroring the
+ * re-exports (`export * from './modules/roles/db';`), mirroring the
  * existing auth entry. Unlike aliased namespaces, plain re-exports stay
  * visible to drizzle-kit. The file is created with the same shape when
  * absent. Entries of modules that left `entities.ts` are pruned.
@@ -184,7 +184,7 @@ export const applySchemaBarrel = (
   // `export *` form.
   for (const declaration of barrelFile.getImportDeclarations()) {
     const specifier = declaration.getModuleSpecifierValue();
-    if (!specifier.startsWith('.') || !specifier.endsWith('/db.js') || expected.has(specifier)) continue;
+    if (!specifier.startsWith('.') || !/\/db(\.js)?$/.test(specifier) || expected.has(specifier)) continue;
     const resolved = posix.normalize(posix.join(barrelDir, specifier));
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
     const removed = declaration.getNamedImports().map((item) => item.getText().split(' as ').pop() ?? '');

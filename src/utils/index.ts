@@ -1,37 +1,37 @@
-export { retry, sleep, withTimeout } from './async.js';
-export type { RetryOptions } from './async.js';
+export { retry, sleep, withTimeout } from './async';
+export type { RetryOptions } from './async';
 export {
   decryptString,
   encryptString,
   hashToken,
   randomToken,
   tokensEqual,
-} from './crypto.js';
-export { deepMerge } from './deep-merge.js';
+} from './crypto';
+export { deepMerge } from './deep-merge';
 export {
   assertNever,
   isForeignKeyViolation,
   isRetryableTransactionError,
   isUniqueViolation,
-} from './errors.js';
-export { getClientIp, getUserAgent } from './request.js';
-export type { ClientRequest } from './request.js';
-export { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from './redact.js';
-export type { RedactOptions } from './redact.js';
+} from './errors';
+export { getClientIp, getUserAgent } from './request';
+export type { ClientRequest } from './request';
+export { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from './redact';
+export type { RedactOptions } from './redact';
 export {
   decodeCursor,
   encodeCursor,
   offsetOf,
   pageMeta,
   paginate,
-} from './pagination.js';
-export type { PageMeta, Paginated } from './pagination.js';
-export { omit, pick, removeUndefined } from './object.js';
-export { maskEmail, normalizeEmail, slugify, truncate } from './string.js';
+} from './pagination';
+export type { PageMeta, Paginated } from './pagination';
+export { omit, pick, removeUndefined } from './object';
+export { maskEmail, normalizeEmail, slugify, truncate } from './string';
 export {
   formatDuration,
   parseDurationToMs,
-} from './duration.js';
+} from './duration';
 export {
   DEFAULT_LIST_LIMIT,
   includeSchema,
@@ -40,4 +40,4 @@ export {
   paginationBaseSchema,
   passwordSchema,
   sortOrderSchema,
-} from './validation.js';
+} from './validation';

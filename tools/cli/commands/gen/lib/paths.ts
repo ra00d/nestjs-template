@@ -4,11 +4,11 @@ import type { EntityContext } from './context.ts';
 
 /**
  * Repo-relative import path from one source file to another, with the `.ts`
- * source extension rewritten to the `.js` specifier the codebase uses.
+ * source extension stripped like every import in the codebase.
  * Computed instead of hardcoded, so `modulesDir` can sit at any depth.
  */
 export const importPath = (fromFile: string, toFile: string): string => {
-  const target = toFile.endsWith('.ts') ? `${toFile.slice(0, -3)}.js` : toFile;
+  const target = toFile.replace(/\.ts(x)?$/, '');
   const relative = posix.relative(posix.dirname(fromFile), target);
   return relative.startsWith('.') ? relative : `./${relative}`;
 };

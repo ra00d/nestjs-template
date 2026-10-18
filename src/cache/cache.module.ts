@@ -7,14 +7,14 @@ import {
   Optional,
 } from '@nestjs/common';
 import Keyv from 'keyv';
-import { CacheService } from './cache.service.js';
-import { CACHE_INSTANCE, CACHE_MODULE_OPTIONS } from './cache.constants.js';
+import { CacheService } from './cache.service';
+import { CACHE_INSTANCE, CACHE_MODULE_OPTIONS } from './cache.constants';
 import type {
   CacheModuleAsyncOptions,
   CacheModuleOptions,
-} from './cache.options.js';
-import { REDIS_STORE } from '../redis/redis.constants.js';
-import type { RedisStore } from '../redis/redis.options.js';
+} from './cache.options';
+import { REDIS_STORE } from '../redis/redis.constants';
+import type { RedisStore } from '../redis/redis.options';
 
 const logger = new Logger('CacheModule');
 

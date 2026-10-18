@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
-import { AuthController } from './controllers/auth.controller.js';
-import { EmailVerificationController } from './controllers/email-verification.controller.js';
-import { MagicLinkController } from './controllers/magic-link.controller.js';
-import { MeController } from './controllers/me.controller.js';
-import { PasswordResetController } from './controllers/password-reset.controller.js';
-import { PasswordController } from './controllers/password.controller.js';
-import { SessionsController } from './controllers/sessions.controller.js';
-import { TokensController } from './controllers/tokens.controller.js';
-import { AuthThrottlerGuard } from './guards/auth-throttler.guard.js';
-import { DrizzleAuthenticationStore } from './repositories/drizzle-authentication.store.js';
-import { RBACRepository } from './repositories/rbac.repository.js';
-import { UsersRepository } from './repositories/users.repository.js';
+import { AuthController } from './controllers/auth.controller';
+import { EmailVerificationController } from './controllers/email-verification.controller';
+import { MagicLinkController } from './controllers/magic-link.controller';
+import { MeController } from './controllers/me.controller';
+import { PasswordResetController } from './controllers/password-reset.controller';
+import { PasswordController } from './controllers/password.controller';
+import { SessionsController } from './controllers/sessions.controller';
+import { TokensController } from './controllers/tokens.controller';
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
+import { DrizzleAuthenticationStore } from './repositories/drizzle-authentication.store';
+import { RBACRepository } from './repositories/rbac.repository';
+import { UsersRepository } from './repositories/users.repository';
 import {
   CredentialsService,
   EmailVerificationMailer,
@@ -18,13 +18,13 @@ import {
   MagicLinkMailer,
   PasswordResetMailer,
   SessionAuth,
-} from './services.js';
-import { RBACController } from './controllers/rbac.controller.js';
-import { RBACService } from './services/rbac.service.js';
-import { RBACPolicy } from './policies/rbac.policy.js';
+} from './services';
+import { RBACController } from './controllers/rbac.controller';
+import { RBACService } from './services/rbac.service';
+import { RBACPolicy } from './policies/rbac.policy';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { ConfigService } from '@nestjs/config';
-import { Env, trustedOrigins } from '../config/env.js';
+import { Env, trustedOrigins } from '../config/env';
 import { AuthorizationModule } from '@nestjs/authorization';
 
 @Module({

@@ -22,33 +22,33 @@ import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
-import { AuditModule } from './audit/audit.module.js';
-import { AuthModule } from './auth/auth.module.js';
-import { AuthThrottlerGuard } from './auth/guards/auth-throttler.guard.js';
-import { CacheModule } from './cache/cache.module.js';
-import { envSchema, type Env } from './config/env.js';
-import { DatabaseModule } from './database/database.module.js';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { AuditModule } from './audit/audit.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthThrottlerGuard } from './auth/guards/auth-throttler.guard';
+import { CacheModule } from './cache/cache.module';
+import { envSchema, type Env } from './config/env';
+import { DatabaseModule } from './database/database.module';
 import {
   AuthenticationExceptionFilter,
   CatchAllExceptionFilter,
   DatabaseExceptionFilter,
   HttpExceptionFilter,
-} from './exceptions/filters/index.js';
-import { HealthModule } from './health/health.module.js';
+} from './exceptions/filters/index';
+import { HealthModule } from './health/health.module';
 import {
   TimeoutInterceptor,
   TransformInterceptor,
-} from './interceptors/index.js';
-import { LoggerModule } from './logger/logger.module.js';
-import { TrimPipe } from './pipes/trim.pipe.js';
-import { REDIS_STORE } from './redis/redis.constants.js';
-import { RedisModule } from './redis/redis.module.js';
-import type { RedisStore } from './redis/redis.options.js';
-import { StorageModule } from './storage/storage.module.js';
-import { TasksModule } from './tasks/tasks.module.js';
-import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage.js';
+} from './interceptors/index';
+import { LoggerModule } from './logger/logger.module';
+import { TrimPipe } from './pipes/trim.pipe';
+import { REDIS_STORE } from './redis/redis.constants';
+import { RedisModule } from './redis/redis.module';
+import type { RedisStore } from './redis/redis.options';
+import { StorageModule } from './storage/storage.module';
+import { TasksModule } from './tasks/tasks.module';
+import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
 
 @Module({
   imports: [

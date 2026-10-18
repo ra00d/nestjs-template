@@ -5,10 +5,10 @@ import {
   type LoggerService,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Env } from '../config/env.js';
-import { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from '../utils/redact.js';
-import { getRequestContext } from './request-context.js';
-import { LOGGER_OPTIONS, type CustomLoggerOptions } from './logger.options.js';
+import type { Env } from '../config/env';
+import { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from '../utils/redact';
+import { getRequestContext } from './request-context';
+import { LOGGER_OPTIONS, type CustomLoggerOptions } from './logger.options';
 
 const LEVELS = ['verbose', 'debug', 'log', 'warn', 'error', 'fatal'] as const;
 type Level = (typeof LEVELS)[number];

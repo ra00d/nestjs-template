@@ -84,11 +84,11 @@ export const buildRepositorySpecFile = (context: EntityContext): { path: string;
     : '';
 
   const content = `import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { ${entity} } from '../${base}.js';
-import type { Create${entity}Dto } from '../dto/create-${base}.dto.js';
-import type { Update${entity}Dto } from '../dto/update-${base}.dto.js';
-import type { List${entity}QueryDto } from '../dto/list-${base}.query.js';
-import { ${plural}Repository } from './${names.name}.repository.js';
+import type { ${entity} } from '../${base}';
+import type { Create${entity}Dto } from '../dto/create-${base}.dto';
+import type { Update${entity}Dto } from '../dto/update-${base}.dto';
+import type { List${entity}QueryDto } from '../dto/list-${base}.query';
+import { ${plural}Repository } from './${names.name}.repository';
 
 /** select() mock resolving at .where(): single-row reads and relation loads. */
 const whereRows = (result: unknown) => ({ from: () => ({ where: () => Promise.resolve(result) }) });

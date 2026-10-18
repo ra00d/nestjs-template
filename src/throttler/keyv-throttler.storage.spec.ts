@@ -1,5 +1,5 @@
-import { KeyvThrottlerStorage } from './keyv-throttler.storage.js';
-import type { RedisStore } from '../redis/redis.options.js';
+import { KeyvThrottlerStorage } from './keyv-throttler.storage';
+import type { RedisStore } from '../redis/redis.options';
 
 describe('KeyvThrottlerStorage (in-memory Map store)', () => {
   const ttl = 60_000;

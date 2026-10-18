@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
-import type { FilterItem, FilterOperator, FilterValue } from './types.js';
+import type { FilterItem, FilterOperator, FilterValue } from './types';
 
 /** The columns a repository accepts filters for, keyed by the API field name. */
 export type FilterColumns = Record<string, PgColumn>;

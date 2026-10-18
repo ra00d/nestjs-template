@@ -1,4 +1,4 @@
-import { TrimPipe } from './trim.pipe.js';
+import { TrimPipe } from './trim.pipe';
 
 describe('TrimPipe', () => {
   const pipe = new TrimPipe();

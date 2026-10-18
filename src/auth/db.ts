@@ -1,1 +1,1 @@
-export * from './db/auth.schema.js';
+export * from './db/auth.schema';

@@ -1,4 +1,4 @@
-import { postgresCode } from '../exceptions/filters/database-exception.filter.js';
+import { postgresCode } from '../exceptions/filters/database-exception.filter';
 
 /** `23505`: an insert/update hit a unique constraint. Map to 409. */
 export function isUniqueViolation(error: unknown): boolean {

@@ -6,7 +6,7 @@ import {
   userPermissions,
   userRoles,
   users,
-} from './auth.schema.js';
+} from './auth.schema';
 
 export const authRelations = defineRelationsPart(
   { users, roles, permissions, rolePermissions, userRoles, userPermissions },

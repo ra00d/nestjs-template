@@ -8,12 +8,12 @@ export const buildSpecFile = (context: EntityContext): { path: string; content: 
 
   const content = `import { NotFoundException } from '@nestjs/common';
 import { Test, type TestingModule } from '@nestjs/testing';
-import type { ${entity} } from '../${base}.js';
-import type { Create${entity}Dto } from '../dto/create-${base}.dto.js';
-import type { Update${entity}Dto } from '../dto/update-${base}.dto.js';
-import type { List${entity}QueryDto } from '../dto/list-${base}.query.js';
-import { ${plural}Repository } from '../repositories/${names.name}.repository.js';
-import { ${plural}Service } from './${names.name}.service.js';
+import type { ${entity} } from '../${base}';
+import type { Create${entity}Dto } from '../dto/create-${base}.dto';
+import type { Update${entity}Dto } from '../dto/update-${base}.dto';
+import type { List${entity}QueryDto } from '../dto/list-${base}.query';
+import { ${plural}Repository } from '../repositories/${names.name}.repository';
+import { ${plural}Service } from './${names.name}.service';
 
 describe('${plural}Service', () => {
   let moduleRef: TestingModule;

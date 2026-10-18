@@ -3,7 +3,7 @@ import {
   normalizedEmailSchema,
   paginationBaseSchema,
   passwordSchema,
-} from './validation.js';
+} from './validation';
 
 describe('passwordSchema', () => {
   it('accepts 12-128 chars and rejects the rest', () => {

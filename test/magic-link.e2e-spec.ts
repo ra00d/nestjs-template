@@ -3,8 +3,8 @@ import { INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { InMemoryMailTransport, MailTransport } from '@nestjs/mail';
 import request, { type Response } from 'supertest';
-import { AppModule } from './../src/app.module.js';
-import { MagicLinkMail } from './../src/auth/magic-link.mailer.js';
+import { AppModule } from './../src/app.module';
+import { MagicLinkMail } from './../src/auth/magic-link.mailer';
 
 // Each run signs in through addresses of its own, so the accounts a previous run
 // left in the database are never the ones these tests find.

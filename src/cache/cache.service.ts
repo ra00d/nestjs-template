@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type Keyv from 'keyv';
-import { CACHE_INSTANCE } from './cache.constants.js';
+import { CACHE_INSTANCE } from './cache.constants';
 
 /**
  * Typed wrapper around the shared `Keyv` instance. Every method passes

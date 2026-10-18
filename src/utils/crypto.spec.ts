@@ -5,7 +5,7 @@ import {
   hashToken,
   randomToken,
   tokensEqual,
-} from './crypto.js';
+} from './crypto';
 
 describe('randomToken', () => {
   it('returns unique url-safe tokens', () => {

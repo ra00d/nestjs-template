@@ -1,6 +1,6 @@
 import { Test, type TestingModule } from '@nestjs/testing';
-import { CacheModule } from './cache.module.js';
-import { CacheService } from './cache.service.js';
+import { CacheModule } from './cache.module';
+import { CacheService } from './cache.service';
 
 describe('CacheService (in-memory store)', () => {
   let module: TestingModule;

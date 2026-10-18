@@ -5,8 +5,8 @@ import {
   HealthIndicatorService,
   MemoryHealthIndicator,
 } from '@nestjs/terminus';
-import { HealthController } from './health.controller.js';
-import { REDIS_STORE } from '../redis/redis.constants.js';
+import { HealthController } from './health.controller';
+import { REDIS_STORE } from '../redis/redis.constants';
 
 describe('HealthController', () => {
   let module: TestingModule;

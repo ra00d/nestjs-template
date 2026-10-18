@@ -1,8 +1,8 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { LOGGER_OPTIONS, type CustomLoggerOptions } from './logger.options.js';
-import { AppLogger } from './logger.service.js';
-import { RequestIdInterceptor } from './request-id.interceptor.js';
+import { LOGGER_OPTIONS, type CustomLoggerOptions } from './logger.options';
+import { AppLogger } from './logger.service';
+import { RequestIdInterceptor } from './request-id.interceptor';
 
 /**
  * Application logging. Global: `AppLogger` (used by `app.useLogger()`, so

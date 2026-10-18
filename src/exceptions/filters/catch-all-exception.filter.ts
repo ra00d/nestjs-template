@@ -9,18 +9,18 @@ import {
 import {
   isAuthError,
   mapAuthError,
-} from './authentication-exception.filter.js';
+} from './authentication-exception.filter';
 import {
   hasPostgresCode,
   mapPostgresError,
-} from './database-exception.filter.js';
+} from './database-exception.filter';
 import {
   buildErrorResponse,
   requestPath,
   type FilterReply,
   type FilterRequest,
-} from './error-response.js';
-import { normalizeHttpBody } from './http-exception.filter.js';
+} from './error-response';
+import { normalizeHttpBody } from './http-exception.filter';
 
 /**
  * Last-resort filter: anything no specific filter claimed becomes a 500

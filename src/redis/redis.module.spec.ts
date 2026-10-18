@@ -1,7 +1,7 @@
 import KeyvRedis from '@keyv/redis';
 import { Test } from '@nestjs/testing';
-import { REDIS_STORE } from './redis.constants.js';
-import { RedisModule } from './redis.module.js';
+import { REDIS_STORE } from './redis.constants';
+import { RedisModule } from './redis.module';
 
 describe('RedisModule', () => {
   it('provides a KeyvRedis store without connecting eagerly', async () => {

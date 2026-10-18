@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import type { ThrottlerStorage } from '@nestjs/throttler';
 import Keyv from 'keyv';
-import type { RedisStore } from '../redis/redis.options.js';
+import type { RedisStore } from '../redis/redis.options';
 
 interface ThrottleRecord {
   /** Absolute expiry of the fixed window, ms since epoch. */

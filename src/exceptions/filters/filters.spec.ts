@@ -8,10 +8,10 @@ import {
 } from '@nestjs/common';
 import { DrizzleQueryError } from 'drizzle-orm';
 import { DatabaseError } from 'pg';
-import { AuthenticationExceptionFilter } from './authentication-exception.filter.js';
-import { CatchAllExceptionFilter } from './catch-all-exception.filter.js';
-import { DatabaseExceptionFilter } from './database-exception.filter.js';
-import { HttpExceptionFilter } from './http-exception.filter.js';
+import { AuthenticationExceptionFilter } from './authentication-exception.filter';
+import { CatchAllExceptionFilter } from './catch-all-exception.filter';
+import { DatabaseExceptionFilter } from './database-exception.filter';
+import { HttpExceptionFilter } from './http-exception.filter';
 
 function mockHost() {
   const sent: { status?: number; body?: unknown } = {};

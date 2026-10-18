@@ -21,7 +21,7 @@ const neededTables = (context: EntityContext): string[] => {
 
 const tableSpecifier = (context: EntityContext, relationsFile: string, variable: string): string => {
   const own = toCamelCase(context.names.name);
-  if (variable === own) return `./${context.names.name}.schema.js`;
+  if (variable === own) return `./${context.names.name}.schema`;
   const known = context.tables.get(variable);
   return known
     ? importPath(relationsFile, `${context.settings.modulesDir}/${known.dir}/db/${known.dir}.schema.ts`)

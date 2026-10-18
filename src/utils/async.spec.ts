@@ -1,4 +1,4 @@
-import { retry, sleep, withTimeout } from './async.js';
+import { retry, sleep, withTimeout } from './async';
 
 describe('sleep', () => {
   it('waits at least the requested time', async () => {

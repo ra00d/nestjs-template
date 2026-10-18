@@ -1,7 +1,7 @@
 import { CurrentUser } from '@nestjs/authentication';
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { AuthzGuard } from '../guards/authorization.guard.js';
-import type { User } from '../types/user.js';
+import { AuthzGuard } from '../guards/authorization.guard';
+import type { User } from '../types/user';
 
 @Controller('me')
 @UseGuards(AuthzGuard)

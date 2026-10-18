@@ -5,7 +5,7 @@ import {
   isForeignKeyViolation,
   isRetryableTransactionError,
   isUniqueViolation,
-} from './errors.js';
+} from './errors';
 
 const pgError = (code: string): DatabaseError => {
   const error = new DatabaseError('db failed', 0, 'error');

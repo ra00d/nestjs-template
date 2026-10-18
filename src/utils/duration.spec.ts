@@ -1,4 +1,4 @@
-import { formatDuration, parseDurationToMs } from './duration.js';
+import { formatDuration, parseDurationToMs } from './duration';
 
 describe('parseDurationToMs', () => {
   it.each([

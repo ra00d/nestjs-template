@@ -1,7 +1,7 @@
 import { Test, type TestingModule } from '@nestjs/testing';
 import { getDrizzleToken } from '@nestjs/drizzle';
-import { auditLogs } from './audit.schema.js';
-import { AuditService } from './audit.module.js';
+import { auditLogs } from './audit.schema';
+import { AuditService } from './audit.module';
 
 describe('AuditService', () => {
   let module: TestingModule;

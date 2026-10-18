@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { I18nModule, InMemoryI18nLoader } from '@nestjs/i18n';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 describe('AppController', () => {
   let appController: AppController;

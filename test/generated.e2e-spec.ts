@@ -3,7 +3,7 @@ import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { type Response } from 'supertest';
 import { App } from 'supertest/types.js';
-import { AppModule } from './../src/app.module.js';
+import { AppModule } from './../src/app.module';
 
 // Exercises the generated posts/comments slice end to end: auth default,
 // validation, filtering, search, pagination envelope, includes, update and

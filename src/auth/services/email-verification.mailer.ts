@@ -6,7 +6,7 @@ import {
 } from '@nestjs/authentication';
 import { I18nService } from '@nestjs/i18n';
 import { Mailer, type Mailable } from '@nestjs/mail';
-import { UsersRepository } from '../repositories/users.repository.js';
+import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class VerifyEmailMail implements Mailable<EmailVerificationLink> {

@@ -1,9 +1,9 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PasswordHasher } from '@nestjs/authentication';
 import { I18nService } from '@nestjs/i18n';
-import { AuditService } from '../../audit/audit.module.js';
-import type { User } from '../types/user.js';
-import { UsersRepository } from '../repositories/users.repository.js';
+import { AuditService } from '../../audit/audit.module';
+import type { User } from '../types/user';
+import { UsersRepository } from '../repositories/users.repository';
 
 @Injectable()
 export class CredentialsService {

@@ -4,7 +4,7 @@ import {
   offsetOf,
   pageMeta,
   paginate,
-} from './pagination.js';
+} from './pagination';
 
 describe('offset/pageMeta/paginate', () => {
   it('derives offsets and page counts', () => {

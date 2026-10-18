@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { finalize, Observable } from 'rxjs';
-import { AppLogger } from './logger.service.js';
-import { runWithRequestContext } from './request-context.js';
+import { AppLogger } from './logger.service';
+import { runWithRequestContext } from './request-context';
 
 interface IdRequest {
   id?: unknown;

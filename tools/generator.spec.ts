@@ -52,7 +52,7 @@ export const users = pgTable('users', {
 });
 `;
 
-const BARREL_FIXTURE = `import { schema as AuthSchema } from './auth/db.js';
+const BARREL_FIXTURE = `import { schema as AuthSchema } from './auth/db';
 
 // All drizzle schemas
 export { AuthSchema };
@@ -131,8 +131,8 @@ describe('plan', () => {
     expect(content).toContain('deletedAt: Date | null;');
     expect(content).toContain('author?: User | null;');
     expect(content).toContain('comments?: Comment[];');
-    expect(content).toContain("import type { User } from '../../auth/types/user.js';");
-    expect(content).toContain("import type { Comment } from '../comments/comment.js';");
+    expect(content).toContain("import type { User } from '../../auth/types/user';");
+    expect(content).toContain("import type { Comment } from '../comments/comment';");
     expect(content).toContain('export interface PostPage {');
   });
 
@@ -160,7 +160,7 @@ describe('plan', () => {
     expect(list).toContain('limit: z.coerce.number().int().min(1).max(100).default(20),');
     expect(list).toContain("sort: z.enum(['createdAt', 'updatedAt', 'title', 'body', 'status', 'authorId', 'views']).default('createdAt'),");
     expect(list).toContain("order: z.enum(['asc', 'desc']).default('desc'),");
-    expect(list).toContain("import { filterItemsSchema } from '../../../database/filters.js';");
+    expect(list).toContain("import { filterItemsSchema } from '../../../database/filters';");
     expect(list).toContain('const postFilterItemSchema = z.union([');
     expect(list).toContain("field: z.literal('title'),");
     expect(list).toContain("operator: z.enum(['eq', 'ne', 'contains']),");
@@ -179,9 +179,9 @@ describe('plan', () => {
   });
 
   it('writes the db entry points mirroring the auth module', () => {
-    expect(file(plans, 'src/modules/posts/db.ts')).toContain("export * from './db/index.js';");
+    expect(file(plans, 'src/modules/posts/db.ts')).toContain("export * from './db/index';");
     const index = file(plans, 'src/modules/posts/db/index.ts');
-    expect(index).toContain("export * from './posts.schema.js';");
+    expect(index).toContain("export * from './posts.schema';");
     expect(index).not.toContain(' as ');
     expect(index).not.toContain('relations');
   });
@@ -189,7 +189,7 @@ describe('plan', () => {
   it('writes the table file with the shared timestamps spread', () => {
     const content = file(plans, 'src/modules/posts/db/posts.schema.ts');
     expect(content).toContain("import { pgTable, text, integer } from 'drizzle-orm/pg-core';");
-    expect(content).toContain("import { timestamps } from '../../../database/fields.js';");
+    expect(content).toContain("import { timestamps } from '../../../database/fields';");
     expect(content).toContain("export const posts = pgTable('posts', {");
     expect(content).toContain("id: text('id').primaryKey(),");
     expect(content).toContain("authorId: text('author_id')");
@@ -198,15 +198,15 @@ describe('plan', () => {
     expect(content).toContain(".default('draft'),");
     expect(content).toContain('...timestamps,');
     expect(content).not.toContain('createdAt: at(');
-    expect(content).toContain("from '../../../auth/db/auth.schema.js';");
+    expect(content).toContain("from '../../../auth/db/auth.schema';");
   });
 
   it('writes the relations part with defineRelationsPart', () => {
     const content = file(plans, 'src/modules/posts/db/posts.relations.ts');
     expect(content).toContain("import { defineRelationsPart } from 'drizzle-orm';");
-    expect(content).toContain("import { posts } from './posts.schema.js';");
-    expect(content).toContain("from '../../comments/db/comments.schema.js';");
-    expect(content).toContain("from '../../../auth/db/auth.schema.js';");
+    expect(content).toContain("import { posts } from './posts.schema';");
+    expect(content).toContain("from '../../comments/db/comments.schema';");
+    expect(content).toContain("from '../../../auth/db/auth.schema';");
     expect(content).toContain('export const postsRelations = defineRelationsPart({ posts, comments, users }, (r) => ({');
     expect(content).toContain('author: r.one.users({ from: r.posts.authorId, to: r.users.id }),');
     expect(content).toContain('comments: r.many.comments({ from: r.posts.id, to: r.comments.postId }),');
@@ -214,24 +214,24 @@ describe('plan', () => {
 
   it('writes the repository with the SQL-like builder and manual includes', () => {
     const content = file(plans, 'src/modules/posts/repositories/posts.repository.ts');
-    expect(content).toContain('constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase)');    expect(content).toContain("import { posts } from '../db/posts.schema.js';");
-    expect(content).not.toContain("from '../../../auth/db/auth.schema.js';");
-    expect(content).toContain("import type { User } from '../../../auth/types/user.js';");
-    expect(content).toContain("import { findUsersByIds } from '../../../auth/repositories/users.repository.js';");
+    expect(content).toContain('constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase)');    expect(content).toContain("import { posts } from '../db/posts.schema';");
+    expect(content).not.toContain("from '../../../auth/db/auth.schema';");
+    expect(content).toContain("import type { User } from '../../../auth/types/user';");
+    expect(content).toContain("import { findUsersByIds } from '../../../auth/repositories/users.repository';");
     expect(content).toContain('const related: User[] = await findUsersByIds(this.db, ids);');
-    expect(content).toContain("import { comments } from '../../comments/db/comments.schema.js';");
+    expect(content).toContain("import { comments } from '../../comments/db/comments.schema';");
     expect(content).toContain('async create(data: CreatePostDto): Promise<Post> {');
     expect(content).toContain('.select()');
     expect(content).toContain('.from(posts)');
     expect(content).toContain(".orderBy(query.order === 'asc' ? asc(posts[query.sort]) : desc(posts[query.sort]))");
     expect(content).toContain('this.db.$count(');
-    expect(content).toContain("import { buildFilterConditions, type FilterColumns } from '../../../database/filters.js';");
+    expect(content).toContain("import { buildFilterConditions, type FilterColumns } from '../../../database/filters';");
     expect(content).toContain('const columns: FilterColumns = {');
     expect(content).toContain('title: posts.title,');
     expect(content).toContain('views: posts.views,');
     expect(content).toContain('const conditions = buildFilterConditions(columns, query.filters);');
     expect(content).toContain('values({ id: randomUUID(), ...data }).returning()');
-    expect(content).toContain("from '../dto/create-post.dto.js';");
+    expect(content).toContain("from '../dto/create-post.dto';");
     expect(content).not.toContain('db.query');
     expect(content).toContain('private async withIncludes(');
     expect(content).toContain("if (include?.has('author')) {");
@@ -261,17 +261,17 @@ describe('plan', () => {
     expect(content).toContain('parseIncludes(include)');
     expect(content).toContain("@Delete(':id')");
     expect(content).toContain('@HttpCode(204)');
-    expect(content).toContain("from '../services/posts.service.js';");
-    expect(content).toContain("from '../dto/list-post.query.js';");
+    expect(content).toContain("from '../services/posts.service';");
+    expect(content).toContain("from '../dto/list-post.query';");
   });
 
   it('writes the service, module and spec', () => {
     expect(file(plans, 'src/modules/posts/services/posts.service.ts')).toContain('throw new NotFoundException(`Post with id ${id} was not found`);');
-    expect(file(plans, 'src/modules/posts/services/posts.service.ts')).toContain("from '../repositories/posts.repository.js';");
+    expect(file(plans, 'src/modules/posts/services/posts.service.ts')).toContain("from '../repositories/posts.repository';");
     expect(file(plans, 'src/modules/posts/posts.module.ts')).toContain('controllers: [PostsController],');
-    expect(file(plans, 'src/modules/posts/posts.module.ts')).toContain("from './controllers/posts.controller.js';");
+    expect(file(plans, 'src/modules/posts/posts.module.ts')).toContain("from './controllers/posts.controller';");
     expect(file(plans, 'src/modules/posts/services/posts.service.spec.ts')).toContain("describe('PostsService', () => {");
-    expect(file(plans, 'src/modules/posts/services/posts.service.spec.ts')).toContain("from '../dto/create-post.dto.js';");
+    expect(file(plans, 'src/modules/posts/services/posts.service.spec.ts')).toContain("from '../dto/create-post.dto';");
   });
 
   it('uses the core query builder when no relation is declared', () => {
@@ -286,7 +286,7 @@ describe('plan', () => {
     expect(repo).not.toContain('db.query');
     expect(repo).not.toContain('withIncludes');
     const table = plan.files.find((file) => file.path === 'src/modules/labels/db/labels.schema.ts')?.content ?? '';
-    expect(table).not.toContain('database/schema.js');
+    expect(table).not.toContain('database/schema');
     expect(table).toContain('...timestamps,');
   });
 });
@@ -303,14 +303,14 @@ describe('apply', () => {
       expect(first.edited).toEqual([join(root, 'src/db-schema.ts'), join(root, 'src/app.module.ts')]);
 
       const barrel = readFileSync(join(root, 'src/db-schema.ts'), 'utf8');
-      expect(barrel).toContain("import { schema as AuthSchema } from './auth/db.js';");
-      expect(barrel).toContain("export * from './modules/posts/db.js';");
-      expect(barrel).toContain("export * from './modules/comments/db.js';");
+      expect(barrel).toContain("import { schema as AuthSchema } from './auth/db';");
+      expect(barrel).toContain("export * from './modules/posts/db';");
+      expect(barrel).toContain("export * from './modules/comments/db';");
       expect(barrel).not.toContain('PostsSchema');
 
       const appModule = readFileSync(join(root, 'src/app.module.ts'), 'utf8');
-      expect(appModule).toContain("import { PostsModule } from './modules/posts/posts.module.js';");
-      expect(appModule).toContain("import { CommentsModule } from './modules/comments/comments.module.js';");
+      expect(appModule).toContain("import { PostsModule } from './modules/posts/posts.module';");
+      expect(appModule).toContain("import { CommentsModule } from './modules/comments/comments.module';");
       expect(appModule).toContain('PostsModule,');
 
       const second = await applyPlan(buildPlan(entities2, entities2, settings), { force: false, entities: entities2, root, settings });
@@ -344,8 +344,8 @@ describe('apply', () => {
       expect(reduced.warnings).toContain('Unregistered comments from AppModule: no longer defined.');
 
       const barrel = readFileSync(join(root, 'src/db-schema.ts'), 'utf8');
-      expect(barrel).not.toContain('comments/db.js');
-      expect(barrel).toContain("export * from './modules/posts/db.js';");
+      expect(barrel).not.toContain('comments/db');
+      expect(barrel).toContain("export * from './modules/posts/db';");
       const appModule = readFileSync(join(root, 'src/app.module.ts'), 'utf8');
       expect(appModule).not.toContain('CommentsModule');
       expect(appModule).toContain('PostsModule');
@@ -357,11 +357,11 @@ describe('apply', () => {
       const entities2 = [posts, comments];
       await applyPlan(buildPlan(entities2, entities2, settings), { force: false, entities: entities2, root, settings });
       const barrelPath = join(root, 'src/db-schema.ts');
-      writeFileSync(barrelPath, `${readFileSync(barrelPath, 'utf8')}export * from './modules/comments/db.js';\n`, 'utf8');
+      writeFileSync(barrelPath, `${readFileSync(barrelPath, 'utf8')}export * from './modules/comments/db';\n`, 'utf8');
 
       const reduced = await applyPlan(buildPlan([posts], entities2, settings), { force: false, entities: [posts], root, settings });
       expect(reduced.warnings).toContain('Unregistered comments from src/db-schema.ts: no longer defined.');
-      expect(readFileSync(barrelPath, 'utf8')).not.toContain("export * from './modules/comments/db.js';");
+      expect(readFileSync(barrelPath, 'utf8')).not.toContain("export * from './modules/comments/db';");
     });
   });
 });

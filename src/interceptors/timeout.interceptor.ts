@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { throwError, timeout, type Observable } from 'rxjs';
-import type { Env } from '../config/env.js';
+import type { Env } from '../config/env';
 
 /**
  * Rejects handlers slower than `REQUEST_TIMEOUT_MS` (default 30s) with a

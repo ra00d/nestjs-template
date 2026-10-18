@@ -12,8 +12,8 @@ import {
   type ErrorResponseBody,
   type FilterReply,
   type FilterRequest,
-} from './error-response.js';
-import { AuthorizationError } from '../authorization.exception.js';
+} from './error-response';
+import { AuthorizationError } from '../authorization.exception';
 
 /**
  * Translates the transport-agnostic errors of `@nestjs/authentication` and

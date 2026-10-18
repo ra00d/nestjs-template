@@ -5,13 +5,13 @@ import {
   HttpException,
   Logger,
 } from '@nestjs/common';
-import type { FilterReply, FilterRequest } from './error-response.js';
+import type { FilterReply, FilterRequest } from './error-response';
 import {
   buildErrorResponse,
   reasonPhrase,
   requestPath,
   type ErrorResponseBody,
-} from './error-response.js';
+} from './error-response';
 
 /**
  * Normalizes every `HttpException` (validation failures, 401s, 404s,

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { normalizeEmail } from './string.js';
+import { normalizeEmail } from './string';
 
 export const DEFAULT_LIST_LIMIT = 20;
 export const MAX_LIST_LIMIT = 100;

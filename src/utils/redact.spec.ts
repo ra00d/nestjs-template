@@ -1,4 +1,4 @@
-import { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from './redact.js';
+import { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from './redact';
 
 describe('redactSensitive', () => {
   it('strips default fields at the top level', () => {

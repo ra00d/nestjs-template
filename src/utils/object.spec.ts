@@ -1,4 +1,4 @@
-import { omit, pick, removeUndefined } from './object.js';
+import { omit, pick, removeUndefined } from './object';
 
 describe('pick', () => {
   it('copies only the requested keys', () => {

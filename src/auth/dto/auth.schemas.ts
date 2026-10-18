@@ -1,6 +1,6 @@
 import { i18nIssueMessage } from '@nestjs/i18n';
 import { z } from 'zod';
-import { passwordSchema } from '../../utils/validation.js';
+import { passwordSchema } from '../../utils/validation';
 
 /** Follows the password rules every setter checks: a minimum, on top of the hasher's own limits. */
 export { passwordSchema };

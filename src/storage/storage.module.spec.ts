@@ -4,8 +4,8 @@ import { Storage } from '@nestjs/storage';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { envSchema } from '../config/env.js';
-import { StorageModule } from './storage.module.js';
+import { envSchema } from '../config/env';
+import { StorageModule } from './storage.module';
 
 const readBody = async (body: NodeJS.ReadableStream): Promise<string> => {
   const chunks: Buffer[] = [];

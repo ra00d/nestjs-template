@@ -1,6 +1,6 @@
 import { StreamableFile } from '@nestjs/common';
 import { lastValueFrom, of } from 'rxjs';
-import { TransformInterceptor } from './transform.interceptor.js';
+import { TransformInterceptor } from './transform.interceptor';
 
 describe('TransformInterceptor', () => {
   const interceptor = new TransformInterceptor();

@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, HttpCode, Post } from '@nestjs/common';
 import { CurrentUser, EmailVerificationService, Public } from '@nestjs/authentication';
-import type { User } from '../types/user.js';
-import { tokenSchema, type TokenDto } from '../dto/auth.schemas.js';
+import type { User } from '../types/user';
+import { tokenSchema, type TokenDto } from '../dto/auth.schemas';
 
 // The link opens a page of the web app, which POSTs the token from its URL
 // back to the API: email scanners and link previews follow links with GET

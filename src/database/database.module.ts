@@ -1,5 +1,5 @@
 import { Global, Module } from '@nestjs/common';
-import { TransactionService } from './transaction.service.js';
+import { TransactionService } from './transaction.service';
 
 /**
  * Exposes {@link TransactionService} application-wide once imported after

@@ -8,7 +8,7 @@ import { buildFile } from './project.ts';
  */
 export const buildDbFile = (context: EntityContext): { path: string; content: string } => ({
   path: `${context.moduleDir}/db.ts`,
-  content: `export * from './db/index.js';\n`,
+  content: `export * from './db/index';\n`,
 });
 
 /**
@@ -21,7 +21,7 @@ export const buildDbIndexFile = (context: EntityContext): { path: string; conten
   const { names, moduleDir } = context;
   const path = `${moduleDir}/db/index.ts`;
   const content = buildFile(path, (file) => {
-    file.addStatements([`export * from './${names.name}.schema.js';`]);
+    file.addStatements([`export * from './${names.name}.schema';`]);
   });
   return { path, content };
 };

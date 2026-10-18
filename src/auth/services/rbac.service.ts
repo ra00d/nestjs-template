@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { UsersRepository } from '../repositories/users.repository.js';
-import { RBACRepository } from '../repositories/rbac.repository.js';
+import { UsersRepository } from '../repositories/users.repository';
+import { RBACRepository } from '../repositories/rbac.repository';
 
 @Injectable()
 export class RBACService {

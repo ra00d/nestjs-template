@@ -3,8 +3,8 @@ import { Test, type TestingModule } from '@nestjs/testing';
 import { mkdtemp, rm, writeFile, utimes } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import type { Env } from '../config/env.js';
-import { TasksService } from './tasks.service.js';
+import type { Env } from '../config/env';
+import { TasksService } from './tasks.service';
 
 describe('TasksService.cleanupUploads', () => {
   let module: TestingModule;

@@ -23,8 +23,8 @@ import {
   type UpdateRoleDto,
   updatePermissionSchema,
   updateRoleSchema,
-} from '../dto/rbac.schemas.js';
-import { RBACService } from '../services/rbac.service.js';
+} from '../dto/rbac.schemas';
+import { RBACService } from '../services/rbac.service';
 
 @Controller('rbac')
 export class RBACController {

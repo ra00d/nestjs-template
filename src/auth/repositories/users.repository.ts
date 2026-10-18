@@ -9,8 +9,8 @@ import {
   toRole,
   type Permission,
   type Role,
-} from '../types/rbac.types.js';
-import { User } from '../types/user.js';
+} from '../types/rbac.types';
+import { User } from '../types/user';
 import {
   permissions,
   rolePermissions,
@@ -18,9 +18,9 @@ import {
   userPermissions,
   userRoles,
   users,
-} from '../db/auth.schema.js';
+} from '../db/auth.schema';
 
-import { currentTx } from '../../database/transaction.js';
+import { currentTx } from '../../database/transaction';
 
 /** A full `users` row: what the database holds, password hash included. */
 type UserRow = typeof users.$inferSelect;

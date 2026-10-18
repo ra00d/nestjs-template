@@ -9,8 +9,8 @@ import {
 } from '@nestjs/terminus';
 import { sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { REDIS_STORE } from '../redis/redis.constants.js';
-import type { RedisStore } from '../redis/redis.options.js';
+import { REDIS_STORE } from '../redis/redis.constants';
+import type { RedisStore } from '../redis/redis.options';
 
 /**
  * Kubernetes-style probes. `/health` stays outside the global API prefix

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { normalizeEmail } from '../../utils/string.js';
+import { normalizeEmail } from '../../utils/string';
 
 /** Per IP everywhere; per (email, IP) where the request body names an account. */
 @Injectable()

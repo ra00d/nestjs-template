@@ -6,7 +6,7 @@ import { Authorize } from '../decorators/rbac.decorator';
 import { PUBLIC_API } from '../decorators/public.decorator';
 import { FastifyRequest } from 'fastify';
 import type { AuthorizeParams } from '../types/auth-types';
-import type { Permission, Role } from '../types/rbac.types.js';
+import type { Permission, Role } from '../types/rbac.types';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {

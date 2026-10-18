@@ -1,7 +1,7 @@
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { Injectable } from '@nestjs/common';
-import type { DbOrTx, Tx, TxOptions } from './types.js';
-import { withTx } from './transaction.js';
+import type { DbOrTx, Tx, TxOptions } from './types';
+import { withTx } from './transaction';
 
 /**
  * NestJS-friendly transaction helper. Inject it wherever you need to group

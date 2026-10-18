@@ -14,7 +14,7 @@ import {
   type TotpRecord,
 } from '@nestjs/authentication';
 import { InjectDrizzle } from '@nestjs/drizzle';
-import { currentTx } from '../../database/transaction.js';
+import { currentTx } from '../../database/transaction';
 import { and, desc, eq, gt, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import {
@@ -25,7 +25,7 @@ import {
   mfaRecoveryCodes,
   refreshTokens,
   sessions,
-} from '../db/auth.schema.js';
+} from '../db/auth.schema';
 
 /**
  * Keeps sessions, refresh tokens, authenticators and pending email tokens in

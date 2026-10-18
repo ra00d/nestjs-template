@@ -1,7 +1,7 @@
 import { Controller, Get, INestApplication } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
-import { Pagination, type PaginationParams } from './pagination.decorator.js';
+import { Pagination, type PaginationParams } from './pagination.decorator';
 
 @Controller('items')
 class TestItemsController {

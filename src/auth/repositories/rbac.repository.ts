@@ -3,8 +3,8 @@ import { InjectDrizzle } from '@nestjs/drizzle';
 import { and, eq } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { randomUUID } from 'node:crypto';
-import { currentTx } from '../../database/transaction.js';
-import { permissions, rolePermissions, roles } from '../db/auth.schema.js';
+import { currentTx } from '../../database/transaction';
+import { permissions, rolePermissions, roles } from '../db/auth.schema';
 
 const slugify = (value: string): string =>
   value

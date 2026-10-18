@@ -1,4 +1,4 @@
-import { getClientIp, getUserAgent } from './request.js';
+import { getClientIp, getUserAgent } from './request';
 
 describe('getClientIp', () => {
   it('prefers the first forwarded address', () => {

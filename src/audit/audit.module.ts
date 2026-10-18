@@ -2,9 +2,9 @@ import { Global, Injectable, Logger, Module } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import { randomUUID } from 'node:crypto';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { currentTx } from '../database/transaction.js';
-import type { DbOrTx } from '../database/types.js';
-import { auditLogs } from './audit.schema.js';
+import { currentTx } from '../database/transaction';
+import type { DbOrTx } from '../database/types';
+import { auditLogs } from './audit.schema';
 
 export interface AuditEntry {
   action: string;
@@ -27,7 +27,9 @@ export class AuditService {
 
   /** Use the active transaction (if any) over the injected database. */
   private get db(): NodePgDatabase {
-    return (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb;
+    return (
+      (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb
+    );
   }
 
   /**

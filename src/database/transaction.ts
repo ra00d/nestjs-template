@@ -1,8 +1,8 @@
 import type { EmptyRelations } from 'drizzle-orm';
 import type { NodePgTransaction } from 'drizzle-orm/node-postgres';
-import type { DbOrTx, Tx, TxConfig, TxOptions } from './types.js';
+import type { DbOrTx, Tx, TxConfig, TxOptions } from './types';
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { isTx, markTx } from './types.js';
+import { isTx, markTx } from './types';
 
 export const txStorage = new AsyncLocalStorage<Tx>();
 

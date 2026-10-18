@@ -1,3 +1,3 @@
-export * from './auth/db.js';
-export * from './audit/audit.schema.js';
+export * from './auth/db';
+export * from './audit/audit.schema';
 export type Datebase = any;

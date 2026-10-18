@@ -13,7 +13,7 @@ import {
   type ErrorResponseBody,
   type FilterReply,
   type FilterRequest,
-} from './error-response.js';
+} from './error-response';
 
 /** The Postgres fields worth logging; never sent to the client. */
 interface PostgresDetails {

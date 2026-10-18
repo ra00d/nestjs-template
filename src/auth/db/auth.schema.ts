@@ -7,7 +7,7 @@ import {
   primaryKey,
   text,
 } from 'drizzle-orm/pg-core';
-import { at, timestamps } from '../../database/fields.js';
+import { at, timestamps } from '../../database/fields';
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),

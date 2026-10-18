@@ -1,7 +1,7 @@
 import { SQL } from 'drizzle-orm';
 import { integer, PgDialect, pgTable, text } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
-import { buildFilterConditions, filterItemsSchema } from './filters.js';
+import { buildFilterConditions, filterItemsSchema } from './filters';
 
 const items = pgTable('items', {
   name: text('name'),

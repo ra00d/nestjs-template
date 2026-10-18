@@ -11,10 +11,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { randomUUID } from 'node:crypto';
 import { ZodObject } from 'zod';
 import { createSchema } from 'zod-openapi';
-import { AppModule } from './app.module.js';
-import { trustedOrigins, type Env } from './config/env.js';
-import { AppLogger } from './logger/logger.service.js';
-import { runWithRequestContext } from './logger/request-context.js';
+import { AppModule } from './app.module';
+import { trustedOrigins, type Env } from './config/env';
+import { AppLogger } from './logger/logger.service';
+import { runWithRequestContext } from './logger/request-context';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(

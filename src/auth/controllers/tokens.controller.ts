@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
 import { Public, TokenService } from '@nestjs/authentication';
 import { Throttle, minutes } from '@nestjs/throttler';
-import { refreshTokenSchema, signInSchema, type RefreshTokenDto, type SignInDto } from '../dto/auth.schemas.js';
-import { CredentialsService } from '../services/credentials.service.js';
+import { refreshTokenSchema, signInSchema, type RefreshTokenDto, type SignInDto } from '../dto/auth.schemas';
+import { CredentialsService } from '../services/credentials.service';
 
 @Public()
 @Controller('auth/token')

@@ -7,12 +7,12 @@ import {
   Optional,
 } from '@nestjs/common';
 import KeyvRedis from '@keyv/redis';
-import { REDIS_MODULE_OPTIONS, REDIS_STORE } from './redis.constants.js';
+import { REDIS_MODULE_OPTIONS, REDIS_STORE } from './redis.constants';
 import type {
   RedisModuleOptions,
   RedisStore,
   RedisModuleAsyncOptions,
-} from './redis.options.js';
+} from './redis.options';
 const logger = new Logger('RedisModule');
 
 /** Creates the shared `KeyvRedis` adapter from validated module options. */

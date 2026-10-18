@@ -5,7 +5,7 @@ import {
   S3Disk,
   StorageModule as VendorStorageModule,
 } from '@nestjs/storage';
-import type { Env } from '../config/env.js';
+import type { Env } from '../config/env';
 
 /**
  * File storage, driven by env: a local disk (`STORAGE_DIR`, created at

@@ -12,7 +12,7 @@ import {
   tokenSchema,
   type EmailDto,
   type TokenDto,
-} from '../dto/auth.schemas.js';
+} from '../dto/auth.schemas';
 
 // The link opens a page of the web app, which POSTs the token from its URL
 // back to the API: email scanners and link previews follow links with GET

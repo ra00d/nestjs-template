@@ -1,8 +1,8 @@
 import { ConfigService } from '@nestjs/config';
 import { Test, type TestingModule } from '@nestjs/testing';
-import { AppLogger } from './logger.service.js';
-import { LOGGER_OPTIONS } from './logger.options.js';
-import { runWithRequestContext } from './request-context.js';
+import { AppLogger } from './logger.service';
+import { LOGGER_OPTIONS } from './logger.options';
+import { runWithRequestContext } from './request-context';
 
 describe('AppLogger', () => {
   let stdout: ReturnType<typeof vi.spyOn>;

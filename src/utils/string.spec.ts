@@ -1,4 +1,4 @@
-import { maskEmail, normalizeEmail, slugify, truncate } from './string.js';
+import { maskEmail, normalizeEmail, slugify, truncate } from './string';
 
 describe('normalizeEmail', () => {
   it('trims, lowercases, and NFC-normalizes', () => {

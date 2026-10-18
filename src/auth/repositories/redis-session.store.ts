@@ -4,8 +4,8 @@ import {
   type SessionRecord,
   type SessionStore,
 } from '@nestjs/authentication';
-import type { RedisStore } from '../../redis/redis.options.js';
-import { REDIS_STORE } from '../../redis/redis.constants.js';
+import type { RedisStore } from '../../redis/redis.options';
+import { REDIS_STORE } from '../../redis/redis.constants';
 
 const SESSION_KEY = 'session:';
 const USER_SESSIONS_KEY = 'user-sessions:';

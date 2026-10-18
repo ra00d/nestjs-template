@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
-import { AppLogger } from './logger.service.js';
-import { RequestIdInterceptor } from './request-id.interceptor.js';
-import { getRequestContext } from './request-context.js';
+import { AppLogger } from './logger.service';
+import { RequestIdInterceptor } from './request-id.interceptor';
+import { getRequestContext } from './request-context';
 
 describe('RequestIdInterceptor', () => {
   const silentLogger = { log: () => {}, warn: () => {} } as unknown as AppLogger;

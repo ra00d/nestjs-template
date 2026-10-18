@@ -1,8 +1,8 @@
 import { getDrizzleToken } from '@nestjs/drizzle';
 import { Test, type TestingModule } from '@nestjs/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TransactionService } from './transaction.service.js';
-import { markTx, isTx } from './types.js';
+import { TransactionService } from './transaction.service';
+import { markTx, isTx } from './types';
 
 describe('TransactionService', () => {
   let module: TestingModule;
