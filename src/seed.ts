@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
 import { normalizeEmail } from './utils/string.js';
 import { UsersRepository } from './auth/repositories/users.repository.js';
+import { toRole } from './auth/types/rbac.types.js';
 
 /**
  * Bootstrap seed: `pnpm db:seed`.
@@ -35,7 +36,7 @@ async function seed() {
     const admin = await users.create(email, {
       passwordHash: await hasher.hash(password),
       emailVerified: true,
-      roles: ['admin'],
+      roles: [toRole('admin')],
     });
     console.log(`db:seed: admin ${admin.email} created.`);
   } finally {

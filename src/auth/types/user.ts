@@ -1,4 +1,5 @@
 import type { users } from '../db/auth.schema';
+import type { Permission, Role } from './rbac.types';
 
 /** A `users` row minus the password hash, which never leaves `UsersRepository`. */
 export type UserRecord = Omit<typeof users.$inferSelect, 'passwordHash'>;
@@ -10,6 +11,6 @@ export type UserRecord = Omit<typeof users.$inferSelect, 'passwordHash'>;
  * schema, so a column change cannot drift from the type.
  */
 export interface User extends UserRecord {
-  roles: string[];
-  permissions: string[];
+  roles: Role[];
+  permissions: Permission[];
 }

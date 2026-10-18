@@ -3,6 +3,7 @@
 // that property, and `AuthenticationContext.user` and `.session` are typed
 
 import { User } from './user';
+import type { Permission, Role } from './rbac.types';
 
 // too. It's one user type for the whole application.
 declare module '@nestjs/authentication' {
@@ -18,8 +19,8 @@ declare module 'fastify' {
 }
 
 export interface AuthorizeParams {
-  permissions?: string[];
-  roles?: string[];
-  anyRole?: string[];
-  anyPermission?: string[];
+  permissions?: Permission[];
+  roles?: Role[];
+  anyRole?: Role[];
+  anyPermission?: Permission[];
 }

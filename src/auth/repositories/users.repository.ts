@@ -4,6 +4,12 @@ import { InjectDrizzle } from '@nestjs/drizzle';
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import {
+  toPermission,
+  toRole,
+  type Permission,
+  type Role,
+} from '../types/rbac.types.js';
 import { User } from '../types/user.js';
 import {
   permissions,
@@ -42,7 +48,7 @@ export class UsersRepository {
     {
       passwordHash = null,
       emailVerified = false,
-      roles: roleSlugs = ['customer'],
+      roles: roleSlugs = [toRole('customer')],
     }: {
       passwordHash?: string | null;
       emailVerified?: boolean;
@@ -131,11 +137,11 @@ export class UsersRepository {
       // Another request created it first: the row is there, under its own address.
       return this.findByEmail(email);
     }
-    await this.assignRoleSlugs(created.id, ['customer']);
+    await this.assignRoleSlugs(created.id, [toRole('customer')]);
     const permissions =
       (await permissionNamesByUser(this.db, [created.id])).get(created.id) ??
       [];
-    return toUser(created, ['customer'], permissions);
+    return toUser(created, [toRole('customer')], permissions);
   }
 
   /**
@@ -162,10 +168,7 @@ export class UsersRepository {
    * exist yet: the first user of a fresh install registers before the roles
    * they ask for exist.
    */
-  private async assignRoleSlugs(
-    userId: string,
-    slugs: string[],
-  ): Promise<void> {
+  private async assignRoleSlugs(userId: string, slugs: Role[]): Promise<void> {
     if (slugs.length === 0) {
       return;
     }
@@ -368,13 +371,13 @@ export class UsersRepository {
   }
 
   /** The names of the permissions the user holds, direct and through roles. */
-  async getUserPermissionNames(userId: string): Promise<string[]> {
-    return (await this.getUserPermissions(userId)).map(
-      (permission) => permission.name,
+  async getUserPermissionNames(userId: string): Promise<Permission[]> {
+    return (await this.getUserPermissions(userId)).map((permission) =>
+      toPermission(permission.name),
     );
   }
 
-  async listUserPermissionNames(userId: string): Promise<string[]> {
+  async listUserPermissionNames(userId: string): Promise<Permission[]> {
     return this.getUserPermissionNames(userId);
   }
 
@@ -408,7 +411,7 @@ export class UsersRepository {
 
   async hasPermissionByName(
     userId: string,
-    permissionName: string,
+    permissionName: Permission,
   ): Promise<boolean> {
     const permission = await this.db
       .select({ id: permissions.id })
@@ -442,8 +445,8 @@ const normalize = (email: string) =>
 
 const toUser = (
   { passwordHash: _, ...account }: UserRow,
-  roles: string[],
-  permissions: string[] = [],
+  roles: Role[],
+  permissions: Permission[],
 ): User => ({ ...account, roles, permissions });
 
 /**
@@ -453,8 +456,8 @@ const toUser = (
 async function rolesByUser(
   db: NodePgDatabase,
   userIds: string[],
-): Promise<Map<string, string[]>> {
-  const byUser = new Map<string, string[]>();
+): Promise<Map<string, Role[]>> {
+  const byUser = new Map<string, Role[]>();
   if (userIds.length === 0) {
     return byUser;
   }
@@ -465,7 +468,7 @@ async function rolesByUser(
     .where(inArray(userRoles.userId, userIds));
   for (const { userId, slug } of rows) {
     const slugs = byUser.get(userId) ?? [];
-    slugs.push(slug);
+    slugs.push(toRole(slug));
     byUser.set(userId, slugs);
   }
   return byUser;
@@ -480,8 +483,8 @@ async function rolesByUser(
 async function permissionNamesByUser(
   db: NodePgDatabase,
   userIds: string[],
-): Promise<Map<string, string[]>> {
-  const byUser = new Map<string, string[]>();
+): Promise<Map<string, Permission[]>> {
+  const byUser = new Map<string, Permission[]>();
   if (userIds.length === 0) {
     return byUser;
   }
@@ -498,8 +501,9 @@ async function permissionNamesByUser(
     .where(inArray(userRoles.userId, userIds));
   for (const { userId, name } of [...direct, ...throughRoles]) {
     const names = byUser.get(userId) ?? [];
-    if (!names.includes(name)) {
-      names.push(name);
+    const permission = toPermission(name);
+    if (!names.includes(permission)) {
+      names.push(permission);
     }
     byUser.set(userId, names);
   }

@@ -5,7 +5,8 @@ import { Reflector } from '@nestjs/core';
 import { Authorize } from '../decorators/rbac.decorator';
 import { PUBLIC_API } from '../decorators/public.decorator';
 import { FastifyRequest } from 'fastify';
-import { AuthorizeParams } from '../types/auth-types';
+import type { AuthorizeParams } from '../types/auth-types';
+import type { Permission, Role } from '../types/rbac.types.js';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
@@ -41,7 +42,9 @@ export class AuthzGuard implements CanActivate {
 
     return false;
   }
-  private getRequiredAuthorizations(params: AuthorizeParams): string[] {
+  private getRequiredAuthorizations(
+    params: AuthorizeParams,
+  ): (Role | Permission)[] {
     return [
       ...new Set([
         ...(params.permissions ?? []),
@@ -51,7 +54,9 @@ export class AuthzGuard implements CanActivate {
       ]),
     ];
   }
-  private getOptionalAuthorizations(params: AuthorizeParams): string[] {
+  private getOptionalAuthorizations(
+    params: AuthorizeParams,
+  ): (Role | Permission)[] {
     return [
       ...new Set([
         // ...(params.permissions ?? []),

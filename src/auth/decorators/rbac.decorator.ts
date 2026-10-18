@@ -1,37 +1,20 @@
 import { Reflector } from '@nestjs/core';
-
-type AuthorizeParams = {
-  permissions?: string[];
-  roles?: string[];
-  anyRole?: string[];
-  anyPermission?: string[];
-};
-// | {
-//     permissions?: string[];
-//     anyRoles?: string[];
-//   }
-// | {
-//     roles?: string[];
-//     anyPermissions?: string[];
-//   }
-// | {
-//     anyRole?: string[];
-//     anyPermission?: string[];
-//   };
+import type { AuthorizeParams } from '../types/auth-types';
+import type { Permission, Role } from '../types/rbac.types';
 
 export const Authorize = Reflector.createDecorator<AuthorizeParams>();
 
-export const RequirePermission = (permission: string) =>
+export const RequirePermission = (permission: Permission) =>
   Authorize({ permissions: [permission] });
 
-export const RequirePermissions = (...permissions: string[]) =>
-  Authorize({ permissions: permissions });
+export const RequirePermissions = (...permissions: Permission[]) =>
+  Authorize({ permissions });
 
-export const RequireAnyPermission = (...permissions: string[]) =>
+export const RequireAnyPermission = (...permissions: Permission[]) =>
   Authorize({ anyPermission: permissions });
 
-export const RequireRoles = (...roles: string[]) => Authorize({ roles: roles });
-export const RequireRole = (role: string) => Authorize({ roles: [role] });
+export const RequireRoles = (...roles: Role[]) => Authorize({ roles });
+export const RequireRole = (role: Role) => Authorize({ roles: [role] });
 
-export const RequireAnyRole = (...roles: string[]) =>
+export const RequireAnyRole = (...roles: Role[]) =>
   Authorize({ anyRole: roles });
