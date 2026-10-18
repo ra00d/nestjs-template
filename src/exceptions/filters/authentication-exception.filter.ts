@@ -1,5 +1,4 @@
 import { AuthenticationError } from '@nestjs/authentication';
-import { AuthorizationError } from '@nestjs/authorization';
 import {
   ArgumentsHost,
   Catch,
@@ -14,6 +13,7 @@ import {
   type FilterReply,
   type FilterRequest,
 } from './error-response.js';
+import { AuthorizationError } from '../authorization.exception.js';
 
 /**
  * Translates the transport-agnostic errors of `@nestjs/authentication` and
