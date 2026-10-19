@@ -25,7 +25,6 @@ import { RBACPolicy } from './policies/rbac.policy';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { ConfigService } from '@nestjs/config';
 import { Env, trustedOrigins } from '../config/env';
-import { AuthorizationModule } from '@nestjs/authorization';
 
 @Module({
   imports: [

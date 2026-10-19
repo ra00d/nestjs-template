@@ -1,5 +1,5 @@
 import { AuthenticationError } from '@nestjs/authentication';
-import { AuthorizationError } from '@nestjs/authorization';
+import { AuthorizationError } from '../authorization.exception';
 import {
   ArgumentsHost,
   BadRequestException,
@@ -94,7 +94,7 @@ describe('AuthenticationExceptionFilter', () => {
   it('maps AuthorizationError denials without leaking policy details', () => {
     const { host, sent } = mockHost();
     new AuthenticationExceptionFilter().catch(
-      new AuthorizationError('forbidden', 'OrderPolicy', 'refund'),
+      new AuthorizationError('Forbidden', { status: 403 }),
       host,
     );
     expect(sent.status).toBe(HttpStatus.FORBIDDEN);
