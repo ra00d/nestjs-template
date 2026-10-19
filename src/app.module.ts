@@ -22,6 +22,7 @@ import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
+import { AbacModule } from './abac/abac.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuditModule } from './audit/audit.module';
@@ -37,10 +38,7 @@ import {
   HttpExceptionFilter,
 } from './exceptions/filters/index';
 import { HealthModule } from './health/health.module';
-import {
-  TimeoutInterceptor,
-  TransformInterceptor,
-} from './interceptors/index';
+import { TimeoutInterceptor, TransformInterceptor } from './interceptors/index';
 import { LoggerModule } from './logger/logger.module';
 import { TrimPipe } from './pipes/trim.pipe';
 import { REDIS_STORE } from './redis/redis.constants';
@@ -152,6 +150,10 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
 
     DatabaseModule,
     AuditModule,
+
+    // Dynamic attribute-based policies: `AbacService`, `AbacGuard` and the
+    // `/abac/policies` CRUD API (table `abac_policy`).
+    AbacModule,
 
     StorageModule.forRoot(),
 
