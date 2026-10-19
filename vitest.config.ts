@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
@@ -9,5 +9,8 @@ export default defineConfig({
     globals: true,
     root: './',
     include: ['**/*.spec.ts'],
+    // Compiled specs under dist/ must never run: `nest build` copies *.spec.ts
+    // through, and a stale copy would shadow the sources they were built from.
+    exclude: [...configDefaults.exclude, 'dist/**'],
   },
 });
