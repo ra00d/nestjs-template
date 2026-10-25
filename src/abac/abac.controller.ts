@@ -11,9 +11,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { CurrentUser } from '@nestjs/authentication';
+import { ApiMeta } from '../decorators/openapi-meta.decorator';
 import { AbacService } from './abac.service';
 import type { AbacEffect } from './abac.types';
 import {
+  abacPolicyIdParams,
+  abacPolicyListQueryParams,
+  abacPolicyListResponseSchema,
+  abacPolicyResponseSchema,
+  abacPolicySlugParams,
   createAbacPolicySchema,
   type CreateAbacPolicyDto,
   type UpdateAbacPolicyDto,
@@ -29,10 +35,15 @@ import {
  * Listing supports the filters the evaluator and admin UIs need:
  * `?resource=comment&action=update&effect=deny&isActive=true&search=owner&includeDeleted=true`.
  */
+@ApiMeta({ tags: 'ABAC' })
 @Controller('abac/policies')
 export class AbacController {
   constructor(private readonly abac: AbacService) {}
 
+  @ApiMeta({
+    q: abacPolicyListQueryParams,
+    res: abacPolicyListResponseSchema,
+  })
   @Get()
   async list(
     @Query('resource') resource?: string,
@@ -55,6 +66,10 @@ export class AbacController {
     });
   }
 
+  @ApiMeta({
+    body: createAbacPolicySchema,
+    res: { 201: abacPolicyResponseSchema },
+  })
   @Post()
   @HttpCode(201)
   async create(
@@ -65,16 +80,35 @@ export class AbacController {
   }
 
   /** Slug lookup for seeds and bootstraps; declared before `:id`. */
+  @ApiMeta({
+    param: abacPolicySlugParams,
+    res: { 200: abacPolicyResponseSchema.nullable() },
+  })
   @Get('slug/:slug')
   async getBySlug(@Param('slug') slug: string) {
     return this.abac.findPolicyBySlug(slug);
   }
 
+  @ApiMeta({
+    param: abacPolicyIdParams,
+    res: {
+      200: abacPolicyResponseSchema,
+      404: { description: 'The policy was not found.' },
+    },
+  })
   @Get(':id')
   async get(@Param('id', ParseIntPipe) id: number) {
     return this.abac.getPolicy(id);
   }
 
+  @ApiMeta({
+    param: abacPolicyIdParams,
+    body: updateAbacPolicySchema,
+    res: {
+      200: abacPolicyResponseSchema,
+      404: { description: 'The policy was not found.' },
+    },
+  })
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -84,6 +118,13 @@ export class AbacController {
     return this.abac.updatePolicy(id, body, actorId);
   }
 
+  @ApiMeta({
+    param: abacPolicyIdParams,
+    res: {
+      204: { description: 'The policy was soft-deleted.' },
+      404: { description: 'The policy was not found.' },
+    },
+  })
   @Delete(':id')
   @HttpCode(204)
   async remove(

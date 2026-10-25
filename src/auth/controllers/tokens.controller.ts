@@ -1,9 +1,23 @@
-import { Body, Controller, HttpCode, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Public, TokenService } from '@nestjs/authentication';
 import { Throttle, minutes } from '@nestjs/throttler';
-import { refreshTokenSchema, signInSchema, type RefreshTokenDto, type SignInDto } from '../dto/auth.schemas';
+import { ApiMeta } from '../../decorators/openapi-meta.decorator';
+import {
+  refreshTokenSchema,
+  signInSchema,
+  tokenPairResponseSchema,
+  type RefreshTokenDto,
+  type SignInDto,
+} from '../dto/auth.schemas';
 import { CredentialsService } from '../services/credentials.service';
 
+@ApiMeta({ tags: 'Auth' })
 @Public()
 @Controller('auth/token')
 export class TokensController {
@@ -12,11 +26,21 @@ export class TokensController {
     private readonly tokenService: TokenService,
   ) {}
 
+  @ApiMeta({
+    body: signInSchema,
+    res: {
+      200: tokenPairResponseSchema,
+      401: { description: 'Invalid email or password.' },
+    },
+  })
   @Throttle({ default: { limit: 5, ttl: minutes(15) } })
   @Post()
   @HttpCode(200)
   async issue(@Body({ schema: signInSchema }) body: SignInDto) {
-    const user = await this.credentialsService.verify(body.email, body.password);
+    const user = await this.credentialsService.verify(
+      body.email,
+      body.password,
+    );
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
@@ -28,6 +52,13 @@ export class TokensController {
   }
 
   // An unknown, expired or reused refresh token gets a 401.
+  @ApiMeta({
+    body: refreshTokenSchema,
+    res: {
+      200: tokenPairResponseSchema,
+      401: { description: 'The refresh token is invalid or has been reused.' },
+    },
+  })
   @Post('refresh')
   @HttpCode(200)
   refresh(@Body({ schema: refreshTokenSchema }) body: RefreshTokenDto) {
@@ -35,6 +66,12 @@ export class TokensController {
   }
 
   // Signs the client out on this device. Unknown tokens get the same answer, as in RFC 7009.
+  @ApiMeta({
+    body: refreshTokenSchema,
+    res: {
+      204: { description: 'The refresh token was revoked.' },
+    },
+  })
   @Post('revoke')
   @HttpCode(204)
   async revoke(@Body({ schema: refreshTokenSchema }) body: RefreshTokenDto) {

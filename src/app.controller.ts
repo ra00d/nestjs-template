@@ -2,7 +2,7 @@ import { Public } from '@nestjs/authentication';
 import { Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
 import z from 'zod';
 import { AppService } from './app.service';
-import { ApiMeta } from './decorators/openapi-response.decorator';
+import { ApiMeta } from './decorators/openapi-meta.decorator';
 
 const greet = z.object({
   msg: z.string().min(5),

@@ -103,3 +103,62 @@ export const updateAbacPolicySchema = z.object({
 });
 
 export type UpdateAbacPolicyDto = z.infer<typeof updateAbacPolicySchema>;
+
+// Response and parameter schemas for the policy API.
+
+const dateTimeSchema = z.date().meta({ format: 'date-time' });
+
+export const abacPolicyResponseSchema = z
+  .object({
+    id: z.number().int(),
+    createdAt: dateTimeSchema,
+    updatedAt: dateTimeSchema,
+    deletedAt: dateTimeSchema.nullable(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    resource: z.string(),
+    action: z.string(),
+    rules: abacRulesSchema,
+    effect: z.enum(['allow', 'deny']),
+    priority: z.number().int(),
+    isActive: z.boolean(),
+    expiresAt: dateTimeSchema.nullable(),
+    createdBy: z.string().nullable(),
+  })
+  .meta({ id: 'AbacPolicy' });
+
+export const abacPolicyListResponseSchema = z.array(abacPolicyResponseSchema);
+
+/**
+ * The filters `GET /abac/policies` accepts, as the query strings the route
+ * reads. Named descriptors merge with the route's `@Query(...)` metadata.
+ */
+export const abacPolicyListQueryParams = [
+  { name: 'resource', required: false, standardSchema: z.string() },
+  { name: 'action', required: false, standardSchema: z.string() },
+  {
+    name: 'effect',
+    required: false,
+    standardSchema: z.enum(['allow', 'deny']),
+  },
+  {
+    name: 'isActive',
+    required: false,
+    standardSchema: z.enum(['true', 'false']),
+  },
+  { name: 'search', required: false, standardSchema: z.string() },
+  {
+    name: 'includeDeleted',
+    required: false,
+    standardSchema: z.enum(['true', 'false']),
+  },
+];
+
+export const abacPolicyIdParams = [
+  { name: 'id', standardSchema: z.coerce.number().int().positive() },
+];
+
+export const abacPolicySlugParams = [
+  { name: 'slug', standardSchema: z.string().min(1) },
+];

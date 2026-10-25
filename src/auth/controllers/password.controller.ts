@@ -1,9 +1,20 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
-import { CurrentUser, SessionService, SignInService, TokenService } from '@nestjs/authentication';
+import {
+  CurrentUser,
+  SessionService,
+  SignInService,
+  TokenService,
+} from '@nestjs/authentication';
+import { ApiMeta } from '../../decorators/openapi-meta.decorator';
 import type { User } from '../types/user';
-import { changePasswordSchema, type ChangePasswordDto } from '../dto/auth.schemas';
+import {
+  changePasswordSchema,
+  passwordChangedResponseSchema,
+  type ChangePasswordDto,
+} from '../dto/auth.schemas';
 import { CredentialsService } from '../services/credentials.service';
 
+@ApiMeta({ tags: 'Auth' })
 @Controller('auth/password')
 export class PasswordController {
   constructor(
@@ -19,12 +30,29 @@ export class PasswordController {
    * password may still be signed in. A new password also invalidates the
    * reset links sent before it.
    */
+  @ApiMeta({
+    body: changePasswordSchema,
+    res: {
+      200: passwordChangedResponseSchema,
+      401: { description: 'The current password is incorrect.' },
+    },
+  })
   @Post('change')
   @HttpCode(200)
-  async change(@CurrentUser() user: User, @Body({ schema: changePasswordSchema }) body: ChangePasswordDto) {
-    await this.credentialsService.changePassword(user, body.currentPassword, body.newPassword);
+  async change(
+    @CurrentUser() user: User,
+    @Body({ schema: changePasswordSchema }) body: ChangePasswordDto,
+  ) {
+    await this.credentialsService.changePassword(
+      user,
+      body.currentPassword,
+      body.newPassword,
+    );
     const rotated = await this.signInService.rotateSession();
-    await this.sessionService.revokeAll(user.id, rotated?.session.id ? { except: rotated.session.id } : undefined);
+    await this.sessionService.revokeAll(
+      user.id,
+      rotated?.session.id ? { except: rotated.session.id } : undefined,
+    );
     await this.tokenService.revokeAll(user.id);
     return { passwordChanged: true };
   }

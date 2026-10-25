@@ -57,3 +57,71 @@ export const assignPermissionToUserSchema = z.object({
 export type AssignPermissionToUserDto = z.infer<
   typeof assignPermissionToUserSchema
 >;
+
+// Response schemas, matching the role and permission rows the RBAC routes
+// return.
+
+const dateTimeSchema = z.date().meta({ format: 'date-time' });
+
+export const roleResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    createdAt: dateTimeSchema,
+    updatedAt: dateTimeSchema,
+    deletedAt: dateTimeSchema.nullable(),
+  })
+  .meta({ id: 'Role' });
+
+export const permissionResponseSchema = z
+  .object({
+    id: z.string(),
+    name: z.string(),
+    slug: z.string(),
+    description: z.string().nullable(),
+    resource: z.string().nullable(),
+    action: z.string().nullable(),
+    createdAt: dateTimeSchema,
+    updatedAt: dateTimeSchema,
+    deletedAt: dateTimeSchema.nullable(),
+  })
+  .meta({ id: 'Permission' });
+
+export const rolesResponseSchema = z.array(roleResponseSchema);
+export const permissionsResponseSchema = z.array(permissionResponseSchema);
+
+export const okResponseSchema = z
+  .object({
+    ok: z.literal(true),
+  })
+  .meta({ id: 'OkResponse' });
+
+// Path parameter descriptors. Each one is named so it merges with the route's
+// own `@Param(...)` metadata instead of being expanded a second time.
+
+export const roleIdParams = [{ name: 'id', standardSchema: z.string().min(1) }];
+
+export const permissionIdParams = [
+  { name: 'id', standardSchema: z.string().min(1) },
+];
+
+export const rolePermissionParams = [
+  { name: 'id', standardSchema: z.string().min(1) },
+  { name: 'permissionId', standardSchema: z.string().min(1) },
+];
+
+export const userIdParams = [
+  { name: 'userId', standardSchema: z.string().min(1) },
+];
+
+export const userIdRoleParams = [
+  { name: 'userId', standardSchema: z.string().min(1) },
+  { name: 'roleId', standardSchema: z.string().min(1) },
+];
+
+export const userIdPermissionParams = [
+  { name: 'userId', standardSchema: z.string().min(1) },
+  { name: 'permissionId', standardSchema: z.string().min(1) },
+];

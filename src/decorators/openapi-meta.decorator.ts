@@ -12,15 +12,19 @@ import {
   type StandardSchemaObject,
 } from '@nestjs/swagger';
 
+export type ApiParameterMeta = StandardSchemaObject | Record<string, unknown>;
+
 export interface ApiMeta {
   res?:
     | StandardSchemaObject
     | ApiResponseOptions
     | Record<number, ApiResponseOptions | StandardSchemaObject>;
   tags?: string | string[];
-  q?: StandardSchemaObject;
+  /** One query schema, or one descriptor per query parameter. */
+  q?: ApiParameterMeta | ApiParameterMeta[];
   body?: StandardSchemaObject;
-  param?: StandardSchemaObject | Record<string, unknown>;
+  /** One path schema, or one descriptor per path parameter. */
+  param?: ApiParameterMeta | ApiParameterMeta[];
   headers?: unknown;
   consumes?: unknown;
 }
@@ -50,6 +54,10 @@ function isResponseRecord(
   );
 }
 
+function toMetaList<T>(value: T | T[]): T[] {
+  return Array.isArray(value) ? value : [value];
+}
+
 function toHeaderList(headers: unknown): Record<string, unknown>[] {
   if (Array.isArray(headers)) {
     return headers.filter(
@@ -74,7 +82,15 @@ export function ApiMeta(options: ApiMeta = {}) {
   }
 
   if (options.q !== undefined) {
-    decorators.push(ApiQuery({ standardSchema: options.q } as never));
+    for (const query of toMetaList(options.q)) {
+      decorators.push(
+        ApiQuery(
+          (isStandardSchema(query)
+            ? { standardSchema: query }
+            : query) as never,
+        ),
+      );
+    }
   }
 
   if (options.body !== undefined) {
@@ -82,14 +98,17 @@ export function ApiMeta(options: ApiMeta = {}) {
   }
 
   if (options.param !== undefined) {
-    const param =
-      typeof options.param === 'object' &&
-      options.param !== null &&
-      ('name' in options.param || 'standardSchema' in options.param)
-        ? options.param
-        : { standardSchema: options.param };
+    for (const parameter of toMetaList(options.param)) {
+      const param =
+        isStandardSchema(parameter) ||
+        (typeof parameter === 'object' &&
+          parameter !== null &&
+          ('name' in parameter || 'standardSchema' in parameter))
+          ? parameter
+          : { standardSchema: parameter };
 
-    decorators.push(ApiParam(param as never));
+      decorators.push(ApiParam(param as never));
+    }
   }
 
   if (options.headers !== undefined) {
@@ -112,10 +131,6 @@ export function ApiMeta(options: ApiMeta = {}) {
   }
 
   if (options.res !== undefined) {
-    // console.log(options.res['~standard']);
-
-    console.log(isStandardSchema(options.res));
-
     if (isStandardSchema(options.res)) {
       decorators.push(
         ApiResponse({ status: 200, standardSchema: options.res } as never),
