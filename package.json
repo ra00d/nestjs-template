@@ -14,7 +14,6 @@
     "db:seed": "nest start --entryFile seed",
     "deploy": "nest deploy",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "gen": "node tools/gen.ts",
     "cli": "node tools/cli/index.ts",
     "db": "node tools/cli/index.ts db",
     "gen:check": "tsc -p tools/tsconfig.json",
