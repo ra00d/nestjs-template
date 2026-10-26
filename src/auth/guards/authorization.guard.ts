@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { RBACPolicy } from '../policies/rbac.policy';
 import { Reflector } from '@nestjs/core';
@@ -7,12 +12,14 @@ import { PUBLIC_API } from '../decorators/public.decorator';
 import { FastifyRequest } from 'fastify';
 import type { AuthorizeParams } from '../types/auth-types';
 import type { Permission, Role } from '../types/rbac.types';
+import { AppLogger } from '@/logger';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
   constructor(
     private readonly rbacPolicy: RBACPolicy,
     private readonly reflector: Reflector,
+    private readonly logger: AppLogger,
   ) {}
   canActivate(
     context: ExecutionContext,
@@ -24,6 +31,8 @@ export class AuthzGuard implements CanActivate {
     if (isPublic) return true;
     const req = context.switchToHttp().getRequest<FastifyRequest>();
     const user = req.user;
+    this.logger.log(user);
+
     if (!user) return false;
     const authzParams = this.reflector.getAllAndOverride(Authorize, [
       context.getClass(),
@@ -47,8 +56,8 @@ export class AuthzGuard implements CanActivate {
   ): (Role | Permission)[] {
     return [
       ...new Set([
-        ...(params.permissions ?? []),
-        ...(params.roles ?? []),
+        ...(params?.permissions ?? []),
+        ...(params?.roles ?? []),
         // ...(params.anyRole ?? []),
         // ...(params.anyPermission ?? []),
       ]),
@@ -61,8 +70,8 @@ export class AuthzGuard implements CanActivate {
       ...new Set([
         // ...(params.permissions ?? []),
         // ...(params.roles ?? []),
-        ...(params.anyRole ?? []),
-        ...(params.anyPermission ?? []),
+        ...(params?.anyRole ?? []),
+        ...(params?.anyPermission ?? []),
       ]),
     ];
   }

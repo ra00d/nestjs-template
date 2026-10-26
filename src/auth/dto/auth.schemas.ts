@@ -1,5 +1,5 @@
 import { i18nIssueMessage } from '@nestjs/i18n';
-import { z } from 'zod';
+import z from 'zod';
 import { passwordSchema } from '../../utils/validation';
 
 /** Follows the password rules every setter checks: a minimum, on top of the hasher's own limits. */
@@ -74,7 +74,9 @@ const dateTimeSchema = z.date().meta({ format: 'date-time' });
 export const userResponseSchema = z
   .object({
     id: z.string(),
-    email: z.email(),
+    email: z.email().meta({
+      examples: ['user@info.com'],
+    }),
     emailVerified: z.boolean(),
     createdAt: dateTimeSchema,
     updatedAt: dateTimeSchema,
