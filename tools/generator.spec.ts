@@ -1,13 +1,13 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { applyPlan } from './cli/commands/gen/lib/apply.ts';
-import { entityDefinitionText } from './cli/commands/gen/lib/append-entity.ts';
-import { buildPlan } from './cli/commands/gen/lib/plan.ts';
-import { resolveConfig } from './cli/commands/gen/lib/config.ts';
-import { toCamelCase, toSnakeCase } from './cli/commands/gen/lib/names.ts';
-import { defineEntity, type EntityDefinition } from './cli/commands/gen/lib/types.ts';
-import { config as userConfig } from './gen.config.ts';
+import { applyPlan } from './cli/commands/gen/lib/apply';
+import { entityDefinitionText } from './cli/commands/gen/lib/append-entity';
+import { buildPlan } from './cli/commands/gen/lib/plan';
+import { resolveConfig } from './cli/commands/gen/lib/config';
+import { toCamelCase, toSnakeCase } from './cli/commands/gen/lib/names';
+import { defineEntity, type EntityDefinition } from './cli/commands/gen/lib/types';
+import { config as userConfig } from './gen.config';
 
 const settings = resolveConfig(userConfig);
 

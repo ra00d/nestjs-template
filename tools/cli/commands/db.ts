@@ -2,16 +2,16 @@ import { writeFile } from 'node:fs/promises';
 import * as p from '@clack/prompts';
 import { Command } from 'commander';
 import { check, exportSql, generate, pull } from 'drizzle-kit/cli';
-import { getConfig, loadCliConfig, type DbCommandConfig } from '../config.ts';
-import { cancel } from '../tui/cancel.ts';
-import { loadDatabaseConfig } from './db/config.ts';
+import { getConfig, loadCliConfig, type DbCommandConfig } from '../config';
+import { cancel } from '../tui/cancel';
+import { loadDatabaseConfig } from './db/config';
 import {
   databaseName,
   ensureDatabase,
   resetDatabase,
   runMigrations,
-} from './db/database.ts';
-import { runSeed } from './db/seed.ts';
+} from './db/database';
+import { runSeed } from './db/seed';
 
 interface DrizzleError {
   code: string;

@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
-import type { FieldDefinition, FieldType } from './lib/types.ts';
-import { cancel } from '../../tui/cancel.ts';
-import { FIELD_TYPES } from './constants.ts';
+import type { FieldDefinition, FieldType } from './lib/types';
+import { cancel } from '../../tui/cancel';
+import { FIELD_TYPES } from './constants';
 
 export const askField = async (): Promise<FieldDefinition> => {
   const name = await p.text({

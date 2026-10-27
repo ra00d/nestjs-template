@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { createDbCommand } from './commands/db.ts';
-import { createGenCommand } from './commands/gen.ts';
+import { createDbCommand } from './commands/db';
+import { createGenCommand } from './commands/gen';
 
 /**
  * Multi-command CLI entry point. Register additional commands here.

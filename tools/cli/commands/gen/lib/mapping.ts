@@ -1,4 +1,4 @@
-import type { FieldType } from './types.ts';
+import type { FieldType } from './types';
 
 /** List-query operators accepted in the `?filters=` item payload. */
 export type Operator = 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'in';

@@ -1,8 +1,8 @@
 import { Scope } from 'ts-morph';
-import { toCamelCase } from './names.ts';
-import type { EntityContext } from './context.ts';
-import { importPath, targetEntityType, targetTypeName } from './paths.ts';
-import { buildFile } from './project.ts';
+import { toCamelCase } from './names';
+import type { EntityContext } from './context';
+import { importPath, targetEntityType, targetTypeName } from './paths';
+import { buildFile } from './project';
 
 /**
  * Whether the relation loads `users`. Those are read through

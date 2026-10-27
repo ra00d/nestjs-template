@@ -1,11 +1,11 @@
 import { existsSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { Project, SyntaxKind } from 'ts-morph';
-import { createContexts } from './context.ts';
-import { DEFAULT_CONFIG, type ResolvedConfig } from './config.ts';
-import { toCamelCase } from './names.ts';
-import { importPath } from './paths.ts';
-import type { EntityDefinition } from './types.ts';
+import { createContexts } from './context';
+import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
+import { toCamelCase } from './names';
+import { importPath } from './paths';
+import type { EntityDefinition } from './types';
 
 
 export interface SchemaEditResult {

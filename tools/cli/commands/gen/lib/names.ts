@@ -1,4 +1,4 @@
-import type { EntityDefinition } from './types.ts';
+import type { EntityDefinition } from './types';
 
 /** `authorId` -> `author_id`, `createdAt` -> `created_at`. */
 export const toSnakeCase = (value: string): string =>

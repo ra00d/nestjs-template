@@ -1,18 +1,18 @@
-import { buildControllerFile } from './build-controller.ts';
-import { buildDbFile, buildDbIndexFile } from './build-db.ts';
-import { buildCreateDtoFile, buildListQueryFile, buildUpdateDtoFile } from './build-dto.ts';
-import { buildEntityFile } from './build-entity.ts';
-import { buildModuleFile } from './build-module.ts';
-import { buildRelationsFile } from './build-relations.ts';
-import { buildRepositoryFile } from './build-repository.ts';
-import { buildRepositorySpecFile } from './build-repospec.ts';
-import { buildServiceFile } from './build-service.ts';
-import { buildSpecFile } from './build-spec.ts';
-import { buildTableFile } from './build-table.ts';
-import { DEFAULT_CONFIG, type ResolvedConfig } from './config.ts';
-import { createContexts } from './context.ts';
-import { entityNames } from './names.ts';
-import type { EntityDefinition } from './types.ts';
+import { buildControllerFile } from './build-controller';
+import { buildDbFile, buildDbIndexFile } from './build-db';
+import { buildCreateDtoFile, buildListQueryFile, buildUpdateDtoFile } from './build-dto';
+import { buildEntityFile } from './build-entity';
+import { buildModuleFile } from './build-module';
+import { buildRelationsFile } from './build-relations';
+import { buildRepositoryFile } from './build-repository';
+import { buildRepositorySpecFile } from './build-repospec';
+import { buildServiceFile } from './build-service';
+import { buildSpecFile } from './build-spec';
+import { buildTableFile } from './build-table';
+import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
+import { createContexts } from './context';
+import { entityNames } from './names';
+import type { EntityDefinition } from './types';
 
 export interface FilePlan {
   /** Path relative to the repository root, e.g. `src/posts/posts.service.ts`. */

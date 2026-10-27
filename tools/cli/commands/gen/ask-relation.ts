@@ -1,9 +1,9 @@
 import * as p from '@clack/prompts';
-import type { RelationDefinition } from './lib/types.ts';
-import type { EntityDefinition } from './lib/types.ts';
-import { entityNames } from './lib/names.ts';
-import { cancel } from '../../tui/cancel.ts';
-import { singular } from '../../utils/strings.ts';
+import type { RelationDefinition } from './lib/types';
+import type { EntityDefinition } from './lib/types';
+import { entityNames } from './lib/names';
+import { cancel } from '../../tui/cancel';
+import { singular } from '../../utils/strings';
 
 export const askRelation = async (
   tables: string[],

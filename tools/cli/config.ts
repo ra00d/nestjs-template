@@ -1,10 +1,12 @@
+import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 import {
   DEFAULT_CONFIG as DEFAULT_GEN_CONFIG,
   type GenConfig,
-} from './commands/gen/lib/config.ts';
-import type { EntityDefinition } from './commands/gen/lib/types.ts';
+} from './commands/gen/lib/config';
+import type { EntityDefinition } from './commands/gen/lib/types';
+import { registerTsResolver } from './ts-resolver';
 
 export const DEFAULT_CONFIG_PATH = 'cli.config.ts';
 
@@ -91,13 +93,20 @@ export function resetCliConfig(): void {
 export async function loadCliConfig(
   path: string = DEFAULT_CONFIG_PATH,
 ): Promise<CliConfig> {
+  registerTsResolver();
   try {
-    const module = await import(pathToFileURL(resolve(path)).href);
+    const module = await import(
+      /* webpackIgnore: true */ pathToFileURL(resolve(path)).href
+    );
     const raw = module.default ?? module.cliConfig ?? module.config;
     const input =
       typeof raw === 'function' ? raw() : (raw as CliConfigInput | undefined);
     cachedCliConfig = defineConfig(input);
-  } catch {
+  } catch (error) {
+    if (existsSync(resolve(path))) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Could not load ${path}: ${message}`);
+    }
     cachedCliConfig = defineConfig();
   }
   return cachedCliConfig;

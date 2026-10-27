@@ -1,4 +1,4 @@
-import type { EntityContext } from './context.ts';
+import type { EntityContext } from './context';
 
 /** `posts.service.spec.ts`: service unit test with a mocked repository. */
 export const buildSpecFile = (context: EntityContext): { path: string; content: string } => {

@@ -1,4 +1,4 @@
-import type { FieldType } from './lib/types.ts';
+import type { FieldType } from './lib/types';
 
 /**
  * Shared paths and option lists for the gen command.

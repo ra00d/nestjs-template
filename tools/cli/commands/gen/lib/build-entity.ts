@@ -1,7 +1,7 @@
-import { tsField } from './mapping.ts';
-import type { EntityContext } from './context.ts';
-import { targetEntityType } from './paths.ts';
-import { buildFile } from './project.ts';
+import { tsField } from './mapping';
+import type { EntityContext } from './context';
+import { targetEntityType } from './paths';
+import { buildFile } from './project';
 
 /** `post.ts`: the entity interface, its relation fields and the list page shape. */
 export const buildEntityFile = (context: EntityContext): { path: string; content: string } => {

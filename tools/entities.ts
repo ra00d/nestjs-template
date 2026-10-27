@@ -1,4 +1,4 @@
-import { defineEntity } from './cli/commands/gen/lib/types.ts';
+import { defineEntity } from './cli/commands/gen/lib/types';
 
 /**
  * Every module the generator scaffolds. Add an entity here (or run

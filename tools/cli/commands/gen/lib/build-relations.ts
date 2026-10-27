@@ -1,8 +1,8 @@
 import { VariableDeclarationKind } from 'ts-morph';
-import { toCamelCase } from './names.ts';
-import type { EntityContext } from './context.ts';
-import { importPath } from './paths.ts';
-import { buildFile } from './project.ts';
+import { toCamelCase } from './names';
+import type { EntityContext } from './context';
+import { importPath } from './paths';
+import { buildFile } from './project';
 
 /** Tables the relations part needs: own table first, then referenced tables. */
 const neededTables = (context: EntityContext): string[] => {

@@ -1,20 +1,18 @@
-import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
 import * as p from '@clack/prompts';
 import { Command } from 'commander';
 import { Project } from 'ts-morph';
-import { appendEntity } from './gen/lib/append-entity.ts';
-import { resolveConfig } from './gen/lib/config.ts';
-import { entityNames } from './gen/lib/names.ts';
-import { buildPlan } from './gen/lib/plan.ts';
-import { getConfig, loadCliConfig } from '../config.ts';
-import { wizard } from './gen/wizard.ts';
-import { run } from './gen/run.ts';
-import { ENTITIES_PATH } from './gen/constants.ts';
-import { generateController } from './gen/generators/controller.ts';
-import { generateModule } from './gen/generators/module.ts';
-import { generateRepository } from './gen/generators/repository.ts';
-import { generateService } from './gen/generators/service.ts';
+import { appendEntity } from './gen/lib/append-entity';
+import { resolveConfig } from './gen/lib/config';
+import { entityNames } from './gen/lib/names';
+import { buildPlan } from './gen/lib/plan';
+import { getConfig, loadCliConfig } from '../config';
+import { wizard } from './gen/wizard';
+import { run } from './gen/run';
+import { ENTITIES_PATH } from './gen/constants';
+import { generateController } from './gen/generators/controller';
+import { generateModule } from './gen/generators/module';
+import { generateRepository } from './gen/generators/repository';
+import { generateService } from './gen/generators/service';
 
 export function createGenCommand(): Command {
   const program = new Command();
@@ -150,23 +148,4 @@ export function createGenCommand(): Command {
   registerResourceCommand('repository', generateRepository, 'repo');
 
   return program;
-}
-
-const isDirectRun = (): boolean => {
-  try {
-    return fileURLToPath(import.meta.url) === resolve(process.argv[1] ?? '');
-  } catch {
-    return false;
-  }
-};
-
-if (isDirectRun()) {
-  createGenCommand()
-    .parseAsync(process.argv)
-    .catch((error) => {
-      if (error instanceof Error) {
-        p.log.error(error.message);
-      }
-      process.exit(1);
-    });
 }

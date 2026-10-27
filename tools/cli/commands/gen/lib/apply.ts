@@ -2,11 +2,11 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from 'node:path';
 import { format as prettierFormat } from 'prettier';
 import { IndentationText, Project, QuoteKind } from 'ts-morph';
-import { DEFAULT_CONFIG, type ResolvedConfig } from './config.ts';
-import { SCHEMA_BARREL, applyAppModuleEdits, applySchemaBarrel, applySchemaEdits } from './edit-targets.ts';
-import { entityNames, toKebabCase } from './names.ts';
-import type { EntityPlan } from './plan.ts';
-import type { EntityDefinition } from './types.ts';
+import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
+import { SCHEMA_BARREL, applyAppModuleEdits, applySchemaBarrel, applySchemaEdits } from './edit-targets';
+import { entityNames, toKebabCase } from './names';
+import type { EntityPlan } from './plan';
+import type { EntityDefinition } from './types';
 
 export interface Change {
   path: string;

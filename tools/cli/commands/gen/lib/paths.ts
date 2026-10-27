@@ -1,6 +1,6 @@
 import { posix } from 'node:path';
-import { singularize, toCamelCase, toPascalCase } from './names.ts';
-import type { EntityContext } from './context.ts';
+import { singularize, toCamelCase, toPascalCase } from './names';
+import type { EntityContext } from './context';
 
 /**
  * Repo-relative import path from one source file to another, with the `.ts`

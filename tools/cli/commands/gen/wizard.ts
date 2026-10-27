@@ -3,13 +3,13 @@ import type {
   EntityDefinition,
   FieldDefinition,
   RelationDefinition,
-} from './lib/types.ts';
-import type { FieldType } from './lib/types.ts';
-import { entityNames } from './lib/names.ts';
-import { cancel } from '../../tui/cancel.ts';
-import { askField } from './ask-field.ts';
-import { askRelation } from './ask-relation.ts';
-import { ENTITIES_PATH } from './constants.ts';
+} from './lib/types';
+import type { FieldType } from './lib/types';
+import { entityNames } from './lib/names';
+import { cancel } from '../../tui/cancel';
+import { askField } from './ask-field';
+import { askRelation } from './ask-relation';
+import { ENTITIES_PATH } from './constants';
 
 export const wizard = async (
   entities: EntityDefinition[],

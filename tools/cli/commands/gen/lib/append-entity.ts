@@ -1,5 +1,5 @@
 import { Project, SyntaxKind } from 'ts-morph';
-import type { EntityDefinition } from './types.ts';
+import type { EntityDefinition } from './types';
 
 /** Renders a definition as the `defineEntity({...})` block used in entities.ts. */
 export const entityDefinitionText = (entity: EntityDefinition): string => {

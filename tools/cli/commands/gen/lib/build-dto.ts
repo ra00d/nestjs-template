@@ -5,10 +5,10 @@ import {
   OPERATORS_BY_TYPE,
   zodField,
   zodFilterValue,
-} from './mapping.ts';
-import type { EntityContext } from './context.ts';
-import { importPath } from './paths.ts';
-import { buildFile } from './project.ts';
+} from './mapping';
+import type { EntityContext } from './context';
+import { importPath } from './paths';
+import { buildFile } from './project';
 
 const quoted = (values: string[]): string => values.map((value) => `'${value}'`).join(', ');
 

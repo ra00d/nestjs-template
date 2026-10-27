@@ -1,7 +1,7 @@
-import { isFilterableType } from './mapping.ts';
-import { entityNames, toCamelCase, toSnakeCase, type EntityNames } from './names.ts';
-import { DEFAULT_CONFIG, type ResolvedConfig } from './config.ts';
-import type { EntityDefinition, FieldDefinition, RelationDefinition } from './types.ts';
+import { isFilterableType } from './mapping';
+import { entityNames, toCamelCase, toSnakeCase, type EntityNames } from './names';
+import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
+import type { EntityDefinition, FieldDefinition, RelationDefinition } from './types';
 
 export interface ComputedField extends FieldDefinition {
   /** Snake_case column name as stored in the database. */

@@ -1,6 +1,6 @@
-import type { EntityContext } from './context.ts';
-import { importPath } from './paths.ts';
-import { buildFile } from './project.ts';
+import type { EntityContext } from './context';
+import { importPath } from './paths';
+import { buildFile } from './project';
 
 /** `posts.module.ts`: wires the controller, service and repository together. */
 export const buildModuleFile = (context: EntityContext): { path: string; content: string } => {

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { registerTsResolver } from '../../ts-resolver';
 
 /** Where the SQL migrations live and how to reach PostgreSQL. */
 export interface DatabaseConfig {
@@ -36,7 +37,10 @@ export async function loadDatabaseConfig(
     url: process.env['DATABASE_URL'] ?? FALLBACK_DATABASE_URL,
   };
   if (!existsSync(resolve(path))) return fallback;
-  const module = (await import(pathToFileURL(resolve(path)).href)) as {
+  registerTsResolver();
+  const module = (await import(
+    /* webpackIgnore: true */ pathToFileURL(resolve(path)).href
+  )) as {
     default?: DrizzleConfigLike;
   };
   const config = module.default ?? {};

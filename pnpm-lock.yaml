@@ -260,6 +260,9 @@ importers:
       '@nestjs/testing':
         specifier: ^12.0.1
         version: 12.1.2(@nestjs/common@12.1.2(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@7.2.0))(@nestjs/core@12.1.2)(@nestjs/platform-express@12.1.2)
+      '@rspack/cli':
+        specifier: ^2.2.9
+        version: 2.2.9(@rspack/core@2.2.9)
       '@rspack/core':
         specifier: ^2.2.9
         version: 2.2.9
@@ -293,6 +296,9 @@ importers:
       prettier:
         specifier: ^3.4.2
         version: 3.9.9
+      run-script-webpack-plugin:
+        specifier: ^0.2.3
+        version: 0.2.3
       source-map-support:
         specifier: ^0.5.21
         version: 0.5.21
@@ -1401,6 +1407,16 @@ packages:
 
   '@rspack/binding@2.2.9':
     resolution: {integrity: sha512-Y8wDJoRo8n0KXDGq6J3KGVekkUQcOcUHSppMHoJv8JLbNBEsyaaKiDx4ljNTGEDtTON0CRbMEWbSiLRe+bJxOQ==, tarball: https://registry.npmjs.org/@rspack/binding/-/binding-2.2.9.tgz}
+
+  '@rspack/cli@2.2.9':
+    resolution: {integrity: sha512-oaFot9B5oensD70w2ikkVRugqpXlAOUYu034JMFsAIrwurEHnoYcUJo+nw06M3Fv4Tx48QCcO7bBh0ynDiDKtw==, tarball: https://registry.npmjs.org/@rspack/cli/-/cli-2.2.9.tgz}
+    hasBin: true
+    peerDependencies:
+      '@rspack/core': ^2.0.0-0
+      '@rspack/dev-server': ^2.0.0-0
+    peerDependenciesMeta:
+      '@rspack/dev-server':
+        optional: true
 
   '@rspack/core@2.2.9':
     resolution: {integrity: sha512-Tp6/ZdM5UrGB3BeLfvh69l1iX03PZ46IgXjKqubVEuJVAhnOjpshooH/YAxcxR0AymcBLKA997Z4v+LV2aXzCw==, tarball: https://registry.npmjs.org/@rspack/core/-/core-2.2.9.tgz}
@@ -2796,6 +2812,10 @@ packages:
     resolution: {integrity: sha512-tvVnVv01b8c1RrA6Ep7JkStj85Guv/YrMcwqYQnwjsAS2cTmmPGBBjAjpCW7RrSodNSoE2/qg9O4bceNvUuDgQ==, tarball: https://registry.npmjs.org/run-async/-/run-async-2.4.1.tgz}
     engines: {node: '>=0.12.0'}
 
+  run-script-webpack-plugin@0.2.3:
+    resolution: {integrity: sha512-GX1JqSNAmtGMAcE3iyLFlnxWpxKBWPNkpac/02w2RF3xynTjA8LWLkFzMzlvATA3c3kARWnT2OrsnvJviB79Lg==, tarball: https://registry.npmjs.org/run-script-webpack-plugin/-/run-script-webpack-plugin-0.2.3.tgz}
+    engines: {node: '>=14'}
+
   rxjs@7.8.2:
     resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==, tarball: https://registry.npmjs.org/rxjs/-/rxjs-7.8.2.tgz}
 
@@ -4013,6 +4033,10 @@ snapshots:
       '@rspack/binding-win32-arm64-msvc': 2.2.9
       '@rspack/binding-win32-ia32-msvc': 2.2.9
       '@rspack/binding-win32-x64-msvc': 2.2.9
+
+  '@rspack/cli@2.2.9(@rspack/core@2.2.9)':
+    dependencies:
+      '@rspack/core': 2.2.9
 
   '@rspack/core@2.2.9':
     dependencies:
@@ -5317,6 +5341,8 @@ snapshots:
     optional: true
 
   run-async@2.4.1: {}
+
+  run-script-webpack-plugin@0.2.3: {}
 
   rxjs@7.8.2:
     dependencies:

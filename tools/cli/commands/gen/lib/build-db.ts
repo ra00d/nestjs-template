@@ -1,5 +1,5 @@
-import type { EntityContext } from './context.ts';
-import { buildFile } from './project.ts';
+import type { EntityContext } from './context';
+import { buildFile } from './project';
 
 /**
  * `<module>/db.ts`: the module's database entry point, mirroring the auth

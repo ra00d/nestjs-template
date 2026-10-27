@@ -1,7 +1,7 @@
 import { Scope } from 'ts-morph';
-import type { EntityContext } from './context.ts';
-import { importPath } from './paths.ts';
-import { buildFile } from './project.ts';
+import type { EntityContext } from './context';
+import { importPath } from './paths';
+import { buildFile } from './project';
 
 /** `services/posts.service.ts`: thin domain layer over the repository. */
 export const buildServiceFile = (context: EntityContext): { path: string; content: string } => {

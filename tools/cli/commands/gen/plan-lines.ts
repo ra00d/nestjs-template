@@ -1,10 +1,10 @@
 import { existsSync } from 'node:fs';
-import type { EntityDefinition } from './lib/types.ts';
-import type { ResolvedConfig } from './lib/config.ts';
-import { buildPlan } from './lib/plan.ts';
-import { entityNames } from './lib/names.ts';
-import { SCHEMA_BARREL } from './lib/edit-targets.ts';
-import { APP_MODULE_PATH } from './constants.ts';
+import type { EntityDefinition } from './lib/types';
+import type { ResolvedConfig } from './lib/config';
+import { buildPlan } from './lib/plan';
+import { entityNames } from './lib/names';
+import { SCHEMA_BARREL } from './lib/edit-targets';
+import { APP_MODULE_PATH } from './constants';
 
 export const planLines = (
   definitions: EntityDefinition[],

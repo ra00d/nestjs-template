@@ -1,5 +1,5 @@
-import { isUsersRelation } from './build-repository.ts';
-import type { EntityContext } from './context.ts';
+import { isUsersRelation } from './build-repository';
+import type { EntityContext } from './context';
 
 /** One relation's fixtures: the `select()` mocks it consumes, and the assertions on the loaded result. */
 interface RelationFixture {

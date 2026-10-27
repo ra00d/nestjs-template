@@ -1,9 +1,9 @@
 import { VariableDeclarationKind } from 'ts-morph';
-import { DRIZZLE_COLUMN_BUILDER } from './mapping.ts';
-import { toCamelCase } from './names.ts';
-import type { EntityContext } from './context.ts';
-import { importPath } from './paths.ts';
-import { buildFile } from './project.ts';
+import { DRIZZLE_COLUMN_BUILDER } from './mapping';
+import { toCamelCase } from './names';
+import type { EntityContext } from './context';
+import { importPath } from './paths';
+import { buildFile } from './project';
 
 const literal = (value: string | number | boolean): string =>
   typeof value === 'string' ? `'${value}'` : String(value);

@@ -1,10 +1,10 @@
 import * as p from '@clack/prompts';
-import type { EntityDefinition } from './lib/types.ts';
-import type { ResolvedConfig } from './lib/config.ts';
-import { buildPlan } from './lib/plan.ts';
-import { applyPlan } from './lib/apply.ts';
-import { planLines } from './plan-lines.ts';
-import { SCHEMA_BARREL } from './lib/edit-targets.ts';
+import type { EntityDefinition } from './lib/types';
+import type { ResolvedConfig } from './lib/config';
+import { buildPlan } from './lib/plan';
+import { applyPlan } from './lib/apply';
+import { planLines } from './plan-lines';
+import { SCHEMA_BARREL } from './lib/edit-targets';
 
 export const run = async (
   definitions: EntityDefinition[],

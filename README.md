@@ -38,6 +38,7 @@ definitions in `tools/entities.ts`, controlled by `tools/gen.config.ts`
 entity types live):
 
 ```bash
+pnpm build:cli           # compile the developer CLI into bin/cli.js
 pnpm gen                 # all defined entities
 pnpm gen posts comments  # the named entities
 pnpm gen add             # interactive wizard to define a new entity

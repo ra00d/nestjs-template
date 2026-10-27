@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getConfig } from '../../../config.ts';
+import { getConfig } from '../../../config';
 
 const pascalCase = (value: string): string =>
   value
