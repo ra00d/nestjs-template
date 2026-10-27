@@ -152,27 +152,20 @@ describe('plan', () => {
     expect(update).toContain('export type UpdatePostDto = z.infer<typeof updatePostSchema>;');
     expect(update).not.toContain('createPostSchema');
 
-    // The list query: pagination, sort whitelist, a validated filter item
-    // union, search and include.
+    // The list query: shared pagination/order/search, sort whitelist, a
+    // filter-field enum and include.
     const list = file(plans, 'src/modules/posts/dto/list-post.query.ts');
     expect(list).toContain('export const listPostQuerySchema = z.object({');
-    expect(list).toContain('page: z.coerce.number().int().min(1).default(1),');
-    expect(list).toContain('limit: z.coerce.number().int().min(1).max(100).default(20),');
+    expect(list).toContain("import { baseQuerySchema } from '@/common';");
+    expect(list).toContain('...baseQuerySchema.shape,');
+    expect(list).not.toContain('page: z.coerce');
+    expect(list).not.toContain('limit: z.coerce');
+    expect(list).not.toContain("order: z.enum(['asc', 'desc'])");
     expect(list).toContain("sort: z.enum(['createdAt', 'updatedAt', 'title', 'body', 'status', 'authorId', 'views']).default('createdAt'),");
-    expect(list).toContain("order: z.enum(['asc', 'desc']).default('desc'),");
-    expect(list).toContain("import { filterItemsSchema } from '../../../database/filters';");
-    expect(list).toContain('const postFilterItemSchema = z.union([');
-    expect(list).toContain("field: z.literal('title'),");
-    expect(list).toContain("operator: z.enum(['eq', 'ne', 'contains']),");
-    expect(list).toContain('value: z.array(z.string()),');
-    expect(list).toContain("field: z.literal('status'),");
-    expect(list).toContain("operator: z.enum(['eq', 'ne']),");
-    expect(list).toContain("value: z.enum(['draft', 'published']),");
-    expect(list).toContain("value: z.array(z.enum(['draft', 'published'])),");
-    expect(list).toContain("field: z.literal('views'),");
-    expect(list).toContain("operator: z.enum(['eq', 'ne', 'gt', 'gte', 'lt', 'lte']),");
-    expect(list).toContain('value: z.coerce.number().int(),');
-    expect(list).toContain('filters: filterItemsSchema(postFilterItemSchema).optional(),');
+    expect(list).toContain("import { createFiltersSchema } from '../../../database/filters';");
+    expect(list).toContain("const filterFields = z.enum(['title', 'body', 'status', 'authorId', 'views']);");
+    expect(list).toContain('filters: createFiltersSchema(filterFields).optional(),');
+    expect(list).not.toContain('filterItemsSchema');
     expect(list).toContain('search: z.string().optional(),');
     expect(list).toContain('export const parseIncludes =');
     expect(list).toContain('export type ListPostQueryDto = z.infer<typeof listPostQuerySchema>;');
