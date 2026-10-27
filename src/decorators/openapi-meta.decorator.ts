@@ -73,7 +73,7 @@ function toHeaderList(headers: unknown): Record<string, unknown>[] {
   return [];
 }
 
-export function ApiMeta(options: ApiMeta = {}) {
+export function ApiMeta(options: ApiMetaOptions = {}) {
   const decorators = [];
 
   if (options.tags !== undefined) {
@@ -82,6 +82,7 @@ export function ApiMeta(options: ApiMeta = {}) {
   }
 
   if (options.q !== undefined) {
+    console.log(options.q);
     for (const query of toMetaList(options.q)) {
       decorators.push(
         ApiQuery(

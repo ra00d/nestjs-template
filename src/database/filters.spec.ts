@@ -36,15 +36,24 @@ const itemSchema = z.union([
 const dialect = new PgDialect();
 
 describe('filterItemsSchema', () => {
-  it('parses a JSON array and coerces values per field type', () => {
-    const parsed = filterItemsSchema(itemSchema).parse(
-      '[{"field":"views","operator":"gte","value":"10"},{"field":"name","operator":"contains","value":"foo"}]',
-    );
+  it('parses an array of JSON-encoded items and coerces values per field type', () => {
+    const parsed = filterItemsSchema(itemSchema).parse([
+      '{"field":"views","operator":"gte","value":"10"}',
+      '{"field":"name","operator":"contains","value":"foo"}',
+    ]);
 
     expect(parsed).toEqual([
       { field: 'views', operator: 'gte', value: 10 },
       { field: 'name', operator: 'contains', value: 'foo' },
     ]);
+  });
+
+  it('parses a single JSON-encoded item', () => {
+    const parsed = filterItemsSchema(itemSchema).parse(
+      '{"field":"views","operator":"gte","value":"10"}',
+    );
+
+    expect(parsed).toEqual({ field: 'views', operator: 'gte', value: 10 });
   });
 
   it('rejects malformed JSON', () => {
@@ -55,7 +64,7 @@ describe('filterItemsSchema', () => {
 
   it('rejects fields the entity does not expose', () => {
     const result = filterItemsSchema(itemSchema).safeParse(
-      '[{"field":"missing","operator":"eq","value":"x"}]',
+      '{"field":"missing","operator":"eq","value":"x"}',
     );
 
     expect(result.success).toBe(false);
@@ -63,7 +72,7 @@ describe('filterItemsSchema', () => {
 
   it('rejects operators the field does not support', () => {
     const result = filterItemsSchema(itemSchema).safeParse(
-      '[{"field":"name","operator":"gte","value":"x"}]',
+      '{"field":"name","operator":"gte","value":"x"}',
     );
 
     expect(result.success).toBe(false);

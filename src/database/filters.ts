@@ -50,14 +50,19 @@ export const filterCondition = (
 export const buildFilterConditions = (
   columns: FilterColumns,
   filters: FilterItem[] = [],
-): SQL<unknown>[] =>
-  filters.map(({ field, operator, value }) => {
+): SQL<unknown>[] => {
+  if (!Array.isArray(filters)) {
+    filters = [filters];
+  }
+
+  return filters.map(({ field, operator, value }) => {
     const column = columns[field];
     if (!column) {
       throw new Error(`Unknown filter field "${field}"`);
     }
     return filterCondition(column, operator, value);
   });
+};
 
 /**
  * Parses the JSON-encoded `?filters=[{"field":"views","operator":"gte","value":10}]`
@@ -65,16 +70,112 @@ export const buildFilterConditions = (
  */
 export const filterItemsSchema = <T extends z.ZodType>(item: T) =>
   z
+    .array(
+      z
+        .string()
+        .transform((value, ctx) => {
+          try {
+            return JSON.parse(value) as unknown;
+          } catch {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'filters must be a JSON array',
+            });
+            return z.NEVER;
+          }
+        })
+        .pipe(item)
+        .meta({
+          examples: ["{ field: 'views', operator: 'gte', value: 10 }"],
+        }),
+    )
+    .or(
+      z
+        .string()
+        .transform((value, ctx) => {
+          try {
+            return JSON.parse(value) as unknown;
+          } catch {
+            ctx.addIssue({
+              code: 'custom',
+              message: 'filters must be a JSON array',
+            });
+            return z.NEVER;
+          }
+        })
+        .pipe(item)
+        .meta({
+          examples: ["{ field: 'views', operator: 'gte', value: 10 }"],
+        }),
+    )
+
+    .meta({
+      description:
+        'JSON-encoded `?filters=[{"field":"views","operator":"gte","value":10}]`',
+      examples: ["{ field: 'views', operator: 'gte', value: 10 }"],
+    });
+
+const operatorValueSchemas = {
+  eq: z.union([z.string(), z.number(), z.boolean()]),
+  ne: z.union([z.string(), z.number(), z.boolean()]),
+  gt: z.number(),
+  gte: z.number(),
+  lt: z.number(),
+  lte: z.number(),
+  in: z.array(z.union([z.string(), z.number()])),
+  notIn: z.array(z.union([z.string(), z.number()])),
+  contains: z.string(),
+} as const;
+
+function createFilterSchema<T extends z.ZodType>(fieldSchema: T) {
+  const filters = Object.entries(operatorValueSchemas).map(
+    ([operator, value]) =>
+      z.object({
+        field: fieldSchema,
+        operator: z.literal(operator as keyof typeof operatorValueSchemas),
+        value,
+      }),
+  );
+
+  return z.discriminatedUnion('operator', filters as any);
+}
+
+export function createFiltersSchema<T extends z.ZodType>(fieldSchema: T) {
+  return z
     .string()
     .transform((value, ctx) => {
       try {
-        return JSON.parse(value) as unknown;
+        return JSON.parse(value);
       } catch {
         ctx.addIssue({
           code: 'custom',
-          message: 'filters must be a JSON array',
+          message: 'Invalid JSON',
         });
+
         return z.NEVER;
       }
     })
-    .pipe(z.array(item));
+    .pipe(z.array(createFilterSchema(fieldSchema)));
+  // z.array(createFilterSchema(fieldSchema));
+}
+// //
+// export const filterItemsSchema = <T extends z.ZodType>(item: T) =>
+//   z
+//     .preprocess((value, ctx) => {
+//       if (typeof value !== 'string') return value;
+//
+//       try {
+//         return JSON.parse(value);
+//       } catch {
+//         ctx.addIssue({
+//           code: 'custom',
+//           message: 'filters must be a JSON array',
+//         });
+//         return z.NEVER;
+//       }
+//     }, z.array(item))
+//     .meta({
+//       description:
+//         'JSON-encoded `?filters=[{"field":"views","operator":"gte","value":10}]`',
+//     });
+//
