@@ -20,7 +20,8 @@
     "strictPropertyInitialization": false,
     "types": ["vitest/globals", "node", "@rspack/core/module"],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "modules/*": ["./src/modules/*"]
     }
   },
   "exclude": ["cli.config.ts"]
