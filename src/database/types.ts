@@ -1,7 +1,15 @@
-import type { EmptyRelations } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import type { NodePgTransaction } from 'drizzle-orm/node-postgres';
-import type { PgTransactionConfig } from 'drizzle-orm/pg-core';
+import { Brand } from '@/types';
+import type { EmptyRelations, SQL } from 'drizzle-orm';
+import type {
+  NodePgDatabase,
+  NodePgTransaction,
+} from 'drizzle-orm/node-postgres';
+import type {
+  PgTable,
+  PgTableWithColumns,
+  PgTransactionConfig,
+  TableConfig,
+} from 'drizzle-orm/pg-core';
 
 /**
  * The Drizzle database attached through `DrizzleModule`. Use this when a
@@ -77,3 +85,57 @@ export type FilterItem = {
   operator: FilterOperator;
   value: FilterValue;
 };
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
+
+export type Select<T extends PgTableWithColumns<TableConfig>> =
+  T['$inferSelect'];
+export type Insert<T extends PgTableWithColumns<TableConfig>> =
+  T['$inferInsert'];
+
+/** Tables managed by this repository must have an `id` primary key. */
+export type TableWithId = PgTableWithColumns<TableConfig> & { id: ColumnLike };
+export type ColumnLike = Brand<any, 'Column'>; // structural constraint kept loose — see note below
+
+export type Id = string | number;
+
+export interface OrderByItem<T extends PgTable> {
+  /** Must be a column of the table — fully type-checked. */
+  column: T[keyof T];
+  direction: 'asc' | 'desc';
+}
+
+export interface ListParams<T extends PgTable> {
+  where?: SQL;
+  orderBy?: OrderByItem<T>[];
+  limit?: number;
+  offset?: number;
+}
+
+export interface CursorParams<T extends PgTable> extends Omit<
+  ListParams<T>,
+  'offset'
+> {
+  /** Pass the `nextCursor` from the previous page to get the next page. */
+  cursor?: unknown;
+  /** Column the cursor refers to. Defaults to `id`. */
+  cursorColumn?: T[keyof T];
+}
+
+export interface Page<T> {
+  rows: T[];
+  /** Pass this as `cursor` to fetch the next page. `null` when exhausted. */
+  nextCursor?: unknown;
+}
+
+export interface BaseRepoOptions {
+  /** Human-readable name for error messages. Defaults to the table name. */
+  entityName?: string;
+  /**
+   * Name of the `updatedAt` timestamp column, if the table has one.
+   * When set, `updateById`/`update` stamp it automatically.
+   */
+  updatedAtColumn?: keyof PgTable; // e.g. 'updatedAt'
+}
