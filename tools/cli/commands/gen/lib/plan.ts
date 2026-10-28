@@ -1,6 +1,10 @@
 import { buildControllerFile } from './build-controller';
-import { buildDbFile, buildDbIndexFile } from './build-db';
-import { buildCreateDtoFile, buildListQueryFile, buildUpdateDtoFile } from './build-dto';
+import { buildDbFile } from './build-db';
+import {
+  buildCreateDtoFile,
+  buildListQueryFile,
+  buildUpdateDtoFile,
+} from './build-dto';
 import { buildEntityFile } from './build-entity';
 import { buildModuleFile } from './build-module';
 import { buildRelationsFile } from './build-relations';
@@ -31,7 +35,10 @@ export const buildEntityFiles = (
   all: EntityDefinition[] = [entity],
   settings: ResolvedConfig = DEFAULT_CONFIG,
 ): FilePlan[] => {
-  const context = createContexts(all, settings).find((candidate) => candidate.entity === entity) ?? createContexts([entity], settings)[0];
+  const context =
+    createContexts(all, settings).find(
+      (candidate) => candidate.entity === entity,
+    ) ?? createContexts([entity], settings)[0];
   const relationsFile = buildRelationsFile(context);
   return [
     buildEntityFile(context),
@@ -39,7 +46,7 @@ export const buildEntityFiles = (
     buildUpdateDtoFile(context),
     buildListQueryFile(context),
     buildDbFile(context),
-    buildDbIndexFile(context),
+    //buildDbIndexFile(context),
     buildTableFile(context),
     ...(relationsFile ? [relationsFile] : []),
     buildRepositoryFile(context),
@@ -55,7 +62,11 @@ export const buildPlan = (
   selected: EntityDefinition[],
   all: EntityDefinition[] = selected,
   settings: ResolvedConfig = DEFAULT_CONFIG,
-): EntityPlan[] => selected.map((entity) => ({ entity, files: buildEntityFiles(entity, all, settings) }));
+): EntityPlan[] =>
+  selected.map((entity) => ({
+    entity,
+    files: buildEntityFiles(entity, all, settings),
+  }));
 
 /** Name, dir and declared fields for reports. */
 export const describeEntity = (
@@ -63,5 +74,9 @@ export const describeEntity = (
   settings: ResolvedConfig = DEFAULT_CONFIG,
 ): { name: string; dir: string; fields: number } => {
   const names = entityNames(entity);
-  return { name: names.name, dir: `${settings.modulesDir}/${names.dir}`, fields: (entity.fields ?? []).length };
+  return {
+    name: names.name,
+    dir: `${settings.modulesDir}/${names.dir}`,
+    fields: (entity.fields ?? []).length,
+  };
 };

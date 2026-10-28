@@ -1,4 +1,4 @@
-import { existsSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { Project, SyntaxKind } from 'ts-morph';
 import { createContexts } from './context';
@@ -6,7 +6,6 @@ import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
 import { toCamelCase } from './names';
 import { importPath } from './paths';
 import type { EntityDefinition } from './types';
-
 
 export interface SchemaEditResult {
   warnings: string[];
@@ -36,13 +35,20 @@ export const applySchemaEdits = (
       if (!field.references) continue;
       const [targetTable] = field.references.split('.');
       if (!known.has(toCamelCase(targetTable))) {
-        warnings.push(`${context.names.name}.${field.name} references unknown table "${targetTable}"`);
+        warnings.push(
+          `${context.names.name}.${field.name} references unknown table "${targetTable}"`,
+        );
       }
     }
     for (const relation of context.relations) {
-      const target = relation.type === 'one' ? relation.references.split('.')[0] : relation.target;
+      const target =
+        relation.type === 'one'
+          ? relation.references.split('.')[0]
+          : relation.target;
       if (!known.has(toCamelCase(target))) {
-        warnings.push(`${context.names.name} relation "${relation.name}" points at unknown table "${target}"`);
+        warnings.push(
+          `${context.names.name} relation "${relation.name}" points at unknown table "${target}"`,
+        );
       }
     }
   }
@@ -63,7 +69,12 @@ export const applyAppModuleEdits = (
 
   const moduleDecorator = appFile.getClass('AppModule')?.getDecorator('Module');
   if (!moduleDecorator) {
-    return { warnings: ['AppModule has no @Module decorator; register generated modules manually.'], changed };
+    return {
+      warnings: [
+        'AppModule has no @Module decorator; register generated modules manually.',
+      ],
+      changed,
+    };
   }
   const importsArray = moduleDecorator
     .getArguments()[0]
@@ -72,17 +83,31 @@ export const applyAppModuleEdits = (
     ?.asKind(SyntaxKind.PropertyAssignment)
     ?.getInitializerIfKind(SyntaxKind.ArrayLiteralExpression);
   if (!importsArray) {
-    return { warnings: ['AppModule has no imports array; register generated modules manually.'], changed };
+    return {
+      warnings: [
+        'AppModule has no imports array; register generated modules manually.',
+      ],
+      changed,
+    };
   }
 
   for (const context of contexts) {
     const { plural, name } = context.names;
     const className = `${plural}Module`;
-    const from = importPath(appModulePath, join(root, context.moduleDir, `${name}.module.ts`));
-    const declaration = appFile.getImportDeclaration((item) =>
-      item.getNamedImports().some((specifier) => specifier.getName() === className),
+    const from = importPath(
+      appModulePath,
+      join(root, context.moduleDir, `${name}.module.ts`),
     );
-    if (importsArray.getElements().some((element) => element.getText() === className)) {
+    const declaration = appFile.getImportDeclaration((item) =>
+      item
+        .getNamedImports()
+        .some((specifier) => specifier.getName() === className),
+    );
+    if (
+      importsArray
+        .getElements()
+        .some((element) => element.getText() === className)
+    ) {
       // Already registered: only fix the specifier when the module moved.
       if (declaration && declaration.getModuleSpecifierValue() !== from) {
         declaration.setModuleSpecifier(from);
@@ -91,7 +116,10 @@ export const applyAppModuleEdits = (
       continue;
     }
     if (!declaration) {
-      appFile.addImportDeclaration({ moduleSpecifier: from, namedImports: [className] });
+      appFile.addImportDeclaration({
+        moduleSpecifier: from,
+        namedImports: [className],
+      });
     } else if (declaration.getModuleSpecifierValue() !== from) {
       declaration.setModuleSpecifier(from);
     }
@@ -103,20 +131,25 @@ export const applyAppModuleEdits = (
   // `modulesDir` that no current entity claims, plus their array elements.
   // (Relation wiring lives in the app's own composition and is untouched.)
   const appDir = posix.dirname(posix.relative(root, appModulePath));
-  const expectedClasses = new Set(contexts.map((context) => `${context.names.plural}Module`));
+  const expectedClasses = new Set(
+    contexts.map((context) => `${context.names.plural}Module`),
+  );
   for (const declaration of appFile.getImportDeclarations()) {
     const specifier = declaration.getModuleSpecifierValue();
     if (!specifier.startsWith('.')) continue;
     const resolved = posix.normalize(posix.join(appDir, specifier));
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    const stale = declaration.getNamedImports().filter((item) => !expectedClasses.has(item.getName()));
+    const stale = declaration
+      .getNamedImports()
+      .filter((item) => !expectedClasses.has(item.getName()));
     if (stale.length === 0) continue;
     const staleNames = new Set(stale.map((item) => item.getName()));
     for (const item of stale) item.remove();
     if (declaration.getNamedImports().length === 0) declaration.remove();
     const elements = importsArray.getElements();
     for (let index = elements.length - 1; index >= 0; index -= 1) {
-      if (staleNames.has(elements[index].getText())) importsArray.removeElement(index);
+      if (staleNames.has(elements[index].getText()))
+        importsArray.removeElement(index);
     }
     const dir = resolved.split('/').at(-2) ?? 'unknown';
     warnings.push(`Unregistered ${dir} from AppModule: no longer defined.`);
@@ -127,12 +160,15 @@ export const applyAppModuleEdits = (
   return { warnings, changed };
 };
 
-/** Path of the schema barrel aggregating every module's `db.ts`, relative to the repo root. */
-export const SCHEMA_BARREL = 'src/db-schema.ts';
+/** Path of the schema barrel aggregating every module's `db/module-name.schema.ts`, relative to the repo root. */
+export const SCHEMA_BARREL = 'src/database/schema.ts';
+
+/** Path of the relations barrel aggregating every module's `db/module-name.relations.ts`, relative to the repo root. */
+export const RELATIONS_BARREL = 'src/database/relations.ts';
 
 /**
- * Registers the entities' `db.ts` files in `src/db-schema.ts` as plain
- * re-exports (`export * from './modules/roles/db';`), mirroring the
+ * Registers the entities' `db.ts` files in the configured schema barrel as
+ * plain re-exports (`export * from './modules/roles/db';`), mirroring the
  * existing auth entry. Unlike aliased namespaces, plain re-exports stay
  * visible to drizzle-kit. The file is created with the same shape when
  * absent. Entries of modules that left `entities.ts` are pruned.
@@ -146,12 +182,14 @@ export const applySchemaBarrel = (
 ): { warnings: string[]; changed: boolean } => {
   const warnings: string[] = [];
   if (!existsSync(barrelPath)) {
+    mkdirSync(posix.dirname(barrelPath), { recursive: true });
     writeFileSync(barrelPath, '// All drizzle schemas\n\nexport {};\n', 'utf8');
   }
   const barrelFile = project.addSourceFileAtPath(barrelPath);
   const before = barrelFile.getFullText();
   const contexts = createContexts(entities, settings);
   const barrelDir = posix.dirname(posix.relative(root, barrelPath));
+  const label = posix.relative(root, barrelPath);
   const expected = new Set<string>();
 
   for (const context of contexts) {
@@ -160,17 +198,26 @@ export const applySchemaBarrel = (
     expected.add(from);
     const starExported = barrelFile
       .getExportDeclarations()
-      .some((item) => item.isNamespaceExport() && item.getModuleSpecifierValue() === from);
+      .some(
+        (item) =>
+          item.isNamespaceExport() && item.getModuleSpecifierValue() === from,
+      );
     if (!starExported) {
       barrelFile.addExportDeclaration({ moduleSpecifier: from });
     }
     // Migrate the previous aliased form (`import { schema as XSchema }`)
     // to plain re-exports.
-    const declaration = barrelFile.getImportDeclaration((item) => item.getModuleSpecifierValue() === from);
+    const declaration = barrelFile.getImportDeclaration(
+      (item) => item.getModuleSpecifierValue() === from,
+    );
     if (declaration) {
-      const removed = declaration.getNamedImports().map((item) => item.getName());
+      const removed = declaration
+        .getNamedImports()
+        .map((item) => item.getName());
       declaration.remove();
-      const target = barrelFile.getExportDeclarations().find((item) => !item.getModuleSpecifier());
+      const target = barrelFile
+        .getExportDeclarations()
+        .find((item) => !item.getModuleSpecifier());
       if (target) {
         for (const item of target.getNamedExports()) {
           if (removed.includes(item.getName())) item.remove();
@@ -184,30 +231,116 @@ export const applySchemaBarrel = (
   // `export *` form.
   for (const declaration of barrelFile.getImportDeclarations()) {
     const specifier = declaration.getModuleSpecifierValue();
-    if (!specifier.startsWith('.') || !/\/db(\.js)?$/.test(specifier) || expected.has(specifier)) continue;
+    if (
+      !specifier.startsWith('.') ||
+      !/\/db(\.js)?$/.test(specifier) ||
+      expected.has(specifier)
+    )
+      continue;
     const resolved = posix.normalize(posix.join(barrelDir, specifier));
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    const removed = declaration.getNamedImports().map((item) => item.getText().split(' as ').pop() ?? '');
+    const removed = declaration
+      .getNamedImports()
+      .map((item) => item.getText().split(' as ').pop() ?? '');
     declaration.remove();
-    const target = barrelFile.getExportDeclarations().find((item) => !item.getModuleSpecifier());
+    const target = barrelFile
+      .getExportDeclarations()
+      .find((item) => !item.getModuleSpecifier());
     if (target) {
       for (const item of target.getNamedExports()) {
         if (removed.includes(item.getName())) item.remove();
       }
     }
-    warnings.push(`Unregistered ${(resolved.split('/').at(-2) ?? 'unknown')} from src/db-schema.ts: no longer defined.`);
+    warnings.push(
+      `Unregistered ${resolved.split('/').at(-2) ?? 'unknown'} from ${label}: no longer defined.`,
+    );
   }
   for (const declaration of barrelFile.getExportDeclarations()) {
     if (!declaration.isNamespaceExport()) continue;
     const specifier = declaration.getModuleSpecifierValue();
-    if (!specifier || !specifier.startsWith('.') || expected.has(specifier)) continue;
+    if (!specifier || !specifier.startsWith('.') || expected.has(specifier))
+      continue;
     const resolved = posix.normalize(posix.join(barrelDir, specifier));
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
     declaration.remove();
-    warnings.push(`Unregistered ${(resolved.split('/').at(-2) ?? 'unknown')} from src/db-schema.ts: no longer defined.`);
+    warnings.push(
+      `Unregistered ${resolved.split('/').at(-2) ?? 'unknown'} from ${label}: no longer defined.`,
+    );
   }
 
   const changed = barrelFile.getFullText() !== before;
+  if (changed) barrelFile.saveSync();
+  return { warnings, changed };
+};
+
+/**
+ * Registers the entities' `db/<module>.relations.ts` files in
+ * `src/database/relations.ts` as plain re-exports
+ * (`export * from './modules/roles/db/roles.relations';`). The file is
+ * created with the same shape when absent, and entries of modules that left
+ * `entities.ts` (or no longer declare relations) are pruned.
+ */
+export const applyRelationsBarrel = (
+  project: Project,
+  barrelPath: string,
+  entities: EntityDefinition[],
+  settings: ResolvedConfig = DEFAULT_CONFIG,
+  root: string = process.cwd(),
+): { warnings: string[]; changed: boolean } => {
+  const warnings: string[] = [];
+  const existed = existsSync(barrelPath);
+  if (!existed) {
+    mkdirSync(posix.dirname(barrelPath), { recursive: true });
+    writeFileSync(
+      barrelPath,
+      '// All drizzle relations\n\nexport {};\n',
+      'utf8',
+    );
+  }
+  const barrelFile = project.addSourceFileAtPath(barrelPath);
+  const before = barrelFile.getFullText();
+  const contexts = createContexts(entities, settings);
+  const barrelDir = posix.dirname(posix.relative(root, barrelPath));
+  const expected = new Set<string>();
+
+  for (const context of contexts) {
+    if (context.relations.length === 0) continue;
+    const { moduleDir, names } = context;
+    const from = importPath(
+      barrelPath,
+      join(root, moduleDir, 'db', `${names.name}.relations.ts`),
+    );
+    expected.add(from);
+    const starExported = barrelFile
+      .getExportDeclarations()
+      .some(
+        (item) =>
+          item.isNamespaceExport() && item.getModuleSpecifierValue() === from,
+      );
+    if (!starExported) {
+      barrelFile.addExportDeclaration({ moduleSpecifier: from });
+    }
+  }
+
+  // Prune entries for modules that left `entities.ts` or stopped declaring
+  // relations. Only generated module paths are touched; hand-written entries
+  // (e.g. auth) stay.
+  for (const declaration of barrelFile.getExportDeclarations()) {
+    if (!declaration.isNamespaceExport()) continue;
+    const specifier = declaration.getModuleSpecifierValue();
+    if (!specifier || !specifier.startsWith('.') || expected.has(specifier))
+      continue;
+    const resolved = posix.normalize(posix.join(barrelDir, specifier));
+    if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
+    declaration.remove();
+    const moduleName =
+      posix.relative(settings.modulesDir, resolved).split('/')[0] || 'unknown';
+    warnings.push(
+      `Unregistered ${moduleName} from ${posix.relative(root, barrelPath)}: no longer defined.`,
+    );
+  }
+
+  const changed = !existed || barrelFile.getFullText() !== before;
   if (changed) barrelFile.saveSync();
   return { warnings, changed };
 };

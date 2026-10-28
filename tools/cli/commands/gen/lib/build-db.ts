@@ -6,9 +6,11 @@ import { buildFile } from './project';
  * module (`src/auth/db.ts`). Re-exported namespaces are aggregated in
  * `src/db-schema.ts`.
  */
-export const buildDbFile = (context: EntityContext): { path: string; content: string } => ({
+export const buildDbFile = (
+  context: EntityContext,
+): { path: string; content: string } => ({
   path: `${context.moduleDir}/db.ts`,
-  content: `export * from './db/index';\n`,
+  content: `export * from './db/${context.names.name}.schema';\n`,
 });
 
 /**
@@ -17,7 +19,9 @@ export const buildDbFile = (context: EntityContext): { path: string; content: st
  * `src/db-schema.ts`. Relations parts live in `db/<module>.relations.ts`
  * for later composition and stay out of the index.
  */
-export const buildDbIndexFile = (context: EntityContext): { path: string; content: string } => {
+export const buildDbIndexFile = (
+  context: EntityContext,
+): { path: string; content: string } => {
   const { names, moduleDir } = context;
   const path = `${moduleDir}/db/index.ts`;
   const content = buildFile(path, (file) => {
