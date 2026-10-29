@@ -46,8 +46,7 @@ const relationMember = (
 /**
  * `db/posts.relations.ts`: this module's relations part, built with
  * `defineRelationsPart`. The part only imports tables (never other parts),
- * so module files stay acyclic: composition happens in
- * `src/database/relations.ts`.
+ * so module files stay acyclic: composition happens in `src/db.ts`.
  */
 export const buildRelationsFile = (
   context: EntityContext,

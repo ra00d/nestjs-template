@@ -4,7 +4,7 @@ import type { ResolvedConfig } from './lib/config';
 import { buildPlan } from './lib/plan';
 import { applyPlan } from './lib/apply';
 import { planLines } from './plan-lines';
-import { RELATIONS_BARREL, SCHEMA_BARREL } from './lib/edit-targets';
+import { SCHEMA_BARREL } from './lib/edit-targets';
 
 export const run = async (
   definitions: EntityDefinition[],
@@ -61,11 +61,8 @@ export const run = async (
   }
   if (created > 0 && result.edited.includes(SCHEMA_BARREL)) {
     p.log.info(
-      `New tables were added under each module’s db/ folder and wired into ${SCHEMA_BARREL}.`,
+      `New tables and relation parts were wired into ${SCHEMA_BARREL}.`,
     );
-  }
-  if (created > 0 && result.edited.includes(RELATIONS_BARREL)) {
-    p.log.info(`Relation parts were wired into ${RELATIONS_BARREL}.`);
   }
   for (const warning of result.warnings) {
     p.log.warn(warning);

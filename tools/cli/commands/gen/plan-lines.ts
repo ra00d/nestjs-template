@@ -3,7 +3,7 @@ import type { EntityDefinition } from './lib/types';
 import type { ResolvedConfig } from './lib/config';
 import { buildPlan } from './lib/plan';
 import { entityNames } from './lib/names';
-import { RELATIONS_BARREL, SCHEMA_BARREL } from './lib/edit-targets';
+import { SCHEMA_BARREL } from './lib/edit-targets';
 import { APP_MODULE_PATH } from './constants';
 
 export const planLines = (
@@ -26,7 +26,6 @@ export const planLines = (
     }
   }
   lines.push(`[edit]     ${SCHEMA_BARREL}`);
-  lines.push(`[edit]     ${RELATIONS_BARREL}`);
   lines.push(`[edit]     ${APP_MODULE_PATH}`);
   return lines;
 };

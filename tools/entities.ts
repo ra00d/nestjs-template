@@ -21,16 +21,9 @@ export const entities = [
         default: 'draft',
         searchable: true,
       },
-      { name: 'authorId', type: 'text', references: 'users.id' },
       { name: 'views', type: 'integer', default: 0 },
     ],
     relations: [
-      {
-        name: 'author',
-        type: 'one',
-        field: 'authorId',
-        references: 'users.id',
-      },
       {
         name: 'comments',
         type: 'many',
@@ -45,16 +38,9 @@ export const entities = [
     fields: [
       { name: 'postId', type: 'text', references: 'posts.id' },
       { name: 'body', type: 'text', searchable: true },
-      { name: 'authorId', type: 'text', references: 'users.id' },
     ],
     relations: [
       { name: 'post', type: 'one', field: 'postId', references: 'posts.id' },
-      {
-        name: 'author',
-        type: 'one',
-        field: 'authorId',
-        references: 'users.id',
-      },
     ],
     timestamps: true,
   }),

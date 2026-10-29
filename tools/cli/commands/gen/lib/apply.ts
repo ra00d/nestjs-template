@@ -10,10 +10,8 @@ import { format as prettierFormat } from 'prettier';
 import { IndentationText, Project, QuoteKind } from 'ts-morph';
 import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
 import {
-  RELATIONS_BARREL,
   SCHEMA_BARREL,
   applyAppModuleEdits,
-  applyRelationsBarrel,
   applySchemaBarrel,
   applySchemaEdits,
 } from './edit-targets';
@@ -96,7 +94,6 @@ export const applyPlan = async (
   const externalSchemaFile = join(root, settings.externalSchema);
   const appModuleFile = join(root, 'src/app.module.ts');
   const schemaBarrelFile = join(root, SCHEMA_BARREL);
-  const relationsBarrelFile = join(root, RELATIONS_BARREL);
   const modulesRoot = join(root, settings.modulesDir);
 
   const project = new Project({
@@ -155,23 +152,6 @@ export const applyPlan = async (
       'utf8',
     );
     edited.push(schemaBarrelFile);
-  }
-
-  const relationsBarrelResult = applyRelationsBarrel(
-    project,
-    relationsBarrelFile,
-    plans.map((plan) => plan.entity),
-    settings,
-    root,
-  );
-  warnings.push(...relationsBarrelResult.warnings);
-  if (relationsBarrelResult.changed) {
-    writeFileSync(
-      relationsBarrelFile,
-      await format(readFileSync(relationsBarrelFile, 'utf8')),
-      'utf8',
-    );
-    edited.push(relationsBarrelFile);
   }
 
   const appModuleResult = applyAppModuleEdits(

@@ -52,10 +52,17 @@ export const users = pgTable('users', {
 });
 `;
 
-const BARREL_FIXTURE = `import { schema as AuthSchema } from '../auth/db';
+const BARREL_FIXTURE = `import * as authSchema from '../auth/db';
+import * as authRelations from '../auth/db/auth.relations';
 
-// All drizzle schemas
-export { AuthSchema };
+// All drizzle schemas and relations
+export const schema = {
+  ...authSchema,
+};
+
+export const relations = {
+  ...authRelations.authRelations,
+};
 `;
 
 const APP_MODULE_FIXTURE = `import { Module } from '@nestjs/common';
@@ -78,9 +85,8 @@ export class AppModule {}
 const withTempRepo = async (run: (root: string) => Promise<void> | void): Promise<void> => {
   const root = mkdtempSync(join(tmpdir(), 'gen-'));
   mkdirSync(join(root, 'src', 'auth', 'db'), { recursive: true });
-  mkdirSync(join(root, 'src', 'database'), { recursive: true });
   writeFileSync(join(root, 'src/auth/db/auth.schema.ts'), EXTERNAL_SCHEMA_FIXTURE);
-  writeFileSync(join(root, 'src/database/schema.ts'), BARREL_FIXTURE);
+  writeFileSync(join(root, 'src/db.ts'), BARREL_FIXTURE);
   writeFileSync(join(root, 'src/app.module.ts'), APP_MODULE_FIXTURE);
   try {
     await run(root);
@@ -290,20 +296,22 @@ describe('apply', () => {
       expect(first.changes.every((change) => change.action === 'created')).toBe(true);
       expect(first.warnings).toEqual([]);
       expect(first.edited).toEqual([
-        join(root, 'src/database/schema.ts'),
-        join(root, 'src/database/relations.ts'),
+        join(root, 'src/db.ts'),
         join(root, 'src/app.module.ts'),
       ]);
 
-      const barrel = readFileSync(join(root, 'src/database/schema.ts'), 'utf8');
-      expect(barrel).toContain("import { schema as AuthSchema } from '../auth/db';");
-      expect(barrel).toContain("export * from '../modules/posts/db';");
-      expect(barrel).toContain("export * from '../modules/comments/db';");
-      expect(barrel).not.toContain('PostsSchema');
-
-      const relationsBarrel = readFileSync(join(root, 'src/database/relations.ts'), 'utf8');
-      expect(relationsBarrel).toContain("export * from '../modules/posts/db/posts.relations';");
-      expect(relationsBarrel).toContain("export * from '../modules/comments/db/comments.relations';");
+      const barrel = readFileSync(join(root, 'src/db.ts'), 'utf8');
+      expect(barrel).toContain("import * as authSchema from '../auth/db';");
+      expect(barrel).toContain("import * as postsSchema from 'modules/posts/db';");
+      expect(barrel).toContain("import * as postsRelations from 'modules/posts/db/posts.relations';");
+      expect(barrel).toContain("import * as commentsSchema from 'modules/comments/db';");
+      expect(barrel).toContain("import * as commentsRelations from 'modules/comments/db/comments.relations';");
+      expect(barrel).toContain('...postsSchema,');
+      expect(barrel).toContain('...postsRelations.postsRelations,');
+      expect(barrel).toContain('...commentsSchema,');
+      expect(barrel).toContain('...commentsRelations.commentsRelations,');
+      expect(barrel).toContain("export * from 'modules/posts/db';");
+      expect(barrel).toContain("export * from 'modules/comments/db';");
 
       const appModule = readFileSync(join(root, 'src/app.module.ts'), 'utf8');
       expect(appModule).toContain("import { PostsModule } from './modules/posts/posts.module';");
@@ -337,31 +345,23 @@ describe('apply', () => {
       await applyPlan(buildPlan(entities2, entities2, settings), { force: false, entities: entities2, root, settings });
 
       const reduced = await applyPlan(buildPlan([posts], entities2, settings), { force: false, entities: [posts], root, settings });
-      expect(reduced.warnings).toContain('Unregistered comments from src/database/schema.ts: no longer defined.');
-      expect(reduced.warnings).toContain('Unregistered comments from src/database/relations.ts: no longer defined.');
+      expect(reduced.warnings).toContain('Unregistered comments from src/db.ts: no longer defined.');
       expect(reduced.warnings).toContain('Unregistered comments from AppModule: no longer defined.');
 
-      const barrel = readFileSync(join(root, 'src/database/schema.ts'), 'utf8');
-      expect(barrel).not.toContain('comments/db');
-      expect(barrel).toContain("export * from '../modules/posts/db';");
-      const relationsBarrel = readFileSync(join(root, 'src/database/relations.ts'), 'utf8');
-      expect(relationsBarrel).not.toContain('comments.relations');
-      expect(relationsBarrel).toContain("export * from '../modules/posts/db/posts.relations';");
+      const barrel = readFileSync(join(root, 'src/db.ts'), 'utf8');
+      expect(barrel).not.toContain('commentsSchema');
+      expect(barrel).not.toContain('commentsRelations');
+      expect(barrel).toContain("import * as postsSchema from 'modules/posts/db';");
+      expect(barrel).toContain("import * as postsRelations from 'modules/posts/db/posts.relations';");
+      expect(barrel).toContain("export * from 'modules/posts/db';");
       const appModule = readFileSync(join(root, 'src/app.module.ts'), 'utf8');
       expect(appModule).not.toContain('CommentsModule');
       expect(appModule).toContain('PostsModule');
     });
   });
 
-  it('keeps hand-written relation entries outside generated modules', async () => {
+  it('keeps hand-written schema and relation entries outside generated modules', async () => {
     await withTempRepo(async (root) => {
-      const relationsPath = join(root, 'src/database/relations.ts');
-      writeFileSync(
-        relationsPath,
-        "// All drizzle relations\n\nexport * from '../auth/db/auth.relations';\n",
-        'utf8',
-      );
-
       const entities2 = [posts, comments];
       await applyPlan(buildPlan(entities2, entities2, settings), {
         force: false,
@@ -370,10 +370,13 @@ describe('apply', () => {
         settings,
       });
 
-      const relationsBarrel = readFileSync(relationsPath, 'utf8');
-      expect(relationsBarrel).toContain("export * from '../auth/db/auth.relations';");
-      expect(relationsBarrel).toContain("export * from '../modules/posts/db/posts.relations';");
-      expect(relationsBarrel).toContain("export * from '../modules/comments/db/comments.relations';");
+      const barrel = readFileSync(join(root, 'src/db.ts'), 'utf8');
+      expect(barrel).toContain("import * as authSchema from '../auth/db';");
+      expect(barrel).toContain("import * as authRelations from '../auth/db/auth.relations';");
+      expect(barrel).toContain('...authSchema,');
+      expect(barrel).toContain('...authRelations.authRelations,');
+      expect(barrel).toContain("import * as postsRelations from 'modules/posts/db/posts.relations';");
+      expect(barrel).toContain("import * as commentsRelations from 'modules/comments/db/comments.relations';");
     });
   });
 
@@ -381,12 +384,12 @@ describe('apply', () => {
     await withTempRepo(async (root) => {
       const entities2 = [posts, comments];
       await applyPlan(buildPlan(entities2, entities2, settings), { force: false, entities: entities2, root, settings });
-      const barrelPath = join(root, 'src/database/schema.ts');
-      writeFileSync(barrelPath, `${readFileSync(barrelPath, 'utf8')}export * from '../modules/comments/db';\n`, 'utf8');
+      const barrelPath = join(root, 'src/db.ts');
+      writeFileSync(barrelPath, `${readFileSync(barrelPath, 'utf8')}export * from 'modules/comments/db';\n`, 'utf8');
 
       const reduced = await applyPlan(buildPlan([posts], entities2, settings), { force: false, entities: [posts], root, settings });
-      expect(reduced.warnings).toContain('Unregistered comments from src/database/schema.ts: no longer defined.');
-      expect(readFileSync(barrelPath, 'utf8')).not.toContain("export * from '../modules/comments/db';");
+      expect(reduced.warnings).toContain('Unregistered comments from src/db.ts: no longer defined.');
+      expect(readFileSync(barrelPath, 'utf8')).not.toContain("export * from 'modules/comments/db';");
     });
   });
 });

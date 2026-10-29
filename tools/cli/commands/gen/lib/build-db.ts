@@ -3,8 +3,8 @@ import { buildFile } from './project';
 
 /**
  * `<module>/db.ts`: the module's database entry point, mirroring the auth
- * module (`src/auth/db.ts`). Re-exported namespaces are aggregated in
- * `src/db-schema.ts`.
+ * module (`src/auth/db/index.ts`). Re-exported namespaces are aggregated in
+ * `src/db.ts`.
  */
 export const buildDbFile = (
   context: EntityContext,

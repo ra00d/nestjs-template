@@ -1,6 +1,13 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
-import { Project, SyntaxKind } from 'ts-morph';
+import {
+  Node,
+  Project,
+  SyntaxKind,
+  VariableDeclarationKind,
+  type ObjectLiteralExpression,
+  type SourceFile,
+} from 'ts-morph';
 import { createContexts } from './context';
 import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
 import { toCamelCase } from './names';
@@ -160,18 +167,118 @@ export const applyAppModuleEdits = (
   return { warnings, changed };
 };
 
-/** Path of the schema barrel aggregating every module's `db/module-name.schema.ts`, relative to the repo root. */
-export const SCHEMA_BARREL = 'src/database/schema.ts';
+/** Path of the schema/relations barrel aggregating every module's `db/` folder, relative to the repo root. */
+export const SCHEMA_BARREL = 'src/db.ts';
 
-/** Path of the relations barrel aggregating every module's `db/module-name.relations.ts`, relative to the repo root. */
-export const RELATIONS_BARREL = 'src/database/relations.ts';
+/** Resolves a barrel import to a repo-relative path (`modules/x` or `./x`). */
+const resolveSpecifier = (barrelDir: string, specifier: string): string =>
+  specifier.startsWith('modules/')
+    ? posix.normalize(
+        posix.join('src/modules', specifier.slice('modules/'.length)),
+      )
+    : posix.normalize(posix.join(barrelDir, specifier));
+
+/** Module directory (`src/modules/posts`) a resolved barrel entry belongs to. */
+const moduleDirOf = (settings: ResolvedConfig, resolved: string): string =>
+  `${settings.modulesDir}/${posix.relative(settings.modulesDir, resolved).split('/')[0]}`;
 
 /**
- * Registers the entities' `db.ts` files in the configured schema barrel as
- * plain re-exports (`export * from './modules/roles/db';`), mirroring the
- * existing auth entry. Unlike aliased namespaces, plain re-exports stay
- * visible to drizzle-kit. The file is created with the same shape when
- * absent. Entries of modules that left `entities.ts` are pruned.
+ * Import specifier used by the barrel. Modules use the `modules/*` alias so
+ * generated entries match the hand-written ones; everything else stays
+ * relative.
+ */
+const barrelSpecifier = (
+  settings: ResolvedConfig,
+  barrelPath: string,
+  root: string,
+  target: string,
+): string => {
+  const withoutExtension = target.replace(/\.tsx?$/, '');
+  const relative = posix.relative(root, withoutExtension);
+  const prefix = `${settings.modulesDir}/`;
+  if (settings.modulesDir === 'src/modules' && relative.startsWith(prefix)) {
+    return `modules/${relative.slice(prefix.length)}`;
+  }
+  return importPath(barrelPath, target);
+};
+
+const ensureNamespaceImport = (
+  file: SourceFile,
+  name: string,
+  moduleSpecifier: string,
+): void => {
+  const existing = file.getImportDeclaration(
+    (declaration) => declaration.getNamespaceImport()?.getText() === name,
+  );
+  if (existing) return;
+  file.addImportDeclaration({ namespaceImport: name, moduleSpecifier });
+};
+
+const ensureObject = (
+  file: SourceFile,
+  name: string,
+): ObjectLiteralExpression => {
+  const declaration = file.getVariableDeclaration(name);
+  if (!declaration) {
+    const statement = file.addVariableStatement({
+      isExported: true,
+      declarationKind: VariableDeclarationKind.Const,
+      declarations: [{ name, initializer: '{}' }],
+    });
+    return statement
+      .getDeclarationList()
+      .getDeclarations()[0]
+      .getInitializerIfKindOrThrow(SyntaxKind.ObjectLiteralExpression);
+  }
+  const initializer = declaration.getInitializerIfKind(
+    SyntaxKind.ObjectLiteralExpression,
+  );
+  if (initializer) return initializer;
+  declaration.setInitializer('{}');
+  return declaration.getInitializerIfKindOrThrow(
+    SyntaxKind.ObjectLiteralExpression,
+  );
+};
+
+const ensureSpread = (
+  objectLiteral: ObjectLiteralExpression,
+  expression: string,
+): void => {
+  const exists = objectLiteral
+    .getProperties()
+    .some(
+      (property) =>
+        Node.isSpreadAssignment(property) &&
+        property.getExpression().getText() === expression,
+    );
+  if (!exists) objectLiteral.addSpreadAssignment({ expression });
+};
+
+const hasExportFrom = (
+  file: SourceFile,
+  barrelDir: string,
+  moduleSpecifier: string,
+): boolean => {
+  const target = resolveSpecifier(barrelDir, moduleSpecifier);
+  return file.getExportDeclarations().some((declaration) => {
+    if (!declaration.isNamespaceExport()) return false;
+    const specifier = declaration.getModuleSpecifierValue();
+    return specifier
+      ? resolveSpecifier(barrelDir, specifier) === target
+      : false;
+  });
+};
+
+/**
+ * Keeps `src/db.ts` in sync with `entities.ts`:
+ *
+ * - namespace imports (`import * as postsSchema from 'modules/posts/db'`)
+ *   and spreads in the exported `schema` object;
+ * - relation namespace imports and spreads in `relations`;
+ * - flat `export *` re-exports so drizzle-kit still sees every table.
+ *
+ * Hand-written entries (auth, audit, abac) are left untouched. Entries of
+ * modules that left `entities.ts` (or stopped declaring relations) are pruned.
  */
 export const applySchemaBarrel = (
   project: Project,
@@ -183,164 +290,99 @@ export const applySchemaBarrel = (
   const warnings: string[] = [];
   if (!existsSync(barrelPath)) {
     mkdirSync(posix.dirname(barrelPath), { recursive: true });
-    writeFileSync(barrelPath, '// All drizzle schemas\n\nexport {};\n', 'utf8');
-  }
-  const barrelFile = project.addSourceFileAtPath(barrelPath);
-  const before = barrelFile.getFullText();
-  const contexts = createContexts(entities, settings);
-  const barrelDir = posix.dirname(posix.relative(root, barrelPath));
-  const label = posix.relative(root, barrelPath);
-  const expected = new Set<string>();
-
-  for (const context of contexts) {
-    const { moduleDir } = context;
-    const from = importPath(barrelPath, join(root, moduleDir, 'db.ts'));
-    expected.add(from);
-    const starExported = barrelFile
-      .getExportDeclarations()
-      .some(
-        (item) =>
-          item.isNamespaceExport() && item.getModuleSpecifierValue() === from,
-      );
-    if (!starExported) {
-      barrelFile.addExportDeclaration({ moduleSpecifier: from });
-    }
-    // Migrate the previous aliased form (`import { schema as XSchema }`)
-    // to plain re-exports.
-    const declaration = barrelFile.getImportDeclaration(
-      (item) => item.getModuleSpecifierValue() === from,
-    );
-    if (declaration) {
-      const removed = declaration
-        .getNamedImports()
-        .map((item) => item.getName());
-      declaration.remove();
-      const target = barrelFile
-        .getExportDeclarations()
-        .find((item) => !item.getModuleSpecifier());
-      if (target) {
-        for (const item of target.getNamedExports()) {
-          if (removed.includes(item.getName())) item.remove();
-        }
-      }
-    }
-  }
-
-  // Prune entries for modules that left `entities.ts`: anything under
-  // `modulesDir` that no current entity claims, in either import or
-  // `export *` form.
-  for (const declaration of barrelFile.getImportDeclarations()) {
-    const specifier = declaration.getModuleSpecifierValue();
-    if (
-      !specifier.startsWith('.') ||
-      !/\/db(\.js)?$/.test(specifier) ||
-      expected.has(specifier)
-    )
-      continue;
-    const resolved = posix.normalize(posix.join(barrelDir, specifier));
-    if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    const removed = declaration
-      .getNamedImports()
-      .map((item) => item.getText().split(' as ').pop() ?? '');
-    declaration.remove();
-    const target = barrelFile
-      .getExportDeclarations()
-      .find((item) => !item.getModuleSpecifier());
-    if (target) {
-      for (const item of target.getNamedExports()) {
-        if (removed.includes(item.getName())) item.remove();
-      }
-    }
-    warnings.push(
-      `Unregistered ${resolved.split('/').at(-2) ?? 'unknown'} from ${label}: no longer defined.`,
-    );
-  }
-  for (const declaration of barrelFile.getExportDeclarations()) {
-    if (!declaration.isNamespaceExport()) continue;
-    const specifier = declaration.getModuleSpecifierValue();
-    if (!specifier || !specifier.startsWith('.') || expected.has(specifier))
-      continue;
-    const resolved = posix.normalize(posix.join(barrelDir, specifier));
-    if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    declaration.remove();
-    warnings.push(
-      `Unregistered ${resolved.split('/').at(-2) ?? 'unknown'} from ${label}: no longer defined.`,
-    );
-  }
-
-  const changed = barrelFile.getFullText() !== before;
-  if (changed) barrelFile.saveSync();
-  return { warnings, changed };
-};
-
-/**
- * Registers the entities' `db/<module>.relations.ts` files in
- * `src/database/relations.ts` as plain re-exports
- * (`export * from './modules/roles/db/roles.relations';`). The file is
- * created with the same shape when absent, and entries of modules that left
- * `entities.ts` (or no longer declare relations) are pruned.
- */
-export const applyRelationsBarrel = (
-  project: Project,
-  barrelPath: string,
-  entities: EntityDefinition[],
-  settings: ResolvedConfig = DEFAULT_CONFIG,
-  root: string = process.cwd(),
-): { warnings: string[]; changed: boolean } => {
-  const warnings: string[] = [];
-  const existed = existsSync(barrelPath);
-  if (!existed) {
-    mkdirSync(posix.dirname(barrelPath), { recursive: true });
     writeFileSync(
       barrelPath,
-      '// All drizzle relations\n\nexport {};\n',
+      '// All drizzle schemas and relations\n\nexport const schema = {};\n\nexport const relations = {};\n',
       'utf8',
     );
   }
   const barrelFile = project.addSourceFileAtPath(barrelPath);
   const before = barrelFile.getFullText();
   const contexts = createContexts(entities, settings);
-  const barrelDir = posix.dirname(posix.relative(root, barrelPath));
-  const expected = new Set<string>();
+  const label = posix.relative(root, barrelPath);
+  const barrelDir = posix.dirname(label);
+  const schemaObject = ensureObject(barrelFile, 'schema');
+  const relationsObject = ensureObject(barrelFile, 'relations');
+  const expectedImports = new Set<string>();
+  const expectedModuleDirs = new Set(
+    contexts.map((context) => context.moduleDir),
+  );
 
   for (const context of contexts) {
-    if (context.relations.length === 0) continue;
     const { moduleDir, names } = context;
-    const from = importPath(
+    const base = toCamelCase(names.name);
+    const schemaName = `${base}Schema`;
+    const schemaFrom = barrelSpecifier(
+      settings,
       barrelPath,
+      root,
+      join(root, moduleDir, 'db.ts'),
+    );
+    expectedImports.add(schemaName);
+    ensureNamespaceImport(barrelFile, schemaName, schemaFrom);
+    ensureSpread(schemaObject, schemaName);
+    if (!hasExportFrom(barrelFile, barrelDir, schemaFrom)) {
+      barrelFile.addExportDeclaration({ moduleSpecifier: schemaFrom });
+    }
+
+    if (context.relations.length === 0) continue;
+    const relationsName = `${base}Relations`;
+    const relationsFrom = barrelSpecifier(
+      settings,
+      barrelPath,
+      root,
       join(root, moduleDir, 'db', `${names.name}.relations.ts`),
     );
-    expected.add(from);
-    const starExported = barrelFile
-      .getExportDeclarations()
-      .some(
-        (item) =>
-          item.isNamespaceExport() && item.getModuleSpecifierValue() === from,
-      );
-    if (!starExported) {
-      barrelFile.addExportDeclaration({ moduleSpecifier: from });
-    }
+    expectedImports.add(relationsName);
+    ensureNamespaceImport(barrelFile, relationsName, relationsFrom);
+    // The relation file exports the part itself (`postsRelations`), so spread
+    // its value to keep the object keyed by table name, as Drizzle expects.
+    ensureSpread(relationsObject, `${relationsName}.${relationsName}`);
   }
 
-  // Prune entries for modules that left `entities.ts` or stopped declaring
-  // relations. Only generated module paths are touched; hand-written entries
-  // (e.g. auth) stay.
+  const staleImports = new Set<string>();
+  const staleModules = new Set<string>();
+  for (const declaration of barrelFile.getImportDeclarations()) {
+    const namespaceImport = declaration.getNamespaceImport();
+    if (!namespaceImport) continue;
+    const name = namespaceImport.getText();
+    if (expectedImports.has(name)) continue;
+    const specifier = declaration.getModuleSpecifierValue();
+    const resolved = resolveSpecifier(barrelDir, specifier);
+    if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
+    staleImports.add(name);
+    const moduleDir = moduleDirOf(settings, resolved);
+    if (!expectedModuleDirs.has(moduleDir)) {
+      staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
+    }
+    declaration.remove();
+  }
   for (const declaration of barrelFile.getExportDeclarations()) {
     if (!declaration.isNamespaceExport()) continue;
     const specifier = declaration.getModuleSpecifierValue();
-    if (!specifier || !specifier.startsWith('.') || expected.has(specifier))
-      continue;
-    const resolved = posix.normalize(posix.join(barrelDir, specifier));
+    if (!specifier) continue;
+    const resolved = resolveSpecifier(barrelDir, specifier);
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
+    const moduleDir = moduleDirOf(settings, resolved);
+    if (expectedModuleDirs.has(moduleDir)) continue;
     declaration.remove();
-    const moduleName =
-      posix.relative(settings.modulesDir, resolved).split('/')[0] || 'unknown';
+    staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
+  }
+  for (const objectLiteral of [schemaObject, relationsObject]) {
+    for (const property of objectLiteral.getProperties()) {
+      if (!Node.isSpreadAssignment(property)) continue;
+      const rootName = property.getExpression().getText().split('.')[0];
+      if (staleImports.has(rootName)) property.remove();
+    }
+  }
+
+  for (const moduleName of staleModules) {
     warnings.push(
-      `Unregistered ${moduleName} from ${posix.relative(root, barrelPath)}: no longer defined.`,
+      `Unregistered ${moduleName} from ${label}: no longer defined.`,
     );
   }
 
-  const changed = !existed || barrelFile.getFullText() !== before;
+  const changed = barrelFile.getFullText() !== before;
   if (changed) barrelFile.saveSync();
   return { warnings, changed };
 };
