@@ -1,16 +1,8 @@
 // oxlint-disable typescript/unbound-method
-import { randomUUID } from 'node:crypto';
-import { InjectDrizzle } from '@nestjs/drizzle';
 import { Injectable } from '@nestjs/common';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import {
-  toPermission,
-  toRole,
-  type Permission,
-  type Role,
-} from '../types/rbac.types';
-import { User } from '../types/user';
+import { randomUUID } from 'node:crypto';
 import {
   permissions,
   rolePermissions,
@@ -19,8 +11,16 @@ import {
   userRoles,
   users,
 } from '../db/auth.schema';
+import {
+  toPermission,
+  toRole,
+  type Permission,
+  type Role,
+} from '../types/rbac.types';
+import { User } from '../types/user';
 
-import { currentTx } from '../../database/transaction';
+import { BaseRepository } from '@/database/base-repo';
+import { Id } from '@/database';
 
 /** A full `users` row: what the database holds, password hash included. */
 type UserRow = typeof users.$inferSelect;
@@ -32,18 +32,13 @@ type UserRow = typeof users.$inferSelect;
  * returned user carries the role slugs assigned through `user_roles` and the
  * permission names it holds, directly and through those roles.
  */
+
 @Injectable()
-export class UsersRepository {
-  constructor(@InjectDrizzle() private readonly baseDb: NodePgDatabase) {}
-
-  /** Use the active transaction (if any) over the injected database. */
-  private get db(): NodePgDatabase {
-    return (
-      (currentTx() as unknown as NodePgDatabase | undefined) ?? this.baseDb
-    );
+export class UsersRepository extends BaseRepository<typeof users> {
+  constructor() {
+    super(users);
   }
-
-  async create(
+  async createUser(
     email: string,
     {
       passwordHash = null,
@@ -71,8 +66,7 @@ export class UsersRepository {
       [];
     return toUser(created, assigned, permissions);
   }
-
-  async findById(id: string): Promise<User | null> {
+  override async findById(id: Id) {
     const [row] = await this.db.select().from(users).where(eq(users.id, id));
     if (!row) {
       return null;
