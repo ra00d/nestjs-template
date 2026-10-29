@@ -1,10 +1,12 @@
+import { relations } from '@/db';
 import { Brand } from '@/types';
-import type { EmptyRelations, SQL } from 'drizzle-orm';
+import type { SQL, SQLWrapper } from 'drizzle-orm';
 import type {
   NodePgDatabase,
   NodePgTransaction,
 } from 'drizzle-orm/node-postgres';
 import type {
+  AnyPgColumn,
   PgTable,
   PgTableWithColumns,
   PgTransactionConfig,
@@ -16,16 +18,16 @@ import type {
  * repository or service does not care whether it runs on a database or
  * inside a transaction.
  */
-export type Db = NodePgDatabase<EmptyRelations>;
+export type DB = NodePgDatabase<typeof relations>;
 
 /**
  * A transaction created by `Db.transaction()`. Transactional reads and
  * writes use this type.
  */
-export type Tx = NodePgTransaction<EmptyRelations>;
+export type Tx = NodePgTransaction<typeof relations>;
 
 /** Anything a repository can query against. */
-export type DbOrTx = Db | Tx;
+export type DbOrTx = DB | Tx;
 
 /** PostgreSQL transaction options forwarded to `BEGIN ...`. */
 export type TxConfig = PgTransactionConfig;
@@ -89,32 +91,38 @@ export type FilterItem = {
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
-
-export type Select<T extends PgTableWithColumns<TableConfig>> =
-  T['$inferSelect'];
-export type Insert<T extends PgTableWithColumns<TableConfig>> =
-  T['$inferInsert'];
-
 /** Tables managed by this repository must have an `id` primary key. */
-export type TableWithId = PgTableWithColumns<TableConfig> & { id: ColumnLike };
+export type TableWithId = PgTable & {
+  id: any;
+};
+
 export type ColumnLike = Brand<any, 'Column'>; // structural constraint kept loose — see note below
+
+export type Select<
+  S extends PgTable,
+  T extends PgTableWithColumns<S['_']> = PgTableWithColumns<S['_']>,
+> = T['$inferSelect'];
+export type Insert<
+  S extends PgTable,
+  T extends PgTableWithColumns<S['_']> = PgTableWithColumns<S['_']>,
+> = T['$inferInsert'];
 
 export type Id = string | number;
 
-export interface OrderByItem<T extends PgTable> {
+export interface OrderByItem<T extends TableWithId> {
   /** Must be a column of the table — fully type-checked. */
   column: T[keyof T];
   direction: 'asc' | 'desc';
 }
 
-export interface ListParams<T extends PgTable> {
+export interface ListParams<T extends TableWithId> {
   where?: SQL;
   orderBy?: OrderByItem<T>[];
   limit?: number;
   offset?: number;
 }
 
-export interface CursorParams<T extends PgTable> extends Omit<
+export interface CursorParams<T extends TableWithId> extends Omit<
   ListParams<T>,
   'offset'
 > {

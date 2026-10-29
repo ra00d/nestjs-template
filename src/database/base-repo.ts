@@ -1,8 +1,11 @@
-import { eq, asc, desc, sql, type SQL } from 'drizzle-orm';
+import { InjectDrizzle } from '@nestjs/drizzle';
+import { asc, desc, eq, getTableName, sql, type SQL } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import {
+import { currentTx } from './transaction';
+import type {
   BaseRepoOptions,
   CursorParams,
+  DB,
   Id,
   Insert,
   ListParams,
@@ -26,18 +29,24 @@ export class NotFoundError extends Error {
 export class BaseRepository<TTable extends TableWithId> {
   protected readonly entityName: string;
   protected readonly updatedAtColumn?: string;
-
+  protected dbInstance: any;
+  @InjectDrizzle()
+  private readonly baseDb: DB;
   constructor(
     /** Exposed so derived repos can reference columns: `this.table.id` etc. */
     public readonly table: TTable,
-    protected readonly dbInstance: any /*DB | Tx*/,
     options: BaseRepoOptions = {},
   ) {
-    this.entityName =
-      // options.entityName ??
-      // (table as unknown as { [TableSymbolName]: string })[TableSymbolName] ??
-      'Entity';
+    this.entityName = getTableName(table);
+    // options.entityName ??
+    // (table as unknown as { [TableSymbolName]: string })[TableSymbolName] ??
+    // 'Entity';
     this.updatedAtColumn = options.updatedAtColumn as string | undefined;
+  }
+
+  /** Use the active transaction (if any) over the injected database. */
+  protected get db(): DB {
+    return (currentTx() as unknown as DB | undefined) ?? this.baseDb;
   }
 
   /* ------------------------------ Create ------------------------------ */
@@ -69,7 +78,7 @@ export class BaseRepository<TTable extends TableWithId> {
 
   /* ------------------------------- Read ------------------------------- */
 
-  async findById(id: Id): Promise<Select<TTable> | undefined> {
+  async findById(id: Id) {
     const [row] = await this.dbInstance
       .select()
       .from(this.table)
@@ -78,7 +87,7 @@ export class BaseRepository<TTable extends TableWithId> {
     return row;
   }
 
-  async findByIdOrThrow(id: Id): Promise<Select<TTable>> {
+  async findByIdOrThrow(id: Id) {
     const row = await this.findById(id);
     if (!row) throw new NotFoundError(this.entityName, id);
     return row;
@@ -106,7 +115,7 @@ export class BaseRepository<TTable extends TableWithId> {
     if (params.orderBy?.length) {
       query = query.orderBy(
         ...params.orderBy.map((o) =>
-          o.direction === 'asc' ? asc(o.column) : desc(o.column),
+          o.direction === 'asc' ? asc(o.column as any) : desc(o.column as any),
         ),
       );
     }
@@ -136,11 +145,11 @@ export class BaseRepository<TTable extends TableWithId> {
     if (params.orderBy?.length) {
       query = query.orderBy(
         ...params.orderBy.map((o) =>
-          o.direction === 'asc' ? asc(o.column) : desc(o.column),
+          o.direction === 'asc' ? asc(o.column as any) : desc(o.column as any),
         ),
       );
     } else {
-      query = query.orderBy(asc(cursorColumn));
+      query = query.orderBy(asc(cursorColumn as any));
     }
 
     const rows = await query.limit(limit + 1);
