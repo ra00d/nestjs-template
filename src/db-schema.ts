@@ -1,4 +1,2 @@
-export * from './auth/db';
-export * from './audit/audit.schema';
-export * from './abac/abac.schema';
-export type Datebase = any;
+// Drizzle-kit entry point: all tables are re-exported from the db barrel.
+export * from './db';

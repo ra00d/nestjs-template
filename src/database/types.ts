@@ -1,12 +1,11 @@
 import { relations } from '@/db';
 import { Brand } from '@/types';
-import type { SQL, SQLWrapper } from 'drizzle-orm';
+import type { AnyRelations, EmptyRelations, SQL, Table } from 'drizzle-orm';
 import type {
   NodePgDatabase,
   NodePgTransaction,
 } from 'drizzle-orm/node-postgres';
 import type {
-  AnyPgColumn,
   PgTable,
   PgTableWithColumns,
   PgTransactionConfig,
@@ -18,7 +17,7 @@ import type {
  * repository or service does not care whether it runs on a database or
  * inside a transaction.
  */
-export type DB = NodePgDatabase<typeof relations>;
+export type DB<T extends AnyRelations = EmptyRelations> = NodePgDatabase<T>;
 
 /**
  * A transaction created by `Db.transaction()`. Transactional reads and
@@ -92,9 +91,7 @@ export type FilterItem = {
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 /** Tables managed by this repository must have an `id` primary key. */
-export type TableWithId = PgTable & {
-  id: any;
-};
+export type TableWithId = PgTable; // PgTableWithColumns<TableConfig>;
 
 export type ColumnLike = Brand<any, 'Column'>; // structural constraint kept loose — see note below
 

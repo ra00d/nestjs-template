@@ -1,5 +1,11 @@
 import { Public } from '@nestjs/authentication';
-import { Inject, Optional, Controller, Get, VERSION_NEUTRAL } from '@nestjs/common';
+import {
+  Inject,
+  Optional,
+  Controller,
+  Get,
+  VERSION_NEUTRAL,
+} from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
 import {
   HealthCheck,

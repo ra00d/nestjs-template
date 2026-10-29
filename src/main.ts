@@ -1,6 +1,6 @@
 import helmet from '@fastify/helmet';
 import secureSession from '@fastify/secure-session';
-import { VersioningType } from '@nestjs/common';
+import { StandardSchemaValidationPipe, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -13,8 +13,7 @@ import { ZodObject } from 'zod';
 import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module';
 import { trustedOrigins, type Env } from './config/env';
-import { AppLogger } from './logger/logger.service';
-import { runWithRequestContext } from './logger/request-context';
+import { runWithRequestContext } from './common/logger/request-context';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -96,7 +95,6 @@ async function bootstrap() {
     exclude: ['/', 'health', 'docs', 'docs/{*path}'],
   });
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
-
   // Refuses cross-origin writes from pages other than the application's own
   // and `TRUSTED_ORIGINS` (the same list the `session` options use).
   app.enableCsrfProtection({
@@ -134,7 +132,9 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, documentFactory, {
     explorer: true,
   });
-  const port: number = config.get('PORT');
-  await app.listen({ port, host: '0.0.0.0' });
+  const port: number = config.get('PORT', 3000);
+  await app.listen({ port, host: '0.0.0.0' }, (_, add) => {
+    console.log('running on', add);
+  });
 }
 await bootstrap();

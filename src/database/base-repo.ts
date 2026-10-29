@@ -11,7 +11,6 @@ import type {
   ListParams,
   Page,
   Select,
-  TableWithId,
   Tx,
 } from './types';
 
@@ -26,12 +25,13 @@ export class NotFoundError extends Error {
 /* Base Repository                                                     */
 /* ------------------------------------------------------------------ */
 
-export class BaseRepository<TTable extends TableWithId> {
+export class BaseRepository<TTable extends PgTable & { id: any }> {
   protected readonly entityName: string;
   protected readonly updatedAtColumn?: string;
   protected dbInstance: any;
   @InjectDrizzle()
   private readonly baseDb: DB;
+
   constructor(
     /** Exposed so derived repos can reference columns: `this.table.id` etc. */
     public readonly table: TTable,
@@ -45,7 +45,7 @@ export class BaseRepository<TTable extends TableWithId> {
   }
 
   /** Use the active transaction (if any) over the injected database. */
-  protected get db(): DB {
+  protected get db() {
     return (currentTx() as unknown as DB | undefined) ?? this.baseDb;
   }
 

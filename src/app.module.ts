@@ -22,31 +22,30 @@ import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
-import { AbacModule } from './abac/abac.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuditModule } from './audit/audit.module';
-import { AuthModule } from './auth/auth.module';
-import { AuthThrottlerGuard } from './auth/guards/auth-throttler.guard';
 import { CacheModule } from './cache/cache.module';
+import { LoggerModule } from './common/logger/logger.module';
 import { envSchema, type Env } from './config/env';
 import { DatabaseModule } from './database/database.module';
-import {
-  AuthenticationExceptionFilter,
-  CatchAllExceptionFilter,
-  DatabaseExceptionFilter,
-  HttpExceptionFilter,
-} from './exceptions/filters/index';
 import { HealthModule } from './health/health.module';
-import { TimeoutInterceptor, TransformInterceptor } from './interceptors/index';
-import { LoggerModule } from './logger/logger.module';
-import { TrimPipe } from './pipes/trim.pipe';
 import { REDIS_STORE } from './redis/redis.constants';
 import { RedisModule } from './redis/redis.module';
 import type { RedisStore } from './redis/redis.options';
 import { StorageModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
+import {
+  HttpExceptionFilter,
+  AuthenticationExceptionFilter,
+  DatabaseExceptionFilter,
+  CatchAllExceptionFilter,
+  TrimPipe,
+  TransformInterceptor,
+  TimeoutInterceptor,
+} from './common';
+import { AbacModule } from './modules/abac/abac.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { AuthThrottlerGuard } from './modules/auth/guards/auth-throttler.guard';
 
 @Module({
   imports: [
@@ -161,9 +160,7 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
 
     AuthModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Exception filters, most specific first: Nest runs the first filter
     // whose `@Catch` metatypes match, and the catch-all matches everything,
     // so it must stay last.
@@ -176,7 +173,15 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
     // with the `validation` namespace (`src/i18n/<locale>/validation.json`).
     // TrimPipe runs first so validation sees trimmed values.
     { provide: APP_PIPE, useClass: TrimPipe },
-    { provide: APP_PIPE, useClass: I18nStandardSchemaValidationPipe },
+    {
+      provide: APP_PIPE,
+      useValue: new I18nStandardSchemaValidationPipe({
+        exceptionFactory: (issue) => {
+          console.log(issue);
+          return issue;
+        },
+      }),
+    },
     // One envelope for every JSON response (`{ data }`, paginated results
     // pass through), plus a 408 for handlers slower than REQUEST_TIMEOUT_MS.
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
