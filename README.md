@@ -50,10 +50,11 @@ Each entity emits a full slice under `<modulesDir>/<name>/` — entity type,
 `controllers/`, `services/`, `repositories/` (SQL-like Drizzle builder with
 manual `?include=` batch loading, plus a mocked-database spec),
 one Zod schema per file under `dto/`, plus a `db.ts` entry point
-(`db/index.ts` exposing the tables as `schema`) and a service spec.
-Tables spread the shared columns from `src/database/fields.ts`
-(`...timestamps`). The `db.ts` namespaces are aggregated in
-`src/db-schema.ts`, and the module is registered in `src/app.module.ts`.
+exposing the module's tables and a service spec. Tables spread the shared
+columns from `src/database/fields.ts` (`...timestamps`). The module's schema
+and relation namespaces are aggregated into the `schema` and `relations`
+objects in `src/db.ts`, and the module is registered in `src/app.module.ts`.
+`src/db-schema.ts` re-exports that barrel for drizzle-kit.
 Existing files are skipped unless `--force` is passed.
 After generating, create the SQL migration:
 
