@@ -483,7 +483,7 @@ async function permissionNamesByUser(
     return byUser;
   }
   const direct = await db
-    .select({ userId: userPermissions.userId, name: permissions.name })
+    .select({ userId: userPermissions.userId, name: permissions.slug })
     .from(userPermissions)
     .innerJoin(permissions, eq(userPermissions.permissionId, permissions.id))
     .where(inArray(userPermissions.userId, userIds));
