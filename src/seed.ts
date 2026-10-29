@@ -33,7 +33,7 @@ async function seed() {
       console.log(`db:seed: ${email} already exists, skipping.`);
       return;
     }
-    const admin = await users.create(email, {
+    const admin = await users.createUser(email, {
       passwordHash: await hasher.hash(password),
       emailVerified: true,
       roles: [toRole('admin')],
