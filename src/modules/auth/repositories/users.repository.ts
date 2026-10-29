@@ -488,7 +488,7 @@ async function permissionNamesByUser(
     .innerJoin(permissions, eq(userPermissions.permissionId, permissions.id))
     .where(inArray(userPermissions.userId, userIds));
   const throughRoles = await db
-    .select({ userId: userRoles.userId, name: permissions.name })
+    .select({ userId: userRoles.userId, name: permissions.slug })
     .from(userRoles)
     .innerJoin(rolePermissions, eq(userRoles.roleId, rolePermissions.roleId))
     .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
