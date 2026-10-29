@@ -82,7 +82,6 @@ export function ApiMeta(options: ApiMetaOptions = {}) {
   }
 
   if (options.q !== undefined) {
-    console.log(options.q);
     for (const query of toMetaList(options.q)) {
       decorators.push(
         ApiQuery(
