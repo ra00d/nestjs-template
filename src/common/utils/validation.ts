@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { normalizeEmail } from './string';
+import { i18nIssueMessage } from '@nestjs/i18n';
 
 export const DEFAULT_LIST_LIMIT = 20;
 export const MAX_LIST_LIMIT = 100;
@@ -54,3 +55,5 @@ export const includeSchema = z
       ),
   )
   .optional();
+
+export const errorMessage = i18nIssueMessage;
