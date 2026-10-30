@@ -101,6 +101,18 @@ export class BaseRepository<TTable extends PgTable & { id: any }> {
       .limit(1);
     return row;
   }
+  async findBy<T extends keyof TTable['_']['columns']>(
+    col: T,
+    val: TTable['_']['columns'][T]['_']['data'],
+  ) {
+    const [row] = await this.db
+      .select()
+      .from(this.table as PgTable)
+      // @ts-expect-error columns are not added to the type
+      .where(eq(this.table[col as string], val))
+      .limit(1);
+    return row;
+  }
 
   async findOneOrThrow(where: SQL): Promise<Select<TTable>> {
     const row = await this.findOne(where);
