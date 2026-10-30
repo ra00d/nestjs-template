@@ -175,12 +175,7 @@ import { AuthThrottlerGuard } from './modules/auth/guards/auth-throttler.guard';
     { provide: APP_PIPE, useClass: TrimPipe },
     {
       provide: APP_PIPE,
-      useValue: new I18nStandardSchemaValidationPipe({
-        exceptionFactory: (issue) => {
-          console.log(issue);
-          return issue;
-        },
-      }),
+      useValue: new I18nStandardSchemaValidationPipe(),
     },
     // One envelope for every JSON response (`{ data }`, paginated results
     // pass through), plus a 408 for handlers slower than REQUEST_TIMEOUT_MS.
