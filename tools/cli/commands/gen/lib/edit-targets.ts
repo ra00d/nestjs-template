@@ -138,28 +138,11 @@ export const applyAppModuleEdits = (
   // `modulesDir` that no current entity claims, plus their array elements.
   // (Relation wiring lives in the app's own composition and is untouched.)
   const appDir = posix.dirname(posix.relative(root, appModulePath));
-  const expectedClasses = new Set(
-    contexts.map((context) => `${context.names.plural}Module`),
-  );
   for (const declaration of appFile.getImportDeclarations()) {
     const specifier = declaration.getModuleSpecifierValue();
     if (!specifier.startsWith('.')) continue;
     const resolved = posix.normalize(posix.join(appDir, specifier));
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    const stale = declaration
-      .getNamedImports()
-      .filter((item) => !expectedClasses.has(item.getName()));
-    if (stale.length === 0) continue;
-    const staleNames = new Set(stale.map((item) => item.getName()));
-    for (const item of stale) item.remove();
-    if (declaration.getNamedImports().length === 0) declaration.remove();
-    const elements = importsArray.getElements();
-    for (let index = elements.length - 1; index >= 0; index -= 1) {
-      if (staleNames.has(elements[index].getText()))
-        importsArray.removeElement(index);
-    }
-    const dir = resolved.split('/').at(-2) ?? 'unknown';
-    warnings.push(`Unregistered ${dir} from AppModule: no longer defined.`);
     changed = true;
   }
 
@@ -340,8 +323,8 @@ export const applySchemaBarrel = (
     ensureSpread(relationsObject, `${relationsName}.${relationsName}`);
   }
 
-  const staleImports = new Set<string>();
-  const staleModules = new Set<string>();
+  // const staleImports = new Set<string>();
+  // const staleModules = new Set<string>();
   for (const declaration of barrelFile.getImportDeclarations()) {
     const namespaceImport = declaration.getNamespaceImport();
     if (!namespaceImport) continue;
@@ -350,12 +333,12 @@ export const applySchemaBarrel = (
     const specifier = declaration.getModuleSpecifierValue();
     const resolved = resolveSpecifier(barrelDir, specifier);
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
-    staleImports.add(name);
-    const moduleDir = moduleDirOf(settings, resolved);
-    if (!expectedModuleDirs.has(moduleDir)) {
-      staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
-    }
-    declaration.remove();
+    // staleImports.add(name);
+    // const moduleDir = moduleDirOf(settings, resolved);
+    // if (!expectedModuleDirs.has(moduleDir)) {
+    //   staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
+    // }
+    // declaration.remove();
   }
   for (const declaration of barrelFile.getExportDeclarations()) {
     if (!declaration.isNamespaceExport()) continue;
@@ -365,22 +348,22 @@ export const applySchemaBarrel = (
     if (!resolved.startsWith(`${settings.modulesDir}/`)) continue;
     const moduleDir = moduleDirOf(settings, resolved);
     if (expectedModuleDirs.has(moduleDir)) continue;
-    declaration.remove();
-    staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
+    // declaration.remove();
+    // staleModules.add(moduleDir.split('/').at(-1) ?? 'unknown');
   }
   for (const objectLiteral of [schemaObject, relationsObject]) {
     for (const property of objectLiteral.getProperties()) {
       if (!Node.isSpreadAssignment(property)) continue;
-      const rootName = property.getExpression().getText().split('.')[0];
-      if (staleImports.has(rootName)) property.remove();
+      // const rootName = property.getExpression().getText().split('.')[0];
+      // if (staleImports.has(rootName)) property.remove();
     }
   }
 
-  for (const moduleName of staleModules) {
-    warnings.push(
-      `Unregistered ${moduleName} from ${label}: no longer defined.`,
-    );
-  }
+  // for (const moduleName of staleModules) {
+  //   warnings.push(
+  //     `Unregistered ${moduleName} from ${label}: no longer defined.`,
+  //   );
+  // }
 
   const changed = barrelFile.getFullText() !== before;
   if (changed) barrelFile.saveSync();

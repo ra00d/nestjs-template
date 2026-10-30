@@ -1,21 +1,14 @@
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { format as prettierFormat } from 'prettier';
 import { IndentationText, Project, QuoteKind } from 'ts-morph';
 import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
 import {
-  SCHEMA_BARREL,
   applyAppModuleEdits,
   applySchemaBarrel,
   applySchemaEdits,
+  SCHEMA_BARREL,
 } from './edit-targets';
-import { entityNames, toKebabCase } from './names';
 import type { EntityPlan } from './plan';
 import type { EntityDefinition } from './types';
 
@@ -94,7 +87,6 @@ export const applyPlan = async (
   const externalSchemaFile = join(root, settings.externalSchema);
   const appModuleFile = join(root, 'src/app.module.ts');
   const schemaBarrelFile = join(root, SCHEMA_BARREL);
-  const modulesRoot = join(root, settings.modulesDir);
 
   const project = new Project({
     manipulationSettings: {
@@ -121,21 +113,6 @@ export const applyPlan = async (
     externalTables,
   );
   warnings.push(...schemaResult.warnings);
-
-  // Folders the generator no longer owns: removing an entity unregisters its
-  // module, but its files stay until deleted by hand.
-  if (existsSync(modulesRoot)) {
-    const known = new Set(
-      options.entities.map((entity) => entityNames(entity).name),
-    );
-    for (const entry of readdirSync(modulesRoot, { withFileTypes: true })) {
-      if (entry.isDirectory() && !known.has(toKebabCase(entry.name))) {
-        warnings.push(
-          `${settings.modulesDir}/${entry.name}/ is not defined in tools/entities.ts.`,
-        );
-      }
-    }
-  }
 
   const barrelResult = applySchemaBarrel(
     project,
