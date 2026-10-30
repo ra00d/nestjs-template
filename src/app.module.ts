@@ -1,4 +1,8 @@
-import { Module } from '@nestjs/common';
+import {
+  Module,
+  StandardSchemaValidationPipe,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { DrizzleModule } from '@nestjs/drizzle';
@@ -23,10 +27,21 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
 import { CacheModule } from './cache/cache.module';
+import {
+  AuthenticationExceptionFilter,
+  CatchAllExceptionFilter,
+  DatabaseExceptionFilter,
+  HttpExceptionFilter,
+  TimeoutInterceptor,
+  TransformInterceptor,
+  TrimPipe,
+  ValidationExceptionFilter,
+} from './common';
 import { LoggerModule } from './common/logger/logger.module';
 import { envSchema, type Env } from './config/env';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { AuthThrottlerGuard } from './modules/auth/guards';
 import { REDIS_STORE } from './redis/redis.constants';
 import { RedisModule } from './redis/redis.module';
 import type { RedisStore } from './redis/redis.options';
@@ -45,7 +60,8 @@ import {
 import { AbacModule } from './modules/abac/abac.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { AuthThrottlerGuard } from './modules/auth/guards/auth-throttler.guard';
+import { AuditModule } from './modules/audit';
+import { AbacModule } from './modules/abac/abac.module';
 
 @Module({
   imports: [
@@ -157,17 +173,21 @@ import { AuthThrottlerGuard } from './modules/auth/guards/auth-throttler.guard';
     StorageModule.forRoot(),
 
     TasksModule,
-
     AuthModule,
+    AuditModule,
+    AbacModule,
+    PostsModule,
+    CommentsModule,
   ],
   providers: [
     // Exception filters, most specific first: Nest runs the first filter
     // whose `@Catch` metatypes match, and the catch-all matches everything,
     // so it must stay last.
+    { provide: APP_FILTER, useClass: CatchAllExceptionFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_FILTER, useClass: ValidationExceptionFilter },
     { provide: APP_FILTER, useClass: AuthenticationExceptionFilter },
     { provide: APP_FILTER, useClass: DatabaseExceptionFilter },
-    { provide: APP_FILTER, useClass: CatchAllExceptionFilter },
     // Validates the request bodies whose handlers declare a `schema` (the
     // Zod schemas in src/auth/auth.schemas.ts) and translates the issues
     // with the `validation` namespace (`src/i18n/<locale>/validation.json`).
@@ -175,7 +195,28 @@ import { AuthThrottlerGuard } from './modules/auth/guards/auth-throttler.guard';
     { provide: APP_PIPE, useClass: TrimPipe },
     {
       provide: APP_PIPE,
-      useValue: new I18nStandardSchemaValidationPipe(),
+      useValue: new I18nStandardSchemaValidationPipe({
+        errorHttpStatusCode: 422,
+        // validateCustomDecorators: true,
+        exceptionFactory: (issues) => {
+          let errors: Record<string, string> = {};
+          let errMsg = 'invalid input for: ';
+          issues.forEach((is) => {
+            const key = is.path?.at(0) as string;
+            errMsg = errMsg + ' ' + key;
+            if (key) errors[key] = is.message;
+          });
+          return new UnprocessableEntityException(
+            {
+              errors,
+              message: errMsg, // 'invalid_input',
+            },
+            {
+              description: 'some of the user input are invalid',
+            },
+          );
+        },
+      }),
     },
     // One envelope for every JSON response (`{ data }`, paginated results
     // pass through), plus a 408 for handlers slower than REQUEST_TIMEOUT_MS.
