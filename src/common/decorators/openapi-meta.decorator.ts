@@ -3,6 +3,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiHeader,
+  ApiHeaderOptions,
   ApiHeaders,
   ApiParam,
   ApiQuery,
@@ -25,7 +26,7 @@ export interface ApiMeta {
   body?: StandardSchemaObject;
   /** One path schema, or one descriptor per path parameter. */
   param?: ApiParameterMeta | ApiParameterMeta[];
-  headers?: unknown;
+  headers?: ApiHeaderOptions | ApiHeaderOptions[];
   consumes?: unknown;
 }
 
@@ -58,16 +59,15 @@ function toMetaList<T>(value: T | T[]): T[] {
   return Array.isArray(value) ? value : [value];
 }
 
-function toHeaderList(headers: unknown): Record<string, unknown>[] {
+function toHeaderList(headers: ApiHeaderOptions | ApiHeaderOptions[]) {
   if (Array.isArray(headers)) {
     return headers.filter(
-      (header): header is Record<string, unknown> =>
-        typeof header === 'object' && header !== null,
+      (header) => typeof header === 'object' && header !== null,
     );
   }
 
   if (typeof headers === 'object' && headers !== null) {
-    return [headers as Record<string, unknown>];
+    return [headers];
   }
 
   return [];
@@ -75,6 +75,7 @@ function toHeaderList(headers: unknown): Record<string, unknown>[] {
 
 export function ApiMeta(options: ApiMetaOptions = {}) {
   const decorators = [];
+  decorators.push();
 
   if (options.tags !== undefined) {
     const tags = Array.isArray(options.tags) ? options.tags : [options.tags];
@@ -114,9 +115,9 @@ export function ApiMeta(options: ApiMetaOptions = {}) {
   if (options.headers !== undefined) {
     const headers = toHeaderList(options.headers);
     if (headers.length === 1) {
-      decorators.push(ApiHeader(headers[0] as never));
+      decorators.push(ApiHeader(headers[0]));
     } else if (headers.length > 1) {
-      decorators.push(ApiHeaders(headers as never));
+      decorators.push(ApiHeaders(headers));
     }
   }
 
