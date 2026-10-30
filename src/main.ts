@@ -14,6 +14,7 @@ import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module';
 import { trustedOrigins, type Env } from './config/env';
 import { runWithRequestContext } from './common/logger/request-context';
+import { DEFAULT_PARAMETERS } from './common';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -111,6 +112,7 @@ async function bootstrap() {
     .setOpenAPIVersion('3.1.0')
     .setVersion('1.0')
     .addBearerAuth()
+    .addGlobalParameters(...DEFAULT_PARAMETERS)
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, oaiConfig, {
