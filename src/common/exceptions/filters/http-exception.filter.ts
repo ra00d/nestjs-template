@@ -5,13 +5,8 @@ import {
   HttpException,
   Logger,
 } from '@nestjs/common';
-import type { FilterReply, FilterRequest } from './error-response';
-import {
-  buildErrorResponse,
-  reasonPhrase,
-  requestPath,
-  type ErrorResponseBody,
-} from './error-response';
+import type { FilterReply, FilterRequest } from './utils';
+import { normalizeHttpBody, requestPath } from './utils';
 
 /**
  * Normalizes every `HttpException` (validation failures, 401s, 404s,
@@ -46,27 +41,4 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     reply.status(status).send(body);
   }
-}
-
-/** The same normalization the filter applies, reused by the catch-all filter. */
-export function normalizeHttpBody(
-  exception: HttpException,
-  path: string,
-): ErrorResponseBody {
-  const status = exception.getStatus();
-  const response = exception.getResponse();
-  if (typeof response === 'string') {
-    return buildErrorResponse(status, response, reasonPhrase(status), path);
-  }
-  const body = response as Record<string, unknown>;
-  const message = body['message'];
-  const error = body['error'];
-  return buildErrorResponse(
-    status,
-    typeof message === 'string' || Array.isArray(message)
-      ? (message as string | string[])
-      : reasonPhrase(status),
-    typeof error === 'string' ? error : reasonPhrase(status),
-    path,
-  );
 }

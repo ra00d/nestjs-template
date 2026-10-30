@@ -1,3 +1,5 @@
+import { HttpException } from '@nestjs/common';
+
 /** The uniform error envelope every filter in this directory returns. */
 export interface ErrorResponseBody {
   statusCode: number;
@@ -5,6 +7,7 @@ export interface ErrorResponseBody {
   error: string;
   path: string;
   timestamp: string;
+  errors?: any;
 }
 
 export function buildErrorResponse(
@@ -12,11 +15,13 @@ export function buildErrorResponse(
   message: string | string[],
   error: string,
   path: string,
+  errors?: any,
 ): ErrorResponseBody {
   return {
     statusCode,
     message,
     error,
+    errors,
     path,
     timestamp: new Date().toISOString(),
   };
@@ -70,4 +75,29 @@ export function reasonPhrase(statusCode: number): string {
     default:
       return statusCode >= 500 ? 'Internal Server Error' : 'Error';
   }
+}
+
+/** The same normalization the filter applies, reused by the catch-all filter. */
+export function normalizeHttpBody(
+  exception: HttpException,
+  path: string,
+): ErrorResponseBody {
+  const status = exception.getStatus();
+  const response = exception.getResponse();
+  if (typeof response === 'string') {
+    return buildErrorResponse(status, response, reasonPhrase(status), path);
+  }
+  const body = response as Record<string, unknown>;
+  const message = body['message'];
+  const error = body['error'];
+  const errors = body['errors'];
+  return buildErrorResponse(
+    status,
+    typeof message === 'string' || Array.isArray(message)
+      ? (message as string | string[])
+      : reasonPhrase(status),
+    typeof error === 'string' ? error : reasonPhrase(status),
+    path,
+    errors,
+  );
 }

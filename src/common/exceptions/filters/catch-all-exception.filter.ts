@@ -6,21 +6,15 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import {
-  isAuthError,
-  mapAuthError,
-} from './authentication-exception.filter';
-import {
-  hasPostgresCode,
-  mapPostgresError,
-} from './database-exception.filter';
+import { isAuthError, mapAuthError } from './authentication-exception.filter';
+import { hasPostgresCode, mapPostgresError } from './database-exception.filter';
 import {
   buildErrorResponse,
   requestPath,
   type FilterReply,
   type FilterRequest,
-} from './error-response';
-import { normalizeHttpBody } from './http-exception.filter';
+} from './utils';
+import { normalizeHttpBody } from './utils';
 
 /**
  * Last-resort filter: anything no specific filter claimed becomes a 500
