@@ -45,4 +45,7 @@ export class AuditService {
       );
     }
   }
+  async get() {
+    return await this.db.select().from(auditLogs);
+  }
 }

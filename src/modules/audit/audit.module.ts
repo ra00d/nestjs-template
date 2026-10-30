@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 import { AuditService } from './audit.service';
+import { AuditController } from './audit.controller';
 
 export interface AuditEntry {
   action: string;
@@ -10,6 +11,7 @@ export interface AuditEntry {
 }
 @Global()
 @Module({
+  controllers: [AuditController],
   providers: [AuditService],
   exports: [AuditService],
 })
