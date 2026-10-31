@@ -6,8 +6,8 @@ import {
   JsonI18nLoader,
   translateStandardSchemaIssues,
 } from '@nestjs/i18n';
-import { signUpSchema } from '../auth/dto/auth.schemas';
 import './i18n.types';
+import { signUpSchema } from '@/modules/auth/dto';
 
 describe('i18n', () => {
   let moduleFixture: TestingModule;
@@ -43,11 +43,18 @@ describe('i18n', () => {
   });
 
   it('translates validation issues in the request locale', () => {
-    const parsed = signUpSchema.safeParse({ email: 'not-an-email', password: 'short' });
+    const parsed = signUpSchema.safeParse({
+      email: 'not-an-email',
+      password: 'short',
+    });
     expect(parsed.success).toBe(false);
     if (!parsed.success) {
-      const english = context.run('en', () => translateStandardSchemaIssues(parsed.error.issues));
-      const german = context.run('de', () => translateStandardSchemaIssues(parsed.error.issues));
+      const english = context.run('en', () =>
+        translateStandardSchemaIssues(parsed.error.issues),
+      );
+      const german = context.run('de', () =>
+        translateStandardSchemaIssues(parsed.error.issues),
+      );
       expect(english.map((issue) => issue.message)).toEqual([
         'Invalid email address',
         'Too small: expected at least 12',

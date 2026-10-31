@@ -1,3 +1,8 @@
+import validation from './ar/validation.json';
+import auth from './ar/auth.json';
+import common from './ar/common.json';
+import mail from './ar/mail.json';
+
 /**
  * The shape of the catalogs in `src/i18n/<locale>/*.json`. Each file is a
  * namespace named after the file (`en/auth.json` -> `auth.*`).
@@ -6,35 +11,10 @@
  * `i18nIssueMessage()` type-check their keys against it.
  */
 export interface Translations {
-  common: {
-    hello: string;
-  };
-  auth: {
-    invalidCredentials: string;
-    emailAlreadyRegistered: string;
-    invalidPassword: string;
-  };
-  mail: {
-    verifyEmail: {
-      subject: string;
-    };
-    passwordReset: {
-      subject: string;
-    };
-    magicLink: {
-      subject: string;
-    };
-  };
-  validation: {
-    invalid_type: string;
-    too_small: string;
-    too_big: string;
-    invalid_format: string;
-    unrecognized_keys: string;
-    invalid_union: string;
-    custom: string;
-    invalidEmail: string;
-  };
+  common: typeof common;
+  auth: typeof auth;
+  mail: typeof mail;
+  validation: typeof validation;
 }
 
 declare module '@nestjs/i18n' {
