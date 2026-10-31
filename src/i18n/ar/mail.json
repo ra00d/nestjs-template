@@ -1,0 +1,11 @@
+{
+  "verifyEmail": {
+    "subject": "أكد بريدك الالكتروني"
+  },
+  "passwordReset": {
+    "subject": "أعد تعيين كلمة المرور"
+  },
+  "magicLink": {
+    "subject": "رابط تسجيل دخولك"
+  }
+}
