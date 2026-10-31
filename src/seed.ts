@@ -1,9 +1,9 @@
 import { PasswordHasher } from '@nestjs/authentication';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { normalizeEmail } from './utils/string';
-import { UsersRepository } from './auth/repositories/users.repository';
-import { toRole } from './auth/types/rbac.types';
+import { normalizeEmail } from './common/utils/string';
+import { UsersRepository } from './modules/auth/repositories/users.repository';
+import { toRole } from './modules/auth/types/rbac.types';
 
 /**
  * Bootstrap seed: `pnpm db:seed`.
