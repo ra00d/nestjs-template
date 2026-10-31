@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDrizzle } from '@nestjs/drizzle';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, or } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { randomUUID } from 'node:crypto';
 import { permissions, rolePermissions, roles } from '../db/auth.schema';
@@ -54,6 +54,7 @@ export class RBACRepository {
         slug: input.slug ?? slugify(input.name),
         description: input.description ?? null,
       })
+      .onConflictDoNothing()
       .returning();
     return created;
   }
@@ -124,6 +125,7 @@ export class RBACRepository {
         resource: input.resource ?? null,
         action: input.action ?? null,
       })
+      .onConflictDoNothing()
       .returning();
     return created;
   }
@@ -180,10 +182,33 @@ export class RBACRepository {
     roleId: string,
     permissionId: string,
   ): Promise<void> {
-    await this.db
-      .insert(rolePermissions)
-      .values({ roleId, permissionId })
-      .onConflictDoNothing();
+    const [role] = await this.db
+      .select({ id: roles.id })
+      .from(roles)
+      .where(
+        or(
+          eq(roles.id, roleId),
+          eq(roles.name, roleId),
+          eq(roles.slug, roleId),
+        ),
+      )
+      .limit(1);
+    const [permission] = await this.db
+      .select({ id: permissions.id })
+      .from(permissions)
+      .where(
+        or(
+          eq(permissions.id, permissionId),
+          eq(permissions.name, permissionId),
+          eq(permissions.slug, permissionId),
+        ),
+      )
+      .limit(1);
+    if (role && permission)
+      await this.db
+        .insert(rolePermissions)
+        .values({ roleId: role.id, permissionId: permission.id })
+        .onConflictDoNothing();
   }
 
   async grantPermissionToRole(
