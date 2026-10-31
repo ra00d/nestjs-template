@@ -1,8 +1,4 @@
-import {
-  Module,
-  StandardSchemaValidationPipe,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { Module, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { DrizzleModule } from '@nestjs/drizzle';
@@ -14,6 +10,7 @@ import {
   I18nStandardSchemaValidationPipe,
   JsonI18nLoader,
   QueryLocaleResolver,
+  t,
 } from '@nestjs/i18n';
 import {
   FileTemplateEngine,
@@ -41,6 +38,9 @@ import { LoggerModule } from './common/logger/logger.module';
 import { envSchema, type Env } from './config/env';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { AbacModule } from './modules/abac/abac.module';
+import { AuditModule } from './modules/audit';
+import { AuthModule } from './modules/auth/auth.module';
 import { AuthThrottlerGuard } from './modules/auth/guards';
 import { REDIS_STORE } from './redis/redis.constants';
 import { RedisModule } from './redis/redis.module';
@@ -48,20 +48,6 @@ import type { RedisStore } from './redis/redis.options';
 import { StorageModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
-import {
-  HttpExceptionFilter,
-  AuthenticationExceptionFilter,
-  DatabaseExceptionFilter,
-  CatchAllExceptionFilter,
-  TrimPipe,
-  TransformInterceptor,
-  TimeoutInterceptor,
-} from './common';
-import { AbacModule } from './modules/abac/abac.module';
-import { AuditModule } from './modules/audit/audit.module';
-import { AuthModule } from './modules/auth/auth.module';
-import { AuditModule } from './modules/audit';
-import { AbacModule } from './modules/abac/abac.module';
 
 @Module({
   imports: [
@@ -99,6 +85,7 @@ import { AbacModule } from './modules/abac/abac.module';
           new AcceptLanguageLocaleResolver(),
         ],
         defaultLocale: config.get('DEFAULT_LOCALE'),
+        missingKey: 'fallback',
       }),
     }),
 
@@ -164,11 +151,6 @@ import { AbacModule } from './modules/abac/abac.module';
     HealthModule,
 
     DatabaseModule,
-    AuditModule,
-
-    // Dynamic attribute-based policies: `AbacService`, `AbacGuard` and the
-    // `/abac/policies` CRUD API (table `abac_policy`).
-    AbacModule,
 
     StorageModule.forRoot(),
 
@@ -176,13 +158,11 @@ import { AbacModule } from './modules/abac/abac.module';
     AuthModule,
     AuditModule,
     AbacModule,
-    PostsModule,
-    CommentsModule,
   ],
   providers: [
-    // Exception filters, most specific first: Nest runs the first filter
+    // Exception filters, most generic first: Nest runs the last filter
     // whose `@Catch` metatypes match, and the catch-all matches everything,
-    // so it must stay last.
+    // so it must stay first.
     { provide: APP_FILTER, useClass: CatchAllExceptionFilter },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
     { provide: APP_FILTER, useClass: ValidationExceptionFilter },
@@ -197,19 +177,25 @@ import { AbacModule } from './modules/abac/abac.module';
       provide: APP_PIPE,
       useValue: new I18nStandardSchemaValidationPipe({
         errorHttpStatusCode: 422,
-        // validateCustomDecorators: true,
+        validateCustomDecorators: true,
         exceptionFactory: (issues) => {
           let errors: Record<string, string> = {};
+          const keys: string[] = [];
           let errMsg = 'invalid input for: ';
           issues.forEach((is) => {
             const key = is.path?.at(0) as string;
+            keys.push(t(('validation.' + key) as any));
             errMsg = errMsg + ' ' + key;
             if (key) errors[key] = is.message;
           });
           return new UnprocessableEntityException(
             {
               errors,
-              message: errMsg, // 'invalid_input',
+              message: t('validation.custom', {
+                args: {
+                  keys: keys,
+                },
+              }), // 'invalid_input',
             },
             {
               description: 'some of the user input are invalid',

@@ -1,6 +1,6 @@
 import helmet from '@fastify/helmet';
 import secureSession from '@fastify/secure-session';
-import { StandardSchemaValidationPipe, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -12,9 +12,9 @@ import { randomUUID } from 'node:crypto';
 import { ZodObject } from 'zod';
 import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module';
-import { trustedOrigins, type Env } from './config/env';
-import { runWithRequestContext } from './common/logger/request-context';
 import { DEFAULT_PARAMETERS } from './common';
+import { runWithRequestContext } from './common/logger/request-context';
+import { trustedOrigins, type Env } from './config/env';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -32,7 +32,7 @@ async function bootstrap() {
       },
       multipart: { limits: { fileSize: 10 * 1024 * 1024, files: 5 } },
     }),
-    //   { bufferLogs: true },
+    { bufferLogs: true, snapshot: true },
   );
   const config = app.get(ConfigService<Env, true>);
   const sessionSecret: string = config.get('SESSION_SECRET');
