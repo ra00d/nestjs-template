@@ -14,8 +14,8 @@ import {
 import {
   toPermission,
   toRole,
-  type Permission,
-  type Role,
+  type PermissionName,
+  type RoleName,
 } from '../types/rbac.types';
 import { User } from '../types/user';
 
@@ -161,7 +161,10 @@ export class UsersRepository extends BaseRepository<typeof users> {
    * exist yet: the first user of a fresh install registers before the roles
    * they ask for exist.
    */
-  private async assignRoleSlugs(userId: string, slugs: Role[]): Promise<void> {
+  private async assignRoleSlugs(
+    userId: string,
+    slugs: RoleName[],
+  ): Promise<void> {
     if (slugs.length === 0) {
       return;
     }
@@ -364,13 +367,13 @@ export class UsersRepository extends BaseRepository<typeof users> {
   }
 
   /** The names of the permissions the user holds, direct and through roles. */
-  async getUserPermissionNames(userId: string): Promise<Permission[]> {
+  async getUserPermissionNames(userId: string): Promise<PermissionName[]> {
     return (await this.getUserPermissions(userId)).map((permission) =>
       toPermission(permission.name),
     );
   }
 
-  async listUserPermissionNames(userId: string): Promise<Permission[]> {
+  async listUserPermissionNames(userId: string): Promise<PermissionName[]> {
     return this.getUserPermissionNames(userId);
   }
 
@@ -404,7 +407,7 @@ export class UsersRepository extends BaseRepository<typeof users> {
 
   async hasPermissionByName(
     userId: string,
-    permissionName: Permission,
+    permissionName: PermissionName,
   ): Promise<boolean> {
     const permission = await this.db
       .select({ id: permissions.id })
@@ -439,8 +442,8 @@ const normalize = (email: string) =>
 const toUser = (
   // oxlint-disable-next-line no-unused-vars
   { passwordHash: _, ...account }: UserRow,
-  roles: Role[],
-  permissions: Permission[],
+  roles: RoleName[],
+  permissions: PermissionName[],
 ): User => ({ ...account, roles, permissions });
 
 /**
@@ -450,8 +453,8 @@ const toUser = (
 async function rolesByUser(
   db: NodePgDatabase,
   userIds: string[],
-): Promise<Map<string, Role[]>> {
-  const byUser = new Map<string, Role[]>();
+): Promise<Map<string, RoleName[]>> {
+  const byUser = new Map<string, RoleName[]>();
   if (userIds.length === 0) {
     return byUser;
   }
@@ -477,8 +480,8 @@ async function rolesByUser(
 async function permissionNamesByUser(
   db: NodePgDatabase,
   userIds: string[],
-): Promise<Map<string, Permission[]>> {
-  const byUser = new Map<string, Permission[]>();
+): Promise<Map<string, PermissionName[]>> {
+  const byUser = new Map<string, PermissionName[]>();
   if (userIds.length === 0) {
     return byUser;
   }

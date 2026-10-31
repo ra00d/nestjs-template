@@ -1,4 +1,9 @@
-import { toPermission, toRole, type Permission, type Role } from '../types';
+import {
+  toPermission,
+  toRole,
+  type PermissionName,
+  type RoleName,
+} from '../types';
 
 /** The roles the template ships with. */
 export const DEFAULT_ROLES = {
@@ -25,7 +30,10 @@ export const DEFAULT_PERMISSIONS = {
  * What each default role grants: `admin` everything, `user` the read-only
  * set, `guest` nothing until an install decides otherwise.
  */
-export const DEFAULT_ROLE_PERMISSIONS: Record<Role, readonly Permission[]> = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<
+  RoleName,
+  readonly PermissionName[]
+> = {
   [DEFAULT_ROLES.admin]: Object.values(DEFAULT_PERMISSIONS),
   [DEFAULT_ROLES.user]: [
     DEFAULT_PERMISSIONS.usersRead,

@@ -11,7 +11,7 @@ import { Authorize } from '../decorators/rbac.decorator';
 import { PUBLIC_API } from '../decorators/public.decorator';
 import { FastifyRequest } from 'fastify';
 import type { AuthorizeParams } from '../types/auth-types';
-import type { Permission, Role } from '../types/rbac.types';
+import type { PermissionName, RoleName } from '../types/rbac.types';
 import { AppLogger } from '@/common/logger';
 
 @Injectable()
@@ -53,7 +53,7 @@ export class AuthzGuard implements CanActivate {
   }
   private getRequiredAuthorizations(
     params: AuthorizeParams,
-  ): (Role | Permission)[] {
+  ): (RoleName | PermissionName)[] {
     return [
       ...new Set([
         ...(params?.permissions ?? []),
@@ -65,7 +65,7 @@ export class AuthzGuard implements CanActivate {
   }
   private getOptionalAuthorizations(
     params: AuthorizeParams,
-  ): (Role | Permission)[] {
+  ): (RoleName | PermissionName)[] {
     return [
       ...new Set([
         // ...(params.permissions ?? []),

@@ -14,24 +14,24 @@
 import { Brand } from '@/types';
 
 /** A role slug, as carried by `User.roles`. */
-export type Role = Brand<string, 'Role'>;
+export type RoleName = Brand<string, 'Role'>;
 
 /** A permission name, as carried by `User.permissions`. */
-export type Permission = Brand<string, 'Permission'>;
+export type PermissionName = Brand<string, 'Permission'>;
 
 /** Brands a value as a `Role`, trimming it and rejecting blank ones.
  *
  * @description this is used to override the default behaveor please create a permission constant to avoid spelling mistakes
  * */
-export function toRole(value: string): Role {
-  return assertName(value, 'role') as Role;
+export function toRole(value: string): RoleName {
+  return assertName(value, 'role') as RoleName;
 }
 
 /** Brands a value as a `Permission`, trimming it and rejecting blank ones.
  * @description this is used to override the default behaveor please create a permission constant to avoid spelling mistakes
  * */
-export function toPermission(value: string): Permission {
-  return assertName(value, 'permission') as Permission;
+export function toPermission(value: string): PermissionName {
+  return assertName(value, 'permission') as PermissionName;
 }
 
 function assertName(value: string, kind: 'role' | 'permission'): string {
