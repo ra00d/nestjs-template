@@ -5,7 +5,7 @@ import {
   type LoggerService,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { Env } from '../config/env';
+import type { Env } from '@/config/env';
 import { DEFAULT_SENSITIVE_FIELDS, redactSensitive } from '../utils/redact';
 import { getRequestContext } from './request-context';
 import { LOGGER_OPTIONS, type CustomLoggerOptions } from './logger.options';
@@ -45,6 +45,19 @@ const isPlainObject = (value: unknown): value is Record<string, unknown> => {
   const proto = Object.getPrototypeOf(value);
   return proto === Object.prototype || proto === null;
 };
+export const isColorAllowed = () => !process.env.NO_COLOR;
+const colorIfAllowed = (colorFn: (text: string) => string) => (text: string) =>
+  isColorAllowed() ? colorFn(text) : text;
+
+export const clc = {
+  bold: colorIfAllowed((text) => `\x1B[1m${text}\x1B[0m`),
+  green: colorIfAllowed((text) => `\x1B[32m${text}\x1B[39m`),
+  yellow: colorIfAllowed((text) => `\x1B[33m${text}\x1B[39m`),
+  red: colorIfAllowed((text) => `\x1B[31m${text}\x1B[39m`),
+  magentaBright: colorIfAllowed((text) => `\x1B[95m${text}\x1B[39m`),
+  cyanBright: colorIfAllowed((text) => `\x1B[96m${text}\x1B[39m`),
+  none: colorIfAllowed((text) => text),
+};
 
 /**
  * The application's logger (`app.useLogger()` in `main.ts`, so `new
@@ -69,7 +82,8 @@ export class AppLogger implements LoggerService {
   ) {
     const envLevel: string = config.get('LOG_LEVEL');
     const level = parseLevel(options?.level ?? envLevel);
-    this.minIndex = level === null ? Number.POSITIVE_INFINITY : LEVELS.indexOf(level);
+    this.minIndex =
+      level === null ? Number.POSITIVE_INFINITY : LEVELS.indexOf(level);
     this.fields = options?.sensitiveFields ?? DEFAULT_SENSITIVE_FIELDS;
     this.redact = options?.redact ?? true;
   }
@@ -97,7 +111,15 @@ export class AppLogger implements LoggerService {
   fatal(message: unknown, ...params: unknown[]): void {
     this.write('fatal', message, params);
   }
-
+  private getClcFn(level: Level | ({} & string)) {
+    level = level.toUpperCase();
+    if (level.includes('LOG')) return clc.green;
+    if (level.includes('ERROR')) return clc.red;
+    if (level.includes('WARN')) return clc.yellow;
+    if (level.includes('LOG')) return clc.green;
+    if (level.includes('LOG')) return clc.green;
+    return clc.none;
+  }
   private write(level: Level, message: unknown, params: unknown[]): void {
     if (LEVELS.indexOf(level) < this.minIndex) return;
     const rest = [...params];
@@ -106,14 +128,15 @@ export class AppLogger implements LoggerService {
       rest.length > 0 && typeof rest[rest.length - 1] === 'string'
         ? (rest.pop() as string)
         : undefined;
-    const segments = [this.format(message), ...rest.map((param) => this.format(param))].filter(
-      (segment) => segment.length > 0,
-    );
+    const segments = [
+      this.getClcFn(level)(this.format(message)),
+      ...rest.map((param) => this.format(param)),
+    ].filter((segment) => segment.length > 0);
     const reqId = getRequestContext()?.reqId;
     const line =
-      `[${new Date().toISOString()}] ${level.toUpperCase().padEnd(7)}` +
-      (context ? ` [${context}]` : '') +
-      (reqId ? ` [${reqId}]` : '') +
+      `[${new Date().toISOString()}] ${this.getClcFn(level)(level.toUpperCase().padEnd(7))}` +
+      (context ? clc.yellow(` [${context}]`) : '') +
+      (reqId ? clc.bold(` [${reqId}]`) : '') +
       (segments.length > 0 ? ` ${segments.join(' ')}` : '');
     if (level === 'error' || level === 'fatal' || level === 'warn') {
       process.stderr.write(`${line}\n`);
@@ -124,7 +147,11 @@ export class AppLogger implements LoggerService {
 
   private format(value: unknown): string {
     if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean' || typeof value === 'bigint') {
+    if (
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      typeof value === 'bigint'
+    ) {
       return String(value);
     }
     if (value === null || value === undefined) return '';
@@ -133,7 +160,10 @@ export class AppLogger implements LoggerService {
     }
     const safe =
       this.redact && (isPlainObject(value) || Array.isArray(value))
-        ? redactSensitive(value, { fields: [...this.fields], replaceDefaults: true })
+        ? redactSensitive(value, {
+            fields: [...this.fields],
+            replaceDefaults: true,
+          })
         : value;
     if (typeof safe === 'object') {
       try {
