@@ -74,7 +74,7 @@ pnpm db generate [name]           # drizzle-kit diff of src/db-schema.ts -> ./dr
 pnpm db check                     # validate the migration snapshots
 pnpm db migrate                   # apply pending migrations
 pnpm db create                    # create the database if missing, then migrate
-pnpm db seed                      # run the seed entry point (src/seed.ts)
+pnpm db seed                      # run the seeders in db.seeders
 pnpm db reset --force [--seed]    # drop every table, re-apply migrations
 pnpm db pull                      # introspect the database into schema files
 pnpm db export [--out file.sql]   # print the DDL of the current schema
@@ -82,8 +82,8 @@ pnpm db export [--out file.sql]   # print the DDL of the current schema
 
 Defaults live in the `db` section of `cli.config.ts`: the drizzle-kit
 dialect, schema path and migrations folder (`dialect`, `schema`, `out`),
-the connection URL (`url`), the package script seeding runs
-(`seedScript`) and the maintenance database used for `CREATE DATABASE`
+the connection URL (`url`), the seeder modules `db seed` runs
+(`seeders`) and the maintenance database used for `CREATE DATABASE`
 (`maintenanceDatabase`). The `db:generate` and `db:migrate` package
 scripts are aliases for `pnpm db generate` and `pnpm db migrate`.
 
