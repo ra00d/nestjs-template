@@ -1,6 +1,6 @@
 import helmet from '@fastify/helmet';
 import secureSession from '@fastify/secure-session';
-import { VersioningType } from '@nestjs/common';
+import { Logger, VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto';
 import { ZodObject } from 'zod';
 import { createSchema } from 'zod-openapi';
 import { AppModule } from './app.module';
-import { DEFAULT_PARAMETERS } from './common';
+import { AppLogger, DEFAULT_PARAMETERS } from './common';
 import { runWithRequestContext } from './common/logger/request-context';
 import { trustedOrigins, type Env } from './config/env';
 
@@ -38,7 +38,7 @@ async function bootstrap() {
   const sessionSecret: string = config.get('SESSION_SECRET');
   const sessionSalt: string = config.get('SESSION_SALT');
 
-  //app.useLogger(app.get(AppLogger));
+  app.useLogger(app.get(AppLogger));
   app.enableShutdownHooks();
 
   // Earliest correlation: primes the logger's request context and echoes
@@ -114,8 +114,13 @@ async function bootstrap() {
     .addBearerAuth()
     .addGlobalParameters(...DEFAULT_PARAMETERS)
     .build();
+  console.log(oaiConfig.openapi);
+
   const documentFactory = () =>
     SwaggerModule.createDocument(app, oaiConfig, {
+      deepScanRoutes: true,
+
+      autoTagControllers: true,
       standardSchemaConverter: (schema, { schemaType }) => {
         let id = '';
         const converted = createSchema(schema as never, {
@@ -133,10 +138,14 @@ async function bootstrap() {
     });
   SwaggerModule.setup('docs', app, documentFactory, {
     explorer: true,
+    swaggerOptions: {},
+    customJs: '/v1',
+    customJsStr: `
+    `,
   });
   const port: number = config.get('PORT', 3000);
   await app.listen({ port, host: '0.0.0.0' }, (_, add) => {
-    console.log('running on', add);
+    app.get(AppLogger).log(`running on `, add, 'bootstrap');
   });
 }
 await bootstrap();

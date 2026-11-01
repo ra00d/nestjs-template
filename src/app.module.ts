@@ -48,8 +48,10 @@ import type { RedisStore } from './redis/redis.options';
 import { StorageModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
+import { AppController } from './app.controller';
 
 @Module({
+  controllers: [AppController],
   imports: [
     // Validates the environment at bootstrap: a missing or malformed
     // variable stops the application before the first request.
