@@ -1,7 +1,6 @@
 import { Module, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
-import { DrizzleModule } from '@nestjs/drizzle';
 import {
   AcceptLanguageLocaleResolver,
   CookieLocaleResolver,
@@ -20,8 +19,6 @@ import {
 } from '@nestjs/mail';
 import { MultipartModule } from '@nestjs/platform-fastify';
 import { ThrottlerModule, minutes } from '@nestjs/throttler';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { join } from 'node:path';
 import { CacheModule } from './cache/cache.module';
 import {
@@ -91,20 +88,9 @@ import { AppController } from './app.controller';
       }),
     }),
 
-    // The Drizzle database, on a pg pool the module closes when the application shuts down.
-    // Migrations run here only when DB_MIGRATE_ON_BOOT=true; otherwise use `pnpm db:migrate`.
-    DrizzleModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: async (config: ConfigService<Env, true>) => {
-        const connection: string = config.get('DATABASE_URL');
-        const db = drizzle(connection, {});
-        if (config.get('DB_MIGRATE_ON_BOOT')) {
-          await migrate(db, { migrationsFolder: './drizzle' });
-        }
-        return {
-          db,
-        };
-      },
+          return 'fallback';
+        },
+      }),
     }),
 
     // Email: links in LogMailTransport's log during development, through
