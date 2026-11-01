@@ -13,8 +13,8 @@ export default defineConfig({
     url:
       process.env['DATABASE_URL'] ??
       'postgres://localhost:5432/nestjs_template',
-    // Package script `db seed` (and `db reset --seed`) runs.
-    seedScript: 'db:seed',
+    // Seeder modules `db seed` (and `db reset --seed`) run, in order.
+    seeders: ['./src/modules/auth/db/seed.ts'],
     // Maintenance database `db create` connects to for `CREATE DATABASE`.
     maintenanceDatabase: 'postgres',
   },
