@@ -39,7 +39,6 @@ import { HealthModule } from './health/health.module';
 import { AbacModule } from './modules/abac/abac.module';
 import { AuditModule } from './modules/audit';
 import { AuthModule } from './modules/auth/auth.module';
-import { AuthThrottlerGuard } from './modules/auth/guards';
 import { REDIS_STORE } from './redis/redis.constants';
 import { RedisModule } from './redis/redis.module';
 import type { RedisStore } from './redis/redis.options';
@@ -194,9 +193,6 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
     // pass through), plus a 408 for handlers slower than REQUEST_TIMEOUT_MS.
     { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: TimeoutInterceptor },
-    // The root module runs first, so this guard sees the request before the
-    // authentication guard: guessed tokens count against the limit too.
-    { provide: APP_GUARD, useClass: AuthThrottlerGuard },
   ],
 })
 export class AppModule {}

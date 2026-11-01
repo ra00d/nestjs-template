@@ -25,6 +25,7 @@ import { RBACPolicy } from './policies/rbac.policy';
 import { AuthenticationModule } from '@nestjs/authentication';
 import { ConfigService } from '@nestjs/config';
 import { Env, trustedOrigins } from '@/config/env';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -88,6 +89,9 @@ import { Env, trustedOrigins } from '@/config/env';
     MagicLinkMailer,
     RBACService,
     RBACPolicy,
+    // The root module runs first, so this guard sees the request before the
+    // authentication guard: guessed tokens count against the limit too.
+    { provide: APP_GUARD, useClass: AuthThrottlerGuard },
   ],
   exports: [UsersRepository, RBACRepository],
 })
