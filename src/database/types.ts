@@ -1,6 +1,6 @@
 import { relations } from '@/db';
 import { Brand } from '@/types';
-import type { AnyRelations, EmptyRelations, SQL, Table } from 'drizzle-orm';
+import type { AnyRelations, EmptyRelations, SQL } from 'drizzle-orm';
 import type {
   NodePgDatabase,
   NodePgTransaction,
@@ -9,8 +9,8 @@ import type {
   PgTable,
   PgTableWithColumns,
   PgTransactionConfig,
-  TableConfig,
 } from 'drizzle-orm/pg-core';
+import { seed } from 'drizzle-seed';
 
 /**
  * The Drizzle database attached through `DrizzleModule`. Use this when a
@@ -144,3 +144,10 @@ export interface BaseRepoOptions {
    */
   updatedAtColumn?: keyof PgTable; // e.g. 'updatedAt'
 }
+
+export type SeederFunc<
+  SCHEMA extends {
+    [key: string]: any;
+  },
+  T extends NodePgDatabase = DB,
+> = Parameters<ReturnType<typeof seed<T, SCHEMA, '2'>>['refine']>[0];
