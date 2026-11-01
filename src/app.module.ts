@@ -20,6 +20,7 @@ import {
 import { MultipartModule } from '@nestjs/platform-fastify';
 import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { join } from 'node:path';
+import { AppController } from './app.controller';
 import { CacheModule } from './cache/cache.module';
 import {
   AuthenticationExceptionFilter,
@@ -45,7 +46,6 @@ import type { RedisStore } from './redis/redis.options';
 import { StorageModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
-import { AppController } from './app.controller';
 
 @Module({
   controllers: [AppController],
@@ -84,15 +84,13 @@ import { AppController } from './app.controller';
           new AcceptLanguageLocaleResolver(),
         ],
         defaultLocale: config.get('DEFAULT_LOCALE'),
-        missingKey: 'fallback',
-      }),
-    }),
+        missingKey: (key, locale) => {
+          console.log(key, locale);
 
           return 'fallback';
         },
       }),
     }),
-
     // Email: links in LogMailTransport's log during development, through
     // SMTP when SMTP_URL is set.
     MailModule.forRootAsync({

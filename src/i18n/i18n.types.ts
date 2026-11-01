@@ -2,6 +2,7 @@ import validation from './ar/validation.json';
 import auth from './ar/auth.json';
 import common from './ar/common.json';
 import mail from './ar/mail.json';
+import errors from './ar/errors.json';
 
 /**
  * The shape of the catalogs in `src/i18n/<locale>/*.json`. Each file is a
@@ -12,6 +13,7 @@ import mail from './ar/mail.json';
  */
 export interface Translations {
   common: typeof common;
+  errors: typeof errors;
   auth: typeof auth;
   mail: typeof mail;
   validation: typeof validation;
