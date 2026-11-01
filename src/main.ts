@@ -1,6 +1,6 @@
 import helmet from '@fastify/helmet';
 import secureSession from '@fastify/secure-session';
-import { Logger, VersioningType } from '@nestjs/common';
+import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import {
@@ -114,7 +114,6 @@ async function bootstrap() {
     .addBearerAuth()
     .addGlobalParameters(...DEFAULT_PARAMETERS)
     .build();
-  console.log(oaiConfig.openapi);
 
   const documentFactory = () =>
     SwaggerModule.createDocument(app, oaiConfig, {
