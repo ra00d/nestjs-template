@@ -24,8 +24,8 @@ let registered = false;
 /**
  * Node's TypeScript support strips types but keeps ESM resolution rules, so
  * `import './foo'` does not find `foo.ts`. Config files loaded by the CLI
- * (`cli.config.ts`, `drizzle.config.ts`) may use extensionless imports like
- * the rest of the project; register a resolver that adds the extension.
+ * (`cli.config.ts`) may use extensionless imports like the rest of the
+ * project; register a resolver that adds the extension.
  */
 export const registerTsResolver = (): void => {
   if (registered) return;

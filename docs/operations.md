@@ -95,9 +95,11 @@ pnpm db pull       # introspect an existing database into schema files
 ```
 
 The `db` command is part of the developer CLI (`pnpm db …`, or
-`pnpm cli db …`); its defaults live in the `db` section of
-`cli.config.ts`. The `db:generate`/`db:migrate`/`db:seed` package scripts
-keep working as direct shortcuts.
+`pnpm cli db …`); its settings live in the `db` section of
+`cli.config.ts` (`dialect`, `schema`, `out`, `url`, `seedScript` and
+`maintenanceDatabase`). The `db:generate` and `db:migrate` package
+scripts are aliases for `pnpm db generate` and `pnpm db migrate`;
+`db:seed` remains the seed entry point.
 
 ## Production notes
 

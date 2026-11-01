@@ -10,7 +10,7 @@
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "types": ["node", "vitest/globals"]
+    "types": ["vitest/globals", "node", "@rspack/core/module"]
   },
   "include": ["**/*.ts"]
 }

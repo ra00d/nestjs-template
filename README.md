@@ -81,10 +81,11 @@ pnpm db export [--out file.sql]   # print the DDL of the current schema
 ```
 
 Defaults live in the `db` section of `cli.config.ts`: the drizzle-kit
-config path (`config`), the package script seeding runs (`seedScript`)
-and the maintenance database used for `CREATE DATABASE`
-(`maintenanceDatabase`). Connection URL and migrations folder are read
-from `drizzle.config.ts`.
+dialect, schema path and migrations folder (`dialect`, `schema`, `out`),
+the connection URL (`url`), the package script seeding runs
+(`seedScript`) and the maintenance database used for `CREATE DATABASE`
+(`maintenanceDatabase`). The `db:generate` and `db:migrate` package
+scripts are aliases for `pnpm db generate` and `pnpm db migrate`.
 
 The generated list endpoint supports pagination, sorting, filtering,
 search and relation includes out of the box. Filters travel as a

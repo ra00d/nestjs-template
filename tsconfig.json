@@ -23,6 +23,6 @@
       "@/*": ["./src/*"],
       "modules/*": ["./src/modules/*"]
     }
-  },
-  "exclude": ["cli.config.ts"]
+  }
+  //"exclude": ["cli.config.ts"]
 }

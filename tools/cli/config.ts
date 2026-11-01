@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { existsSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
@@ -15,10 +16,27 @@ export interface GenCommandConfig {
   entities: EntityDefinition[];
 }
 
+/** Dialects accepted by drizzle-kit. */
+export type DbDialect =
+  | 'postgresql'
+  | 'mysql'
+  | 'sqlite'
+  | 'turso'
+  | 'singlestore'
+  | 'mssql'
+  | 'cockroach'
+  | 'duckdb';
+
 /** Settings for the `db` command; all fall back to the template defaults. */
 export interface DbCommandConfig {
-  /** drizzle-kit config file read by `generate`, `check`, `migrate`, `create`, `reset`, `pull` and `export`. */
-  config: string;
+  /** Database dialect drizzle-kit runs against. */
+  dialect: DbDialect;
+  /** Glob path(s) to the Drizzle schema. */
+  schema: string;
+  /** Migrations output folder; the drizzle-orm migrator reads from it. */
+  out: string;
+  /** PostgreSQL connection URL. */
+  url: string;
   /** Package script `db seed` (and `db reset --seed`) runs. */
   seedScript: string;
   /** Maintenance database `db create` connects to for `CREATE DATABASE`. */
@@ -46,7 +64,11 @@ export interface CliConfigInput {
 
 /** Fallbacks mirror what the `db` command would use without cli.config.ts. */
 export const DEFAULT_DB_CONFIG: DbCommandConfig = {
-  config: 'drizzle.config.ts',
+  dialect: 'postgresql',
+  schema: './src/db-schema.ts',
+  out: './drizzle',
+  url:
+    process.env['DATABASE_URL'] ?? 'postgres://localhost:5432/nestjs_template',
   seedScript: 'db:seed',
   maintenanceDatabase: 'postgres',
 };
