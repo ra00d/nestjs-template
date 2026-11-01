@@ -37,8 +37,8 @@ export interface DbCommandConfig {
   out: string;
   /** PostgreSQL connection URL. */
   url: string;
-  /** Package script `db seed` (and `db reset --seed`) runs. */
-  seedScript: string;
+  /** Seeder modules `db seed` and `db reset --seed` run, in order. */
+  seeders: string[];
   /** Maintenance database `db create` connects to for `CREATE DATABASE`. */
   maintenanceDatabase: string;
 }
@@ -69,7 +69,7 @@ export const DEFAULT_DB_CONFIG: DbCommandConfig = {
   out: './drizzle',
   url:
     process.env['DATABASE_URL'] ?? 'postgres://localhost:5432/nestjs_template',
-  seedScript: 'db:seed',
+  seeders: [],
   maintenanceDatabase: 'postgres',
 };
 

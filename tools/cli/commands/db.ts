@@ -10,7 +10,7 @@ import {
   resetDatabase,
   runMigrations,
 } from './db/database';
-import { runSeed } from './db/seed';
+import { runSeeders } from './db/seed';
 
 interface DrizzleError {
   code: string;
@@ -111,10 +111,12 @@ export function createDbCommand(): Command {
     });
 
   db.command('seed')
-    .description('Run the seed entry point via the configured package script')
+    .description('Run the seeders configured in db.seeders')
     .action(async () => {
       await loadCliConfig();
-      await runSeed(dbConfig().seedScript);
+      const { url, schema, seeders } = dbConfig();
+      p.log.step(`Running ${seeders.length} seeder(s).`);
+      await runSeeders({ url, schema, seeders });
       p.log.success('Seed finished.');
     });
 
@@ -124,7 +126,7 @@ export function createDbCommand(): Command {
     .option('--seed', 'run the seed after migrating')
     .action(async (options: { force?: boolean; seed?: boolean }) => {
       await loadCliConfig();
-      const { url, out, seedScript } = dbConfig();
+      const { url, out, schema, seeders } = dbConfig();
       const name = databaseName(url);
       if (!options.force) {
         if (!process.stdin.isTTY) {
@@ -142,7 +144,7 @@ export function createDbCommand(): Command {
       await resetDatabase(url);
       p.log.step(`Applying migrations from ${out}.`);
       await runMigrations(url, out);
-      if (options.seed) await runSeed(seedScript);
+      if (options.seed) await runSeeders({ url, schema, seeders });
       p.log.success('Database reset.');
     });
 

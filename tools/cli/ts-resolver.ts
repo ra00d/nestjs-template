@@ -19,13 +19,32 @@ const EXTENSIONS = [
   '.json',
 ];
 
+/** Project aliases from `tsconfig.json`, resolved from the working directory. */
+const ALIASES = [
+  { prefix: '@/', directory: 'src' },
+  { prefix: 'modules/', directory: 'src/modules' },
+];
+
+const resolveFile = (base: string): string | undefined => {
+  for (const extension of EXTENSIONS) {
+    const candidate = `${base}${extension}`;
+    if (existsSync(candidate)) return candidate;
+  }
+  for (const extension of EXTENSIONS) {
+    const candidate = resolve(base, `index${extension}`);
+    if (existsSync(candidate)) return candidate;
+  }
+  return undefined;
+};
+
 let registered = false;
 
 /**
  * Node's TypeScript support strips types but keeps ESM resolution rules, so
  * `import './foo'` does not find `foo.ts`. Config files loaded by the CLI
- * (`cli.config.ts`) may use extensionless imports like the rest of the
- * project; register a resolver that adds the extension.
+ * (`cli.config.ts`) and the seeder modules it runs may use extensionless
+ * imports and the project's `@/` / `modules/` aliases; register a resolver
+ * that adds the extension and maps those aliases.
  */
 export const registerTsResolver = (): void => {
   if (registered) return;
@@ -33,6 +52,19 @@ export const registerTsResolver = (): void => {
 
   registerHooks({
     resolve(specifier, context, nextResolve) {
+      for (const alias of ALIASES) {
+        if (!specifier.startsWith(alias.prefix)) continue;
+        const base = resolve(
+          process.cwd(),
+          alias.directory,
+          specifier.slice(alias.prefix.length),
+        );
+        const candidate = resolveFile(base);
+        if (candidate) {
+          return { url: pathToFileURL(candidate).href, shortCircuit: true };
+        }
+      }
+
       const isRelative =
         specifier.startsWith('./') ||
         specifier.startsWith('../') ||
@@ -50,17 +82,9 @@ export const registerTsResolver = (): void => {
       }
 
       const base = resolve(dirname(fileURLToPath(parent)), specifier);
-      for (const extension of EXTENSIONS) {
-        const candidate = `${base}${extension}`;
-        if (existsSync(candidate)) {
-          return { url: pathToFileURL(candidate).href, shortCircuit: true };
-        }
-      }
-      for (const extension of EXTENSIONS) {
-        const candidate = resolve(base, `index${extension}`);
-        if (existsSync(candidate)) {
-          return { url: pathToFileURL(candidate).href, shortCircuit: true };
-        }
+      const candidate = resolveFile(base);
+      if (candidate) {
+        return { url: pathToFileURL(candidate).href, shortCircuit: true };
       }
 
       return nextResolve(specifier, context);
