@@ -1,12 +1,13 @@
 {
   "invalid_type": "قيمة غير صالحة",
   "email": "البريد",
+  "url": "رابط",
   "password": "كلمة المرور",
   "too_small": "قيمة صغيرة يجب ان تكون اكبر او تساوي {minimum} ",
   "too_big": "Too big: expected at most {maximum}",
-  "invalid_format": "Invalid {format}",
+  "invalid_format": "غير صالح {format}",
   "unrecognized_keys": "Unrecognized keys: { keys }",
-  "invalid_union": "Invalid input",
+  "invalid_union": "مدخل غير صالح",
   "custom": "مدخلات غير صالحة ل : {keys}",
   "invalidEmail": "بريد غير صالح"
 }
