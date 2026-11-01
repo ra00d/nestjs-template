@@ -26,7 +26,7 @@ service names; everything else comes from `.env`.
 docker compose up db redis mail   # Postgres :5432, Redis :6379, Mailpit :8025
 pnpm install
 pnpm db generate && pnpm db migrate   # create tables (incl. audit_logs)
-pnpm db seed                          # no-op unless ADMIN_EMAIL/ADMIN_PASSWORD are set
+pnpm db seed                          # run the seeders in db.seeders
 pnpm start:dev
 ```
 
@@ -87,7 +87,8 @@ Key behavior flags:
 pnpm db generate   # Drizzle diff of src/db-schema.ts -> ./drizzle
 pnpm db migrate    # apply (or DB_MIGRATE_ON_BOOT=true for ephemeral envs)
 pnpm db create     # create the database if missing, then migrate
-ADMIN_EMAIL=a@b.co ADMIN_PASSWORD=… pnpm db seed   # idempotent admin
+pnpm db:seed                                      # app bootstrap: seeders + optional admin
+ADMIN_EMAIL=a@b.co ADMIN_PASSWORD=… pnpm db:seed  # ...and an idempotent admin
 pnpm db reset --force --seed   # wipe a dev database and rebuild it
 pnpm db check      # validate the migration snapshots
 pnpm db export     # print the DDL of the current schema
@@ -96,10 +97,12 @@ pnpm db pull       # introspect an existing database into schema files
 
 The `db` command is part of the developer CLI (`pnpm db …`, or
 `pnpm cli db …`); its settings live in the `db` section of
-`cli.config.ts` (`dialect`, `schema`, `out`, `url`, `seedScript` and
+`cli.config.ts` (`dialect`, `schema`, `out`, `url`, `seeders` and
 `maintenanceDatabase`). The `db:generate` and `db:migrate` package
-scripts are aliases for `pnpm db generate` and `pnpm db migrate`;
-`db:seed` remains the seed entry point.
+scripts are aliases for `pnpm db generate` and `pnpm db migrate`.
+`pnpm db seed` runs the seeder modules listed in `db.seeders`; the
+`db:seed` package script boots the app for the same seeders plus the
+optional admin bootstrap.
 
 ## Production notes
 
