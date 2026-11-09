@@ -1,6 +1,6 @@
 import { Module, UnprocessableEntityException } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import {
   AcceptLanguageLocaleResolver,
   CookieLocaleResolver,
@@ -18,6 +18,7 @@ import {
   SmtpTransport,
 } from '@nestjs/mail';
 import { MultipartModule } from '@nestjs/platform-fastify';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { join } from 'node:path';
 import { AppController } from './app.controller';
@@ -52,6 +53,16 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
     // Validates the environment at bootstrap: a missing or malformed
     // variable stops the application before the first request.
     ConfigModule.forRoot({ isGlobal: true, validationSchema: envSchema }),
+    ServeStaticModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<Env, true>) => {
+        return [
+          {
+            rootPath: join(import.meta.dirname, '..', config.get('PUBLIC_DIR')),
+          },
+        ];
+      },
+    }),
 
     // Application logging: `AppLogger` (stdout/stderr with automatic
     // secret stripping) plus the outermost request-id interceptor feeding
