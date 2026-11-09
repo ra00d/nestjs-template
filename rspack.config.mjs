@@ -1,5 +1,5 @@
 // @ts-check
-import { BannerPlugin } from '@rspack/core';
+import { BannerPlugin, IgnorePlugin } from '@rspack/core';
 import { defineConfig } from '@rspack/cli';
 import nodeExternals from 'webpack-node-externals';
 
@@ -46,7 +46,10 @@ export default defineConfig({
   externals: [
     // Keep packages external: this produces one file for the CLI code while
     // dependencies continue to resolve from node_modules at runtime.
-    nodeExternals({ importType: 'module' }),
+    // @ts-ignore
+    // nodeExternals({
+    //   importType: 'module',
+    // }),
   ],
   plugins: [
     new BannerPlugin({
