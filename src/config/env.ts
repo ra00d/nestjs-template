@@ -28,6 +28,9 @@ export const envSchema = z.object({
     .default('api'),
   /** Run Drizzle SQL migrations on boot when `true`. Prefer `pnpm db:migrate` in production. */
   DB_MIGRATE_ON_BOOT: z.stringbool().default(false),
+  /** public  dir: serving static assets */
+  PUBLIC_DIR: z.string().min(1).default('./public'),
+
   /** Upload staging: multipart `dest` and the files the GC task sweeps. */
   UPLOAD_DIR: z.string().min(1).default('./upload'),
   /** Staged uploads older than this (days) are deleted by the nightly task. */
