@@ -145,9 +145,10 @@ export interface BaseRepoOptions {
   updatedAtColumn?: keyof PgTable; // e.g. 'updatedAt'
 }
 
-export type SeederFunc<
+export type SeederRefineFunc<
   SCHEMA extends {
     [key: string]: any;
   },
-  T extends NodePgDatabase = DB,
+  T extends NodePgDatabase,
 > = Parameters<ReturnType<typeof seed<T, SCHEMA, '2'>>['refine']>[0];
+export type SeedFunc<T extends NodePgDatabase = DB> = (db: T) => Promise<void>;
