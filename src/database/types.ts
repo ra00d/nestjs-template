@@ -10,7 +10,6 @@ import type {
   PgTableWithColumns,
   PgTransactionConfig,
 } from 'drizzle-orm/pg-core';
-import { seed } from 'drizzle-seed';
 
 /**
  * The Drizzle database attached through `DrizzleModule`. Use this when a
@@ -145,10 +144,5 @@ export interface BaseRepoOptions {
   updatedAtColumn?: keyof PgTable; // e.g. 'updatedAt'
 }
 
-export type SeederRefineFunc<
-  SCHEMA extends {
-    [key: string]: any;
-  },
-  T extends NodePgDatabase,
-> = Parameters<ReturnType<typeof seed<T, SCHEMA, '2'>>['refine']>[0];
+/** Seeds a module's own tables using the provided Drizzle instance. */
 export type SeedFunc<T extends NodePgDatabase = DB> = (db: T) => Promise<void>;

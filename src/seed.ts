@@ -1,10 +1,13 @@
 import { PasswordHasher } from '@nestjs/authentication';
 import { NestFactory } from '@nestjs/core';
+import { getDrizzleToken } from '@nestjs/drizzle';
 import { AppModule } from './app.module';
 import { normalizeEmail } from './common/utils/string';
+import type { DB } from './database';
+import { authSeeder } from './modules/auth/db/seed';
+import { RBACRepository } from './modules/auth/repositories';
 import { UsersRepository } from './modules/auth/repositories/users.repository';
 import { toRole } from './modules/auth/types/rbac.types';
-import { RBACRepository } from './modules/auth/repositories';
 
 export const roles = [
   {
@@ -97,27 +100,32 @@ export const rolePermissionAssignments = [
   { role: 'user', permission: 'roles:read' },
   { role: 'user', permission: 'permissions:read' },
 ] as const;
+
 /**
- * Bootstrap seed: `pnpm db:seed`.
+ * Seed: `pnpm db:seed`.
  *
- * - Without `ADMIN_EMAIL`/`ADMIN_PASSWORD` it prints why and exits `0`
- *   (safe in CI before secrets exist) — before booting Nest, so no
- *   database is needed for the no-op path.
- * - With them it creates a verified admin idempotently (existing address
- *   is left untouched) and exits.
+ * - Runs every module's `db/seed.ts` through drizzle-seed.
+ * - With `ADMIN_EMAIL`/`ADMIN_PASSWORD` it also creates a verified admin
+ *   idempotently (an existing address is left untouched).
  */
-async function seed() {
+async function main() {
   const email = normalizeEmail(process.env['ADMIN_EMAIL'] ?? '');
   const password = process.env['ADMIN_PASSWORD'] ?? '';
-  if (!email || !password) {
-    console.log('db:seed: ADMIN_EMAIL/ADMIN_PASSWORD not set, nothing to do.');
-    return;
-  }
 
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn', 'log'],
   });
   try {
+    const db = app.get<DB>(getDrizzleToken());
+    await authSeeder(db);
+
+    if (!email || !password) {
+      console.log(
+        'db:seed: ADMIN_EMAIL/ADMIN_PASSWORD not set, skipping admin.',
+      );
+      return;
+    }
+
     const users = app.get(UsersRepository);
     const rbac = app.get(RBACRepository);
     for (const role of roles) {
@@ -153,4 +161,4 @@ async function seed() {
   }
 }
 
-await seed();
+await main();
