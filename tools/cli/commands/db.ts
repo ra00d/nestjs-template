@@ -34,10 +34,11 @@ export function createDbCommand(): Command {
     .description('Generate SQL migrations from the schema')
     .argument('[name]', 'migration name')
     .option('--ignore-conflicts', 'skip commutativity conflict checks')
+    .option('--custom', 'new empty migration')
     .action(
       async (
         name: string | undefined,
-        options: { ignoreConflicts?: boolean },
+        options: { ignoreConflicts?: boolean,custom?:boolean },
       ) => {
         await loadCliConfig();
         const { dialect, schema, out } = dbConfig();
@@ -47,6 +48,7 @@ export function createDbCommand(): Command {
           out,
           name,
           ignoreConflicts: options.ignoreConflicts,
+          custom:options.custom
         });
         // if (result.status === 'error') {
         //   throw new Error(formatDrizzleError(result.error));

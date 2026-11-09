@@ -175,15 +175,17 @@ export const generateMigration = async (
   opts: Pick<DbCommandConfig, 'schema' | 'dialect' | 'out'> & {
     name?: string;
     ignoreConflicts?: boolean;
+    custom?: boolean;
   },
 ) => {
-  const { name, ignoreConflicts, schema, dialect, out } = opts;
+  const { name, custom, ignoreConflicts, schema, dialect, out } = opts;
 
   const flags = [`--dialect=${dialect}`, `--schema=${schema}`, `--out=${out}`];
 
   if (name) {
     flags.push(`--name=${name}`);
   }
+  if (custom) flags.push('--custom');
 
   if (ignoreConflicts) {
     flags.push('--ignore-conflicts');
