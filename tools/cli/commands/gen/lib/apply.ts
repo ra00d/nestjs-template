@@ -1,6 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { format as prettierFormat } from 'prettier';
 import { IndentationText, Project, QuoteKind } from 'ts-morph';
 import { DEFAULT_CONFIG, type ResolvedConfig } from './config';
 import {
@@ -23,20 +22,6 @@ export interface ApplyResult {
   /** Files edited in place (schema/relations barrels and app module). */
   edited: string[];
 }
-
-/** Formats with the repo's Prettier settings; keeps the raw source on a syntax error. */
-const format = async (source: string): Promise<string> => {
-  try {
-    return await prettierFormat(source, {
-      parser: 'typescript',
-      singleQuote: true,
-      trailingComma: 'all',
-    });
-  } catch {
-    return source;
-  }
-};
-
 const writeFiles = async (
   plans: EntityPlan[],
   force: boolean,
@@ -51,7 +36,7 @@ const writeFiles = async (
         continue;
       }
       mkdirSync(join(target, '..'), { recursive: true });
-      writeFileSync(target, await format(file.content), 'utf8');
+      writeFileSync(target, file.content, 'utf8');
       changes.push({ path: file.path, action: 'created' });
     }
   }
@@ -125,7 +110,7 @@ export const applyPlan = async (
   if (barrelResult.changed) {
     writeFileSync(
       schemaBarrelFile,
-      await format(readFileSync(schemaBarrelFile, 'utf8')),
+      readFileSync(schemaBarrelFile, 'utf8'),
       'utf8',
     );
     edited.push(schemaBarrelFile);
@@ -140,11 +125,7 @@ export const applyPlan = async (
   );
   warnings.push(...appModuleResult.warnings);
   if (appModuleResult.changed) {
-    writeFileSync(
-      appModuleFile,
-      await format(readFileSync(appModuleFile, 'utf8')),
-      'utf8',
-    );
+    writeFileSync(appModuleFile, readFileSync(appModuleFile, 'utf8'), 'utf8');
     edited.push(appModuleFile);
   }
 

@@ -1,17 +1,13 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import type { DbCommandConfig } from '../../config';
 import { registerTsResolver } from '../../ts-resolver';
 
-type Seeder = (fn: any) => Record<string, any>;
+type Seeder = (db: NodePgDatabase) => Promise<void>;
 
 interface SeederModule {
   default?: unknown;
-}
-
-interface SchemaModule {
-  schema?: Record<string, any>;
 }
 
 const loadModule = async <T>(path: string): Promise<T> => {
@@ -32,12 +28,13 @@ const loadSeeder = async (path: string): Promise<Seeder> => {
 };
 
 /**
- * Run every seeder configured in `db.seeders` against the database, using the
- * tables exported by `db.schema`. Seeder modules default-export a
- * `SeederFunc`, e.g. `src/modules/auth/db/seed.ts`.
+ * Run every seeder configured in `db.seeders` against one database
+ * connection. Each module owns its tables: a seeder receives the Drizzle
+ * instance and seeds only what it needs. Seeder modules default-export a
+ * `SeedFunc` from `src/database/types.ts`.
  */
 export const runSeeders = async (
-  config: Pick<DbCommandConfig, 'url' | 'schema' | 'seeders'>,
+  config: Pick<DbCommandConfig, 'url' | 'seeders'>,
 ): Promise<void> => {
   if (config.seeders.length === 0) {
     throw new Error(
@@ -45,21 +42,12 @@ export const runSeeders = async (
     );
   }
 
-  const schemaModule = await loadModule<SchemaModule>(config.schema);
-  if (!schemaModule.schema) {
-    throw new Error(`"${config.schema}" must export a \`schema\` object.`);
-  }
-
   const seeders = await Promise.all(config.seeders.map(loadSeeder));
-  const { seed } = await import('drizzle-seed');
   const db = drizzle(config.url);
   try {
-    await seed(db, schemaModule.schema).refine((fn) =>
-      seeders.reduce<Record<string, any>>(
-        (tables, seeder) => ({ ...tables, ...seeder(fn) }),
-        {},
-      ),
-    );
+    for (const seeder of seeders) {
+      await seeder(db);
+    }
   } finally {
     await db.$client.end();
   }

@@ -1,24 +1,27 @@
-import { writeFile } from 'node:fs/promises';
 import * as p from '@clack/prompts';
 import { Command } from 'commander';
-import { check, exportSql, generate, pull } from 'drizzle-kit/cli';
+
 import { getConfig, loadCliConfig, type DbCommandConfig } from '../config';
 import { cancel } from '../tui/cancel';
 import {
+  checkDB as check,
   databaseName,
   ensureDatabase,
+  exportSql,
+  generateMigration as generate,
+  pullSchema as pull,
   resetDatabase,
   runMigrations,
 } from './db/database';
 import { runSeeders } from './db/seed';
 
-interface DrizzleError {
-  code: string;
-  message?: string;
-}
+// interface DrizzleError {
+//   code: string;
+//   message?: string;
+// }
 
-const formatDrizzleError = (error: DrizzleError): string =>
-  `drizzle-kit: ${error.message ?? error.code}`;
+// const formatDrizzleError = (error: DrizzleError): string =>
+//   `drizzle-kit: ${error.message ?? error.code}`;
 
 const dbConfig = (): DbCommandConfig => getConfig('db');
 
@@ -45,25 +48,25 @@ export function createDbCommand(): Command {
           name,
           ignoreConflicts: options.ignoreConflicts,
         });
-        if (result.status === 'error') {
-          throw new Error(formatDrizzleError(result.error));
-        }
-        if (result.status === 'no_changes') {
-          p.log.info('No schema changes; nothing to generate.');
-          return;
-        }
-        if (result.status === 'missing_hints') {
-          p.log.warn('drizzle-kit needs hints to resolve ambiguous changes:');
-          p.log.message(JSON.stringify(result.unresolved, null, 2));
-          throw new Error(
-            `Run \`pnpm exec drizzle-kit generate --dialect=${dialect} --schema=${schema} --out=${out}\` and pick the renames/creates.`,
-          );
-        }
-        p.log.success(
-          'migration_path' in result && result.migration_path
-            ? `Generated ${result.migration_path}.`
-            : 'Migration generated.',
-        );
+        // if (result.status === 'error') {
+        //   throw new Error(formatDrizzleError(result.error));
+        // }
+        // if (result.status === 'no_changes') {
+        //   p.log.info('No schema changes; nothing to generate.');
+        //   return;
+        // }
+        // if (result.status === 'missing_hints') {
+        //   p.log.warn('drizzle-kit needs hints to resolve ambiguous changes:');
+        //   p.log.message(JSON.stringify(result.unresolved, null, 2));
+        //   throw new Error(
+        //     `Run \`pnpm exec drizzle-kit generate --dialect=${dialect} --schema=${schema} --out=${out}\` and pick the renames/creates.`,
+        //   );
+        // }
+        // p.log.success(
+        //   'migration_path' in result && result.migration_path
+        //     ? `Generated ${result.migration_path}.`
+        //     : 'Migration generated.',
+        // );
       },
     );
 
@@ -73,15 +76,16 @@ export function createDbCommand(): Command {
     .action(async (options: { ignoreConflicts?: boolean }) => {
       await loadCliConfig();
       const { dialect, out } = dbConfig();
-      const result = await check({
+      const res = await check({
         dialect,
         out,
         ignoreConflicts: options.ignoreConflicts,
       });
-      if (result.status !== 'ok') {
-        throw new Error(formatDrizzleError(result.error));
-      }
-      p.log.success(`Migrations are consistent (${result.dialect}).`);
+      p.log.success(res);
+      // if (result.status !== 'ok') {
+      //   throw new Error(formatDrizzleError(result.error));
+      // }
+      // p.log.success(`Migrations are consistent (${result.dialect}).`);
     });
 
   db.command('migrate')
@@ -114,9 +118,9 @@ export function createDbCommand(): Command {
     .description('Run the seeders configured in db.seeders')
     .action(async () => {
       await loadCliConfig();
-      const { url, schema, seeders } = dbConfig();
+      const { url, seeders } = dbConfig();
       p.log.step(`Running ${seeders.length} seeder(s).`);
-      await runSeeders({ url, schema, seeders });
+      await runSeeders({ url, seeders });
       p.log.success('Seed finished.');
     });
 
@@ -126,7 +130,7 @@ export function createDbCommand(): Command {
     .option('--seed', 'run the seed after migrating')
     .action(async (options: { force?: boolean; seed?: boolean }) => {
       await loadCliConfig();
-      const { url, out, schema, seeders } = dbConfig();
+      const { url, out, seeders } = dbConfig();
       const name = databaseName(url);
       if (!options.force) {
         if (!process.stdin.isTTY) {
@@ -144,7 +148,7 @@ export function createDbCommand(): Command {
       await resetDatabase(url);
       p.log.step(`Applying migrations from ${out}.`);
       await runMigrations(url, out);
-      if (options.seed) await runSeeders({ url, schema, seeders });
+      if (options.seed) await runSeeders({ url, seeders });
       p.log.success('Database reset.');
     });
 
@@ -155,18 +159,18 @@ export function createDbCommand(): Command {
     .action(async () => {
       await loadCliConfig();
       const { dialect, out, url } = dbConfig();
-      const result = await pull({ dialect, out, url });
-      if (result.status !== 'ok') {
-        throw new Error(formatDrizzleError(result.error));
-      }
-      p.log.success(`Schema written to ${result.schemaPath}.`);
-      if (result.relationsPath) {
-        p.log.message(`Relations: ${result.relationsPath}`);
-      }
-      p.log.message(`Snapshot: ${result.snapshotPath}`);
-      if (result.migrationPath) {
-        p.log.message(`Migration: ${result.migrationPath}`);
-      }
+      await pull({ dialect, out, url });
+      // if (result.status !== 'ok') {
+      //   throw new Error(formatDrizzleError(result.error));
+      // }
+      // p.log.success(`Schema written to ${result.schemaPath}.`);
+      // if (result.relationsPath) {
+      //   p.log.message(`Relations: ${result.relationsPath}`);
+      // }
+      // p.log.message(`Snapshot: ${result.snapshotPath}`);
+      // if (result.migrationPath) {
+      //   p.log.message(`Migration: ${result.migrationPath}`);
+      // }
     });
 
   db.command('export')
@@ -175,22 +179,22 @@ export function createDbCommand(): Command {
     .action(async (options: { out?: string }) => {
       await loadCliConfig();
       const { dialect, schema } = dbConfig();
-      const result = await exportSql({ dialect, schema, sql: true });
-      if (result.status !== 'ok') {
-        throw new Error(formatDrizzleError(result.error));
-      }
-      for (const warning of result.warnings) {
-        console.error(`Warning: ${warning}`);
-      }
-      const sql = result.statements.join('\n');
-      if (options.out) {
-        await writeFile(options.out, `${sql}\n`, 'utf8');
-        p.log.success(
-          `Wrote ${result.statements.length} statements to ${options.out}.`,
-        );
-        return;
-      }
-      process.stdout.write(`${sql}\n`);
+      const result = await exportSql({ dialect, schema, out: options.out });
+      p.log.success(result || '');
+      // if (result.status !== 'ok') {
+      //   throw new Error(formatDrizzleError(result.error));
+      // }
+      // for (const warning of result.warnings) {
+      //   console.error(`Warning: ${warning}`);
+      // }
+      // const sql = result.statements.join('\n');
+      // if (options.out) {
+      //   await writeFile(options.out, `${sql}\n`, 'utf8');
+      //   p.log.success(
+      //     `Wrote ${result.statements.length} statements to ${options.out}.`,
+      //   );
+      //   return;
+      // }
     });
 
   return db;

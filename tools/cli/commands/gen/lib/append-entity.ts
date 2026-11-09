@@ -11,9 +11,14 @@ export const entityDefinitionText = (entity: EntityDefinition): string => {
     if (field.required === false) parts.push('required: false');
     if (field.unique) parts.push('unique: true');
     if (field.default !== undefined) {
-      parts.push(`default: ${typeof field.default === 'string' ? `'${field.default}'` : String(field.default)}`);
+      parts.push(
+        `default: ${typeof field.default === 'string' ? `'${field.default}'` : String(field.default)}`,
+      );
     }
-    if (field.values) parts.push(`values: [${field.values.map((value) => `'${value}'`).join(', ')}]`);
+    if (field.values)
+      parts.push(
+        `values: [${field.values.map((value) => `'${value}'`).join(', ')}]`,
+      );
     if (field.references) parts.push(`references: '${field.references}'`);
     if (field.searchable) parts.push('searchable: true');
     lines.push(`    { ${parts.join(', ')} },`);
@@ -24,13 +29,20 @@ export const entityDefinitionText = (entity: EntityDefinition): string => {
     for (const relation of entity.relations) {
       const parts =
         relation.type === 'one'
-          ? [`name: '${relation.name}'`, "type: 'one'", `field: '${relation.field}'`, `references: '${relation.references}'`]
+          ? [
+              `name: '${relation.name}'`,
+              "type: 'one'",
+              `field: '${relation.field}'`,
+              `references: '${relation.references}'`,
+            ]
           : [
               `name: '${relation.name}'`,
               "type: 'many'",
               `target: '${relation.target}'`,
               `foreignKey: '${relation.foreignKey}'`,
-              ...(relation.localKey ? [`localKey: '${relation.localKey}'`] : []),
+              ...(relation.localKey
+                ? [`localKey: '${relation.localKey}'`]
+                : []),
             ];
       lines.push(`    { ${parts.join(', ')} },`);
     }
@@ -43,7 +55,11 @@ export const entityDefinitionText = (entity: EntityDefinition): string => {
 };
 
 /** Appends the entity to the `entities` array of tools/entities.ts. */
-export const appendEntity = async (project: Project, entitiesPath: string, entity: EntityDefinition): Promise<void> => {
+export const appendEntity = async (
+  project: Project,
+  entitiesPath: string,
+  entity: EntityDefinition,
+): Promise<void> => {
   const file = project.addSourceFileAtPath(entitiesPath);
   const array = file
     .getVariableDeclaration('entities')
@@ -54,11 +70,6 @@ export const appendEntity = async (project: Project, entitiesPath: string, entit
   array.addElement(entityDefinitionText(entity));
   file.saveSync();
   const { readFileSync, writeFileSync } = await import('node:fs');
-  const { format } = await import('prettier');
-  const formatted = await format(readFileSync(entitiesPath, 'utf8'), {
-    parser: 'typescript',
-    singleQuote: true,
-    trailingComma: 'all',
-  });
+  const formatted = readFileSync(entitiesPath, 'utf8');
   writeFileSync(entitiesPath, formatted, 'utf8');
 };
