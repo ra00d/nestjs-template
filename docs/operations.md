@@ -102,7 +102,9 @@ The `db` command is part of the developer CLI (`pnpm db …`, or
 scripts are aliases for `pnpm db generate` and `pnpm db migrate`.
 `pnpm db seed` runs the seeder modules listed in `db.seeders`; the
 `db:seed` package script boots the app for the same seeders plus the
-optional admin bootstrap.
+optional admin bootstrap. A seeder is a `SeedFunc` that receives the
+Drizzle instance and seeds only its module's tables, so one module never
+inserts into another module's tables.
 
 ## Production notes
 
