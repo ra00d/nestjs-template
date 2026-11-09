@@ -1,12 +1,12 @@
-import { at, timestamps } from '@/database';
+import { at, timestamps } from '@/database/fields';
 import {
-    boolean,
-    index,
-    integer,
-    jsonb,
-    pgTable,
-    primaryKey,
-    text,
+  boolean,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
 } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {

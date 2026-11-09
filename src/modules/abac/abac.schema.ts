@@ -11,7 +11,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { users } from '../auth/db/auth.schema';
 import type { AbacRules } from './abac.types';
-import { at, timestamps } from '@/database';
+import { at, timestamps } from '@/database/fields';
 
 /**
  * Dynamic ABAC policies: one row per rule set, evaluated by

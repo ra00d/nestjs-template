@@ -1,4 +1,4 @@
-import { at } from '@/database';
+import { at } from '@/database/fields';
 import { index, jsonb, pgTable, text } from 'drizzle-orm/pg-core';
 
 /**
