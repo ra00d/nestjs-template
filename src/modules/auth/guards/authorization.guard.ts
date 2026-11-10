@@ -1,18 +1,13 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { RBACPolicy } from '../policies/rbac.policy';
+import { AppLogger } from '@/common/logger';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Authorize } from '../decorators/rbac.decorator';
+import { NodeRequest } from '@nestjs/platform-node';
+import { Observable } from 'rxjs';
 import { PUBLIC_API } from '../decorators/public.decorator';
-import { FastifyRequest } from 'fastify';
+import { Authorize } from '../decorators/rbac.decorator';
+import { RBACPolicy } from '../policies/rbac.policy';
 import type { AuthorizeParams } from '../types/auth-types';
 import type { PermissionName, RoleName } from '../types/rbac.types';
-import { AppLogger } from '@/common/logger';
 
 @Injectable()
 export class AuthzGuard implements CanActivate {
@@ -29,7 +24,7 @@ export class AuthzGuard implements CanActivate {
       context.getHandler(),
     ]);
     if (isPublic) return true;
-    const req = context.switchToHttp().getRequest<FastifyRequest>();
+    const req = context.switchToHttp().getRequest<NodeRequest>();
     const user = req.user;
     this.logger.log(user);
 

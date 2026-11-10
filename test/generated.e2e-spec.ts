@@ -33,9 +33,15 @@ describe('Generated modules (e2e)', () => {
   // e2e spec for the same helper).
   const browser = () => {
     const jar = new Map<string, string>();
-    const call = async (method: 'get' | 'post' | 'patch' | 'delete', path: string, body?: object): Promise<Response> => {
+    const call = async (
+      method: 'get' | 'post' | 'patch' | 'delete',
+      path: string,
+      body?: object,
+    ): Promise<Response> => {
       const pending = request(base)[method](path);
-      const cookies = [...jar].map(([name, value]) => `${name}=${value}`).join('; ');
+      const cookies = [...jar]
+        .map(([name, value]) => `${name}=${value}`)
+        .join('; ');
       if (cookies) {
         pending.set('Cookie', cookies);
       }
@@ -49,20 +55,32 @@ describe('Generated modules (e2e)', () => {
     };
     return {
       get: (path: string) => ({
-        expect: (status: number) => call('get', path).then((res) => (expect(res.status).toBe(status), res)),
+        expect: (status: number) =>
+          call('get', path).then(
+            (res) => (expect(res.status).toBe(status), res),
+          ),
       }),
       post: (path: string) => ({
         send: (body: object) => ({
-          expect: (status: number) => call('post', path, body).then((res) => (expect(res.status).toBe(status), res)),
+          expect: (status: number) =>
+            call('post', path, body).then(
+              (res) => (expect(res.status).toBe(status), res),
+            ),
         }),
       }),
       patch: (path: string) => ({
         send: (body: object) => ({
-          expect: (status: number) => call('patch', path, body).then((res) => (expect(res.status).toBe(status), res)),
+          expect: (status: number) =>
+            call('patch', path, body).then(
+              (res) => (expect(res.status).toBe(status), res),
+            ),
         }),
       }),
       delete: (path: string) => ({
-        expect: (status: number) => call('delete', path).then((res) => (expect(res.status).toBe(status), res)),
+        expect: (status: number) =>
+          call('delete', path).then(
+            (res) => (expect(res.status).toBe(status), res),
+          ),
       }),
     };
   };
@@ -84,9 +102,20 @@ describe('Generated modules (e2e)', () => {
     const me = (await client.get('/me').expect(200)).body;
 
     const first = (
-      await client.post('/posts').send({ title: 'Hello world', body: 'First post', authorId: me.id }).expect(201)
+      await client
+        .post('/posts')
+        .send({ title: 'Hello world', body: 'First post', authorId: me.id })
+        .expect(201)
     ).body;
-    await client.post('/posts').send({ title: 'Second post', status: 'published', views: 42, authorId: me.id }).expect(201);
+    await client
+      .post('/posts')
+      .send({
+        title: 'Second post',
+        status: 'published',
+        views: 42,
+        authorId: me.id,
+      })
+      .expect(201);
 
     // An unknown sort key is a 400 from the list query schema.
     await client.get('/posts?sort=nope').expect(400);
@@ -114,11 +143,15 @@ describe('Generated modules (e2e)', () => {
     const searched = (await client.get('/posts?search=hello').expect(200)).body;
     expect(searched.meta.total).toBeGreaterThanOrEqual(1);
 
-    const sorted = (await client.get('/posts?sort=views&order=desc&limit=1').expect(200)).body;
+    const sorted = (
+      await client.get('/posts?sort=views&order=desc&limit=1').expect(200)
+    ).body;
     expect(sorted.data).toHaveLength(1);
     expect(sorted.meta.totalPages).toBeGreaterThanOrEqual(1);
 
-    const one = (await client.get(`/posts/${first.id}?include=author,comments`).expect(200)).body;
+    const one = (
+      await client.get(`/posts/${first.id}?include=author,comments`).expect(200)
+    ).body;
     expect(one.title).toBe('Hello world');
 
     await client.patch(`/posts/${first.id}`).send({ views: 7 }).expect(200);

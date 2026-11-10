@@ -17,7 +17,7 @@ import {
   MailModule,
   SmtpTransport,
 } from '@nestjs/mail';
-import { MultipartModule } from '@nestjs/platform-fastify';
+import { MulterModule } from '@nestjs/platform-node';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, minutes } from '@nestjs/throttler';
 import { join } from 'node:path';
@@ -69,7 +69,7 @@ import { KeyvThrottlerStorage } from './throttler/keyv-throttler.storage';
     // it the correlation ID.
     LoggerModule.forRoot(),
 
-    MultipartModule.registerAsync({
+    MulterModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => ({
         dest: config.get('UPLOAD_DIR'),

@@ -12,8 +12,8 @@ declare module '@nestjs/authentication' {
   }
 }
 
-declare module 'fastify' {
-  interface FastifyRequest {
+declare module '@nestjs/platform-node' {
+  interface NodeRequest {
     user: User;
   }
 }

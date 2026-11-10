@@ -1,5 +1,5 @@
 import { Reflector } from '@nestjs/core';
-import type { FastifyRequest } from 'fastify';
+import { NodeRequest } from '@nestjs/platform-node';
 
 /**
  * Declares that a route is guarded by the ABAC engine. `AbacGuard` reads
@@ -32,13 +32,13 @@ export interface AbacRouteOptions {
   action: string;
   /** Resolves the entity's attributes; defaults to the route parameters. */
   attributes?: (
-    request: FastifyRequest,
+    request: NodeRequest,
   ) =>
     | Readonly<Record<string, unknown>>
     | Promise<Readonly<Record<string, unknown>>>;
   /** Extra environment attributes, merged over the UTC defaults. */
   environment?: (
-    request: FastifyRequest,
+    request: NodeRequest,
   ) =>
     | Readonly<Record<string, unknown>>
     | Promise<Readonly<Record<string, unknown>>>;

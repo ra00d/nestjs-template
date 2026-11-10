@@ -1,12 +1,12 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { FastifyRequest } from 'fastify';
 import type { User } from '../auth/types/user';
 import { AbacService } from './abac.service';
 import { toAbacSubject } from './abac.types';
 import { Abac } from './decorators/abac.decorator';
+import { NodeRequest } from '@nestjs/platform-node';
 
-type RequestWithUser = FastifyRequest & { user?: User };
+type RequestWithUser = NodeRequest & { user?: User };
 
 /**
  * Route guard for the ABAC engine. Add `@UseGuards(AbacGuard)` plus `@Abac({…})`
@@ -58,6 +58,6 @@ export class AbacGuard implements CanActivate {
  * intentionally ignored — a policy must not read values the caller chose at
  * request time unless the route says so explicitly.
  */
-function routeAttributes(request: FastifyRequest): Record<string, unknown> {
+function routeAttributes(request: NodeRequest): Record<string, unknown> {
   return { ...(request.params as Record<string, unknown> | undefined) };
 }
