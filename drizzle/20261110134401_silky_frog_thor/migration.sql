@@ -1,3 +1,32 @@
+CREATE TABLE "abac_policy" (
+	"id" integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY (sequence name "abac_policy_id_seq" INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START WITH 1 CACHE 1),
+	"created_at" timestamp with time zone DEFAULT now(),
+	"updated_at" timestamp with time zone,
+	"deleted_at" timestamp with time zone,
+	"name" text NOT NULL,
+	"slug" text NOT NULL,
+	"description" text,
+	"resource" text NOT NULL,
+	"action" text NOT NULL,
+	"rules" jsonb NOT NULL,
+	"effect" text DEFAULT 'allow' NOT NULL,
+	"priority" integer DEFAULT 100 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"expires_at" timestamp with time zone,
+	"created_by" text,
+	CONSTRAINT "abac_policy_effect_check" CHECK ("effect" IN ('allow', 'deny'))
+);
+--> statement-breakpoint
+CREATE TABLE "audit_logs" (
+	"id" text PRIMARY KEY,
+	"actor_id" text,
+	"action" text NOT NULL,
+	"entity" text NOT NULL,
+	"entity_id" text,
+	"metadata" jsonb,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "email_tokens" (
 	"id" text PRIMARY KEY,
 	"purpose" text NOT NULL,
@@ -108,16 +137,11 @@ CREATE TABLE "users" (
 	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
-CREATE TABLE "audit_logs" (
-	"id" text PRIMARY KEY,
-	"actor_id" text,
-	"action" text NOT NULL,
-	"entity" text NOT NULL,
-	"entity_id" text,
-	"metadata" jsonb,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
+CREATE INDEX "abac_policy_resource_action_priority_idx" ON "abac_policy" ("resource","action","priority");--> statement-breakpoint
+CREATE UNIQUE INDEX "abac_policy_slug_idx" ON "abac_policy" ("slug");--> statement-breakpoint
+CREATE INDEX "audit_logs_actor_id_idx" ON "audit_logs" ("actor_id");--> statement-breakpoint
+CREATE INDEX "audit_logs_entity_entity_id_idx" ON "audit_logs" ("entity","entity_id");--> statement-breakpoint
+CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs" ("created_at");--> statement-breakpoint
 CREATE INDEX "email_tokens_user_id_purpose_idx" ON "email_tokens" ("user_id","purpose");--> statement-breakpoint
 CREATE INDEX "email_tokens_expires_at_idx" ON "email_tokens" ("expires_at");--> statement-breakpoint
 CREATE INDEX "magic_links_expires_at_idx" ON "magic_links" ("expires_at");--> statement-breakpoint
@@ -136,9 +160,7 @@ CREATE INDEX "user_permissions_user_id_idx" ON "user_permissions" ("user_id");--
 CREATE INDEX "user_permissions_permission_id_idx" ON "user_permissions" ("permission_id");--> statement-breakpoint
 CREATE INDEX "user_roles_user_id_idx" ON "user_roles" ("user_id");--> statement-breakpoint
 CREATE INDEX "user_roles_role_id_idx" ON "user_roles" ("role_id");--> statement-breakpoint
-CREATE INDEX "audit_logs_actor_id_idx" ON "audit_logs" ("actor_id");--> statement-breakpoint
-CREATE INDEX "audit_logs_entity_entity_id_idx" ON "audit_logs" ("entity","entity_id");--> statement-breakpoint
-CREATE INDEX "audit_logs_created_at_idx" ON "audit_logs" ("created_at");--> statement-breakpoint
+ALTER TABLE "abac_policy" ADD CONSTRAINT "abac_policy_created_by_users_id_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL;--> statement-breakpoint
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_role_id_roles_id_fkey" FOREIGN KEY ("role_id") REFERENCES "roles"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "role_permissions" ADD CONSTRAINT "role_permissions_permission_id_permissions_id_fkey" FOREIGN KEY ("permission_id") REFERENCES "permissions"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "user_permissions" ADD CONSTRAINT "user_permissions_user_id_users_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
