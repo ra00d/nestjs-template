@@ -1,4 +1,4 @@
-// import session from 'express-session';
+import session from 'express-session';
 import { VersioningType } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
@@ -32,7 +32,6 @@ async function bootstrap() {
   );
   const config = app.get(ConfigService<Env, true>);
   const sessionSecret: string = config.get('SESSION_SECRET');
-  const sessionSalt: string = config.get('SESSION_SALT');
 
   app.useSecurityHeaders({
     contentSecurityPolicy: false,
@@ -66,9 +65,6 @@ async function bootstrap() {
     },
   );
 
-  // Security headers (CSP off: Swagger UI needs inline scripts).
-  // await app.use(helmet({ contentSecurityPolicy: false }));
-
   // Browsers may call the API only from the app itself and TRUSTED_ORIGINS.
   const appUrl = new URL(config.get('APP_URL'));
   app.enableCors({
@@ -92,13 +88,14 @@ async function bootstrap() {
   app.enableCsrfProtection({
     trustedOrigins: trustedOrigins(config.get('TRUSTED_ORIGINS')),
   });
-  // app.use(
-  //   session({
-  //     secret: sessionSecret,
-  //     resave: false,
-  //     saveUninitialized: false,
-  //   }),
-  // );
+  app.use(
+    session({
+      secret: sessionSecret,
+
+      resave: false,
+      saveUninitialized: false,
+    }),
+  );
 
   const oaiConfig = new DocumentBuilder()
     .setTitle('API')
