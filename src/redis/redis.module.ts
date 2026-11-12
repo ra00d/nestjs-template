@@ -13,6 +13,7 @@ import type {
   RedisStore,
   RedisModuleAsyncOptions,
 } from './redis.options';
+import { RedisService } from './redis.service';
 const logger = new Logger('RedisModule');
 
 /** Creates the shared `KeyvRedis` adapter from validated module options. */
@@ -73,8 +74,8 @@ export class RedisModule implements OnApplicationShutdown {
     const isGlobal = options.isGlobal ?? true;
     const module: DynamicModule = {
       module: RedisModule,
-      providers: buildProviders(options),
-      exports: [REDIS_STORE],
+      providers: [...buildProviders(options), RedisService],
+      exports: [REDIS_STORE, RedisService],
       global: isGlobal,
     };
     return module;
@@ -85,8 +86,8 @@ export class RedisModule implements OnApplicationShutdown {
     const module: DynamicModule = {
       module: RedisModule,
       imports: asyncOptions.imports ?? [],
-      providers: buildProviders(undefined, asyncOptions),
-      exports: [REDIS_STORE],
+      providers: [...buildProviders(undefined, asyncOptions), RedisService],
+      exports: [REDIS_STORE, RedisService],
       global: isGlobal,
     };
     return module;
