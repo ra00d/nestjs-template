@@ -24,10 +24,12 @@ export const toPascalCase = (value: string): string =>
 /** `email-tokens` -> `emailTokens` (valid TS identifier, used for table names). */
 export const toCamelCase = (value: string): string => {
   const pascal = toPascalCase(value);
+
   return pascal.charAt(0).toLowerCase() + pascal.slice(1);
 };
 
-export const singularize = (value: string): string => (value.endsWith('s') ? value.slice(0, -1) : value);
+export const singularize = (value: string): string =>
+  value.endsWith('s') ? value.slice(0, -1) : value;
 
 export interface EntityNames {
   /** Entity name as given, kebab-cased: `posts`, `email-tokens`. */

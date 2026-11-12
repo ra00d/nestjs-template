@@ -9,7 +9,8 @@
  */
 
 /** Field storage types, mapped to Drizzle columns, Zod schemas and TS types. */
-export type FieldType = 'text' | 'uuid' | 'integer' | 'boolean' | 'timestamp' | 'enum' | 'jsonb';
+export type FieldType =
+  'text' | 'uuid' | 'integer' | 'boolean' | 'timestamp' | 'enum' | 'jsonb';
 
 export interface FieldDefinition {
   /** Property name, camelCase. Becomes a snake_case column (`authorId` -> `author_id`). */
@@ -54,10 +55,17 @@ export interface ManyRelationDefinition {
   foreignKey: string;
   /** Local column the foreign key points at. Default `'id'`. */
   localKey?: string;
+  extraColumns?: Exclude<FieldDefinition, 'filterable' | 'searchable'>[];
 }
 
 export type RelationDefinition = OneRelationDefinition | ManyRelationDefinition;
 
+export interface ModuleDefinition {
+  /** Kebab or camelCase plural, e.g. `posts` or `email-tokens`. Drives file/class names. */
+  name: string;
+  /** entities defined in this module , e.g. `posts` or `post-tags` */
+  entities: EntityDefinition[];
+}
 export interface EntityDefinition {
   /** Kebab or camelCase plural, e.g. `posts` or `email-tokens`. Drives file/class names. */
   name: string;
@@ -72,4 +80,5 @@ export interface EntityDefinition {
 }
 
 /** Identity helper that gives `entities.ts` a typed, autocompleted shape. */
-export const defineEntity = (definition: EntityDefinition): EntityDefinition => definition;
+export const defineEntity = (definition: EntityDefinition): EntityDefinition =>
+  definition;

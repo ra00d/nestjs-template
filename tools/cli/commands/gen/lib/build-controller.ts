@@ -44,21 +44,30 @@ export const buildControllerFile = (
       isTypeOnly: true,
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/create-${names.base}.dto.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/create-${names.base}.dto.ts`,
+      ),
       namedImports: [
         `type Create${names.entity}Dto`,
         `create${names.entity}Schema`,
       ],
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/update-${names.base}.dto.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/update-${names.base}.dto.ts`,
+      ),
       namedImports: [
         `type Update${names.entity}Dto`,
         `update${names.entity}Schema`,
       ],
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/list-${names.base}.query.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/list-${names.base}.query.ts`,
+      ),
       namedImports: [
         `type List${names.entity}QueryDto`,
         `list${names.entity}QuerySchema`,
@@ -66,7 +75,10 @@ export const buildControllerFile = (
       ],
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/services/${names.name}.service.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/services/${names.name}.service.ts`,
+      ),
       namedImports: [`${names.plural}Service`],
     });
 
@@ -81,7 +93,7 @@ export const buildControllerFile = (
         {
           parameters: [
             {
-              name: `${names.base}Service`,
+              name: `${names.entity}Service`,
               type: `${names.plural}Service`,
               scope: Scope.Private,
               isReadonly: true,
@@ -107,7 +119,7 @@ export const buildControllerFile = (
             },
           ],
           returnType: `Promise<${names.entity}>`,
-          statements: [`return this.${names.base}Service.create(body);`],
+          statements: [`return this.${names.entity}Service.create(body);`],
         },
         {
           name: 'findAll',
@@ -125,7 +137,7 @@ export const buildControllerFile = (
             },
           ],
           returnType: `Promise<${names.entity}Page>`,
-          statements: [`return this.${names.base}Service.findAll(query);`],
+          statements: [`return this.${names.entity}Service.findAll(query);`],
         },
         {
           name: 'findOne',
@@ -149,7 +161,7 @@ export const buildControllerFile = (
           ],
           returnType: `Promise<${names.entity}>`,
           statements: [
-            `return this.${names.base}Service.findOne(${relations.length > 0 ? 'id, parseIncludes(include)' : 'id'});`,
+            `return this.${names.entity}Service.findOne(${relations.length > 0 ? 'id, parseIncludes(include)' : 'id'});`,
           ],
         },
         {
@@ -173,7 +185,7 @@ export const buildControllerFile = (
             },
           ],
           returnType: `Promise<${names.entity}>`,
-          statements: [`return this.${names.base}Service.update(id, body);`],
+          statements: [`return this.${names.entity}Service.update(id, body);`],
         },
         {
           name: 'remove',
@@ -189,7 +201,7 @@ export const buildControllerFile = (
             },
           ],
           returnType: 'Promise<void>',
-          statements: [`return this.${names.base}Service.remove(id);`],
+          statements: [`return this.${names.entity}Service.remove(id);`],
         },
       ],
     });

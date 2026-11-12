@@ -26,14 +26,20 @@ const relationTables = (
   const targets = new Map<string, string>();
   for (const relation of context.relations) {
     if (isUsersRelation(relation)) continue;
-    const raw = relation.type === 'one' ? relation.references.split('.')[0] : relation.target;
+    const raw =
+      relation.type === 'one'
+        ? relation.references.split('.')[0]
+        : relation.target;
     const variable = toCamelCase(raw);
     if (variable === own || targets.has(variable)) continue;
     const known = context.tables.get(variable);
     targets.set(
       variable,
       known
-        ? importPath(repositoryFile, `${context.settings.modulesDir}/${known.dir}/db/${known.dir}.schema.ts`)
+        ? importPath(
+            repositoryFile,
+            `${context.settings.modulesDir}/${known.dir}/db/${known.dir}.schema.ts`,
+          )
         : importPath(repositoryFile, context.settings.externalSchema),
     );
   }
@@ -43,18 +49,28 @@ const relationTables = (
     list.push(variable);
     bySpecifier.set(specifier, list);
   }
-  return [...bySpecifier].map(([moduleSpecifier, namedImports]) => ({ moduleSpecifier, namedImports }));
+  return [...bySpecifier].map(([moduleSpecifier, namedImports]) => ({
+    moduleSpecifier,
+    namedImports,
+  }));
 };
 
 /** One batch-load block per relation, stitching rows onto the entities. */
-const includeBlock = (context: EntityContext, relation: EntityContext['relations'][number]): string => {
+const includeBlock = (
+  context: EntityContext,
+  relation: EntityContext['relations'][number],
+): string => {
   if (relation.type === 'one') {
     const [targetTable, targetColumn] = relation.references.split('.');
     const target = toCamelCase(targetTable);
     const targetType = targetTypeName(context, targetTable);
-    const field = context.fields.find((candidate) => candidate.name === relation.field);
+    const field = context.fields.find(
+      (candidate) => candidate.name === relation.field,
+    );
     const ids = `[...new Set(rows.map((row) => row.${relation.field}))]${
-      field && !field.required ? '.filter((id): id is string => id !== null)' : ''
+      field && !field.required
+        ? '.filter((id): id is string => id !== null)'
+        : ''
     }`;
     if (isUsersRelation(relation)) {
       return [
@@ -94,21 +110,27 @@ const includeBlock = (context: EntityContext, relation: EntityContext['relations
 };
 
 /** `repositories/posts.repository.ts`: Drizzle CRUD, filters, pagination, relation loading. */
-export const buildRepositoryFile = (context: EntityContext): { path: string; content: string } => {
+export const buildRepositoryFile = (
+  context: EntityContext,
+): { path: string; content: string } => {
   const { names, listFields, searchableFields, relations, moduleDir } = context;
   const table = toCamelCase(names.name);
   const path = `${moduleDir}/repositories/${names.name}.repository.ts`;
   const hasRelations = relations.length > 0;
   // `inArray` is only for the relations that load their table directly; a
   // users relation goes through `findUsersByIds`.
-  const loadsTableRelations = relations.some((relation) => !isUsersRelation(relation));
+  const loadsTableRelations = relations.some(
+    (relation) => !isUsersRelation(relation),
+  );
 
   const sqlConditions: string[] = [];
   const sqlImports = new Set<string>(['eq', 'and', 'asc', 'desc', 'type SQL']);
   if (searchableFields.length > 0) {
     sqlImports.add('ilike');
     sqlImports.add('or');
-    const predicates = searchableFields.map((field) => `ilike(${table}.${field.name}, \`%\${query.search}%\`)`).join(', ');
+    const predicates = searchableFields
+      .map((field) => `ilike(${table}.${field.name}, \`%\${query.search}%\`)`)
+      .join(', ');
     // `or()` returns `undefined` when every predicate is `undefined`: the
     // guard keeps the `conditions` list free of it.
     sqlConditions.push(
@@ -124,7 +146,9 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     listFields.length > 0
       ? [
           'const columns: FilterColumns = {',
-          ...listFields.map((field) => `  ${field.name}: ${table}.${field.name},`),
+          ...listFields.map(
+            (field) => `  ${field.name}: ${table}.${field.name},`,
+          ),
           '};',
           'const conditions = buildFilterConditions(columns, query.filters);',
         ]
@@ -132,18 +156,29 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
 
   const entityImports = new Map<string, string>();
   for (const relation of relations) {
-    const raw = relation.type === 'one' ? relation.references.split('.')[0] : relation.target;
+    const raw =
+      relation.type === 'one'
+        ? relation.references.split('.')[0]
+        : relation.target;
     const { type, from } = targetEntityType(context, path, raw);
     if (!entityImports.has(from)) entityImports.set(from, type);
   }
   const usesUsers = relations.some(isUsersRelation);
 
-  const imports: { moduleSpecifier: string; namedImports: string[]; isTypeOnly?: boolean }[] = [
+  const imports: {
+    moduleSpecifier: string;
+    namedImports: string[];
+    isTypeOnly?: boolean;
+  }[] = [
     { moduleSpecifier: 'node:crypto', namedImports: ['randomUUID'] },
     { moduleSpecifier: '@nestjs/common', namedImports: ['Injectable'] },
     { moduleSpecifier: '@nestjs/drizzle', namedImports: ['InjectDrizzle'] },
     { moduleSpecifier: 'drizzle-orm', namedImports: [...sqlImports] },
-    { moduleSpecifier: 'drizzle-orm/node-postgres', namedImports: ['NodePgDatabase'], isTypeOnly: true },
+    {
+      moduleSpecifier: 'drizzle-orm/node-postgres',
+      namedImports: ['NodePgDatabase'],
+      isTypeOnly: true,
+    },
     {
       moduleSpecifier: importPath(path, 'src/database/transaction.ts'),
       namedImports: ['currentTx'],
@@ -151,7 +186,10 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     ...(usesUsers
       ? [
           {
-            moduleSpecifier: importPath(path, 'src/auth/repositories/users.repository.ts'),
+            moduleSpecifier: importPath(
+              path,
+              'src/modules/auth/repositories/users.repository.ts',
+            ),
             namedImports: ['findUsersByIds'],
           },
         ]
@@ -165,24 +203,44 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
         ]
       : []),
     {
-      moduleSpecifier: importPath(path, `${moduleDir}/db/${names.name}.schema.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/db/${names.name}.schema.ts`,
+      ),
       namedImports: [table],
     },
     ...relationTables(context, path).map((declaration) => ({ ...declaration })),
-    ...[...entityImports].map(([moduleSpecifier, type]) => ({ moduleSpecifier, namedImports: [type], isTypeOnly: true })),
-    { moduleSpecifier: importPath(path, `${moduleDir}/${names.base}.ts`), namedImports: [names.entity], isTypeOnly: true },
+    ...[...entityImports].map(([moduleSpecifier, type]) => ({
+      moduleSpecifier,
+      namedImports: [type],
+      isTypeOnly: true,
+    })),
     {
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/create-${names.base}.dto.ts`),
+      moduleSpecifier: importPath(path, `${moduleDir}/${names.base}.ts`),
+      namedImports: [names.entity],
+      isTypeOnly: true,
+    },
+    {
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/create-${names.base}.dto.ts`,
+      ),
       namedImports: [`Create${names.entity}Dto`],
       isTypeOnly: true,
     },
     {
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/update-${names.base}.dto.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/update-${names.base}.dto.ts`,
+      ),
       namedImports: [`Update${names.entity}Dto`],
       isTypeOnly: true,
     },
     {
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/list-${names.base}.query.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/list-${names.base}.query.ts`,
+      ),
       namedImports: [`List${names.entity}QueryDto`],
       isTypeOnly: true,
     },
@@ -201,7 +259,11 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
     .offset((query.page - 1) * query.limit),
   this.db.$count(${table}, conditions.length > 0 ? and(...conditions) : undefined),
 ]);`,
-    ...(hasRelations ? ['return { data: await this.withIncludes(rows, query.include), total };'] : ['return { data: rows, total };']),
+    ...(hasRelations
+      ? [
+          'return { data: await this.withIncludes(rows, query.include), total };',
+        ]
+      : ['return { data: rows, total };']),
   ];
 
   const findByIdStatements = hasRelations
@@ -211,7 +273,10 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
         'const [first] = await this.withIncludes([row], include);',
         'return first;',
       ]
-    : [`const [row] = await this.db.select().from(${table}).where(eq(${table}.id, id));`, 'return row ?? null;'];
+    : [
+        `const [row] = await this.db.select().from(${table}).where(eq(${table}.id, id));`,
+        'return row ?? null;',
+      ];
 
   const content = buildFile(path, (file) => {
     for (const declaration of imports) {
@@ -260,7 +325,15 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
           isAsync: true,
           parameters: [
             { name: 'id', type: 'string' },
-            ...(hasRelations ? [{ name: 'include', type: 'Set<string>', hasQuestionToken: true }] : []),
+            ...(hasRelations
+              ? [
+                  {
+                    name: 'include',
+                    type: 'Set<string>',
+                    hasQuestionToken: true,
+                  },
+                ]
+              : []),
           ],
           returnType: `Promise<${names.entity} | null>`,
           statements: findByIdStatements,
@@ -290,14 +363,20 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
           isAsync: true,
           parameters: [{ name: 'id', type: 'string' }],
           returnType: 'Promise<void>',
-          statements: [`await this.db.delete(${table}).where(eq(${table}.id, id));`],
+          statements: [
+            `await this.db.delete(${table}).where(eq(${table}.id, id));`,
+          ],
         },
         {
           name: 'getFilterConditions',
           scope: Scope.Private,
           parameters: [{ name: 'query', type: `List${names.entity}QueryDto` }],
           returnType: 'SQL<unknown>[]',
-          statements: [...filterStatements, ...sqlConditions, 'return conditions;'],
+          statements: [
+            ...filterStatements,
+            ...sqlConditions,
+            'return conditions;',
+          ],
         },
         ...(hasRelations
           ? [
@@ -307,12 +386,18 @@ export const buildRepositoryFile = (context: EntityContext): { path: string; con
                 scope: Scope.Private,
                 parameters: [
                   { name: 'rows', type: `${names.entity}[]` },
-                  { name: 'include', type: 'Set<string>', hasQuestionToken: true },
+                  {
+                    name: 'include',
+                    type: 'Set<string>',
+                    hasQuestionToken: true,
+                  },
                 ],
                 returnType: `Promise<${names.entity}[]>`,
                 statements: [
                   'if (rows.length === 0) return rows;',
-                  ...relations.map((relation) => includeBlock(context, relation)),
+                  ...relations.map((relation) =>
+                    includeBlock(context, relation),
+                  ),
                   'return rows;',
                 ],
               },

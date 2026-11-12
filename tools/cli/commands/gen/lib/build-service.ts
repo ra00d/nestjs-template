@@ -4,30 +4,54 @@ import { importPath } from './paths';
 import { buildFile } from './project';
 
 /** `services/posts.service.ts`: thin domain layer over the repository. */
-export const buildServiceFile = (context: EntityContext): { path: string; content: string } => {
+export const buildServiceFile = (
+  context: EntityContext,
+): { path: string; content: string } => {
   const { names, relations, moduleDir } = context;
   const path = `${moduleDir}/services/${names.name}.service.ts`;
   const notFound = `throw new NotFoundException(\`${names.entity} with id \${id} was not found\`);`;
 
   const content = buildFile(path, (file) => {
-    file.addImportDeclaration({ moduleSpecifier: '@nestjs/common', namedImports: ['Injectable', 'NotFoundException'] });
-    file.addImportDeclaration({ moduleSpecifier: importPath(path, `${moduleDir}/${names.base}.ts`), namedImports: [names.entity, `${names.entity}Page`], isTypeOnly: true });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/create-${names.base}.dto.ts`),
+      moduleSpecifier: '@nestjs/common',
+      namedImports: ['Injectable', 'NotFoundException'],
+    });
+    file.addImportDeclaration({
+      moduleSpecifier: importPath(path, `${moduleDir}/${names.base}.ts`),
+      namedImports: [names.entity, `${names.entity}Page`],
+      isTypeOnly: true,
+    });
+    file.addImportDeclaration({
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/create-${names.base}.dto.ts`,
+      ),
       namedImports: [`Create${names.entity}Dto`],
       isTypeOnly: true,
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/update-${names.base}.dto.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/update-${names.base}.dto.ts`,
+      ),
       namedImports: [`Update${names.entity}Dto`],
       isTypeOnly: true,
     });
     file.addImportDeclaration({
-      moduleSpecifier: importPath(path, `${moduleDir}/dto/list-${names.base}.query.ts`),
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/dto/list-${names.base}.query.ts`,
+      ),
       namedImports: [`List${names.entity}QueryDto`],
       isTypeOnly: true,
     });
-    file.addImportDeclaration({ moduleSpecifier: importPath(path, `${moduleDir}/repositories/${names.name}.repository.ts`), namedImports: [`${names.plural}Repository`] });
+    file.addImportDeclaration({
+      moduleSpecifier: importPath(
+        path,
+        `${moduleDir}/repositories/${names.name}.repository.ts`,
+      ),
+      namedImports: [`${names.plural}Repository`],
+    });
     file.addClass({
       name: `${names.plural}Service`,
       isExported: true,
@@ -36,7 +60,7 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
         {
           parameters: [
             {
-              name: `${names.base}Repository`,
+              name: `${names.entity}Repository`,
               type: `${names.plural}Repository`,
               scope: Scope.Private,
               isReadonly: true,
@@ -50,7 +74,7 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
           name: 'create',
           parameters: [{ name: 'data', type: `Create${names.entity}Dto` }],
           returnType: `Promise<${names.entity}>`,
-          statements: [`return this.${names.base}Repository.create(data);`],
+          statements: [`return this.${names.entity}Repository.create(data);`],
         },
         {
           name: 'findAll',
@@ -58,7 +82,7 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
           parameters: [{ name: 'query', type: `List${names.entity}QueryDto` }],
           returnType: `Promise<${names.entity}Page>`,
           statements: [
-            `const { data, total } = await this.${names.base}Repository.findAll(query);`,
+            `const { data, total } = await this.${names.entity}Repository.findAll(query);`,
             'return {',
             '  data,',
             '  meta: {',
@@ -75,17 +99,25 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
           isAsync: true,
           parameters: [
             { name: 'id', type: 'string' },
-            ...(relations.length > 0 ? [{ name: 'include', type: 'Set<string>', hasQuestionToken: true }] : []),
+            ...(relations.length > 0
+              ? [
+                  {
+                    name: 'include',
+                    type: 'Set<string>',
+                    hasQuestionToken: true,
+                  },
+                ]
+              : []),
           ],
           returnType: `Promise<${names.entity}>`,
           statements: [
-            `const ${names.base} = await this.${names.base}Repository.findById(${
+            `const ${names.entity} = await this.${names.entity}Repository.findById(${
               relations.length > 0 ? 'id, include' : 'id'
             });`,
-            `if (!${names.base}) {`,
+            `if (!${names.entity}) {`,
             notFound,
             '}',
-            `return ${names.base};`,
+            `return ${names.entity};`,
           ],
         },
         {
@@ -93,10 +125,11 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
           isAsync: true,
           parameters: [
             { name: 'id', type: 'string' },
-            { name: 'data', type: `Update${names.entity}Dto` }],
+            { name: 'data', type: `Update${names.entity}Dto` },
+          ],
           returnType: `Promise<${names.entity}>`,
           statements: [
-            `const updated = await this.${names.base}Repository.update(id, data);`,
+            `const updated = await this.${names.entity}Repository.update(id, data);`,
             'if (!updated) {',
             notFound,
             '}',
@@ -107,7 +140,7 @@ export const buildServiceFile = (context: EntityContext): { path: string; conten
           name: 'remove',
           parameters: [{ name: 'id', type: 'string' }],
           returnType: 'Promise<void>',
-          statements: [`return this.${names.base}Repository.remove(id);`],
+          statements: [`return this.${names.entity}Repository.remove(id);`],
         },
       ],
     });
