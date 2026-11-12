@@ -1,4 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { REDIS_STORE, type RedisStore } from '@/redis';
+import { RedisClientConnectionType } from '@keyv/redis';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import type Keyv from 'keyv';
 import { CACHE_INSTANCE } from './cache.constants';
 
@@ -10,8 +12,19 @@ import { CACHE_INSTANCE } from './cache.constants';
  * `false`) instead of rejecting.
  */
 @Injectable()
-export class CacheService {
-  constructor(@Inject(CACHE_INSTANCE) private readonly keyv: Keyv) {}
+export class CacheService implements OnModuleInit {
+  private redis: RedisClientConnectionType;
+  constructor(
+    @Inject(CACHE_INSTANCE) private readonly keyv: Keyv,
+    @Inject(REDIS_STORE) private readonly store: RedisStore,
+  ) {}
+  async onModuleInit() {
+    this.redis = await this.store.getClient();
+  }
+  //
+  // private get redis() {
+  //   return this.store.getClient();
+  // }
 
   /** The underlying Keyv instance, for iterators, hooks, and stats. */
   getKeyv(): Keyv {
@@ -64,7 +77,25 @@ export class CacheService {
   async clear(): Promise<void> {
     await this.keyv.clear();
   }
+  async keys() {
+    let cursor = '0';
 
+    do {
+      const result = await this.redis.scan(cursor, {
+        MATCH: '*',
+        COUNT: 100,
+      });
+
+      cursor = result.cursor;
+      console.log(result);
+
+      // if (result.keys.length) {
+      //   await redis.unlink(result.keys);
+      // }
+    } while (cursor !== '0');
+    const keys: string[] = [];
+    return keys;
+  }
   /**
    * Cache-aside helper: returns the cached value, or calls `fn`, caches its
    * result, and returns it. `ttl` (ms) overrides `defaultTtl` for the write.

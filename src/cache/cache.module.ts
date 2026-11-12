@@ -5,16 +5,17 @@ import {
   Module,
   OnApplicationShutdown,
   Optional,
+  Provider,
 } from '@nestjs/common';
 import Keyv from 'keyv';
-import { CacheService } from './cache.service';
+import { REDIS_STORE } from '../redis/redis.constants';
+import type { RedisStore } from '../redis/redis.options';
 import { CACHE_INSTANCE, CACHE_MODULE_OPTIONS } from './cache.constants';
 import type {
   CacheModuleAsyncOptions,
   CacheModuleOptions,
 } from './cache.options';
-import { REDIS_STORE } from '../redis/redis.constants';
-import type { RedisStore } from '../redis/redis.options';
+import { CacheService } from './cache.service';
 
 const logger = new Logger('CacheModule');
 
@@ -29,7 +30,7 @@ function createKeyvInstance(
   const adapterNamespace =
     typeof (store as { namespace?: unknown }).namespace === 'string'
       ? ((store as { namespace?: string }).namespace as string)
-      : undefined;
+      : 'default';
   const keyv = new Keyv({
     store,
     namespace: options.namespace ?? adapterNamespace,
@@ -48,7 +49,7 @@ function createKeyvInstance(
 function buildProviders(
   options: CacheModuleOptions | undefined,
   asyncOptions?: CacheModuleAsyncOptions,
-) {
+): Provider[] {
   const optionsProvider =
     asyncOptions != null
       ? {
@@ -63,7 +64,15 @@ function buildProviders(
       createKeyvInstance(opts, redisStore),
     inject: [CACHE_MODULE_OPTIONS, { token: REDIS_STORE, optional: true }],
   };
-  return [optionsProvider, instanceProvider, CacheService];
+  return [
+    optionsProvider,
+    instanceProvider,
+    CacheService,
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
+  ];
 }
 
 @Module({})
