@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
 import request from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module';
+import { NodeAdapter } from '@nestjs/platform-node';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,11 +14,11 @@ describe('AppController (e2e)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication(new FastifyAdapter());
+    app = moduleFixture.createNestApplication(new NodeAdapter());
     // `listen()` calls `fastify.ready()` — without it the route contexts lack
     // their hook lists and requests crash in fastify's preParsing runner.
     await app.listen(0);
-    const server = app.getHttpServer();
+    const server = app.getHttpServer() as any;
     const address = server.address() as { port: number };
     base = `http://127.0.0.1:${address.port}`;
   });

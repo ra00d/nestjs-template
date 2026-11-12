@@ -1,9 +1,9 @@
 import { INestApplication } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test, TestingModule } from '@nestjs/testing';
 import request, { type Response } from 'supertest';
 import { App } from 'supertest/types.js';
 import { AppModule } from './../src/app.module';
+import { NodeAdapter } from '@nestjs/platform-node';
 
 // Exercises the generated posts/comments slice end to end: auth default,
 // validation, filtering, search, pagination envelope, includes, update and
@@ -17,9 +17,9 @@ describe('Generated modules (e2e)', () => {
       imports: [AppModule],
     }).compile();
 
-    app = moduleFixture.createNestApplication(new FastifyAdapter());
+    app = moduleFixture.createNestApplication(new NodeAdapter());
     await app.listen(0);
-    const server = app.getHttpServer();
+    const server = app.getHttpServer() as any;
     const address = server.address() as { port: number };
     base = `http://127.0.0.1:${address.port}`;
   });
