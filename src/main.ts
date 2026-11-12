@@ -15,19 +15,7 @@ import { trustedOrigins, type Env } from './config/env';
 async function bootstrap() {
   const app = await NestFactory.create<NestNodeApplication>(
     AppModule,
-    new NodeAdapter({
-      // Correlation ID at the server layer so every log (including
-      // early-boot rejections) carries it: honor the client's
-      // `x-request-id`, generate a UUID when missing.
-      // genReqId: (req: {
-      //   headers?: Record<string, string | string[] | undefined>;
-      // }) => {
-      //   const header = req.headers?.['x-request-id'];
-      //   const sent = Array.isArray(header) ? header[0] : header;
-      //   return sent && sent.length > 0 ? sent : randomUUID();
-      // },
-      // multipart: { limits: { fileSize: 10 * 1024 * 1024, files: 5 } },
-    }),
+    new NodeAdapter({}),
     { bufferLogs: true, snapshot: true },
   );
   const config = app.get(ConfigService<Env, true>);
