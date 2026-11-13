@@ -7,9 +7,17 @@
     "deleteOutDir": true,
     "plugins": ["@nestjs/swagger"],
     "assets": [
-      { "include": "mail/templates/**/*" },
-      { "include": "i18n/**/*" },
-      { "include": "../storage/**/*", "outDir": "dist/stg" }
+      {
+        "include": "mail/templates/**/*"
+      },
+      {
+        "include": "i18n/**/*"
+      },
+      {
+        "include": "../storage/**/*",
+        "outDir": "dist/stg"
+      }
     ]
   }
 }
+

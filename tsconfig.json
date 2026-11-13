@@ -18,11 +18,24 @@
     "skipLibCheck": true,
     "strict": true,
     "strictPropertyInitialization": false,
-    "types": ["vitest/globals", "node", "@rspack/core/module"],
+    "types": [
+      "vitest/globals",
+      "node",
+      "@rspack/core/module"
+    ],
     "paths": {
-      "@/*": ["./src/*"],
-      "modules/*": ["./src/modules/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@app/ui": [
+        "./libs/packages/ui/src/index.ts"
+      ],
+      "@app/ui/*": [
+        "./libs/packages/ui/src/*"
+      ],
+      "modules/*": [
+        "./src/modules/*"
+      ]
     }
   }
-  //"exclude": ["cli.config.ts"]
 }
